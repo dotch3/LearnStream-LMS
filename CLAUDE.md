@@ -89,6 +89,9 @@ Located in `docs/planning/` (git-ignored, for internal reference only):
 ## Active Technologies
 - TypeScript 5.x / Node.js 20 LTS (001-auth)
 - PostgreSQL via Prisma ORM — `User` and `RefreshToken` tables (001-auth)
+- TypeScript 5.x / Node.js 20 LTS + NestJS (existing), Prisma 7 + @prisma/adapter-pg (existing), class-validator, class-transformer, @nestjs/swagger — all already installed (003-tracks-videos)
+- PostgreSQL — two new tables: `tracks`, `videos` (Prisma migration `add-tracks-videos`) (003-tracks-videos)
 
 ## Recent Changes
 - 001-auth: Added TypeScript 5.x / Node.js 20 LTS
+- 003-tracks-videos: Added TracksModule + VideosModule; `Track` and `Video` Prisma models; extractYoutubeId utility; 6 frontend pages (dashboard/tracks, admin/tracks, admin/videos)
