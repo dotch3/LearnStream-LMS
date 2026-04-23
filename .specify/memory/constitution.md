@@ -1,50 +1,129 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: (none) → 1.0.0
+Action: Initial ratification — replaced all template placeholders
+
+Principles added:
+  I.   Security-First (NON-NEGOTIABLE)
+  II.  Role-Based Access Control
+  III. Data Integrity — Progress Never Decrements
+  IV.  Modular Architecture — One Module per Domain
+  V.   API-First with Swagger Documentation
+
+Sections added:
+  - Technical Constraints & Standards
+  - Development Workflow
+  - Governance
+
+Templates reviewed:
+  ✅ .specify/templates/plan-template.md  — Constitution Check gates now mapped to Principles I–V
+  ✅ .specify/templates/spec-template.md  — No changes needed; template is technology-agnostic
+  ✅ .specify/templates/tasks-template.md — No changes needed; task structure aligns with modular arch
+
+Deferred TODOs:
+  - RATIFICATION_DATE set to 2026-04-22 (today, first ratification)
+-->
+
+# VideosYT Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Security-First (NON-NEGOTIABLE)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Authentication MUST use JWT with access tokens expiring in 15 minutes and refresh tokens
+expiring in 7 days with rotation on every use. Passwords MUST be stored exclusively as
+bcrypt hashes (10 salt rounds) and MUST never be returned in any API response.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+Refresh token replay attacks (reuse of an already-consumed token) MUST trigger full
+session invalidation for the affected user. Login endpoints MUST enforce rate limiting:
+maximum 5 attempts per minute per IP, returning 429 on breach.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Access tokens MUST be stored in-memory on the frontend only — localStorage and
+sessionStorage are prohibited for token storage.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. Role-Based Access Control
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+The system MUST support exactly two roles: `ADMIN` and `VIEWER`. No public self-registration
+is permitted — only ADMIN can create user accounts. All `/admin/*` and `/api/admin/*`
+routes MUST be protected by role guards that return 403 Forbidden for VIEWER access.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+YouTube video IDs MUST be exposed only to authenticated users. Error messages for failed
+login attempts MUST be generic ("Credenciais inválidas") and MUST NOT reveal whether the
+email exists in the system.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### III. Data Integrity — Progress Never Decrements
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+Video watch progress MUST be stored as the maximum of the existing and incoming values:
+`Math.max(existingPercentage, newPercentage)`. A video is marked `completed = true` when
+watch percentage reaches or exceeds 80%. The 80% threshold MUST be a named constant in the
+backend — never a magic number inline.
+
+Once a video is marked complete, it MUST NOT revert to incomplete. Certificates once issued
+MUST remain valid even if videos are subsequently deleted from the track. Certificates are
+historical records and MUST NOT be invalidated retroactively.
+
+### IV. Modular Architecture — One Module per Domain
+
+The NestJS backend MUST be organised into exactly these domain modules: `auth`, `users`,
+`tracks`, `videos`, `progress`, `certificates`, `import`, `reports`. Modules MUST NOT
+import each other's repositories or entities directly — cross-module communication MUST go
+through exported services only.
+
+The Next.js frontend MUST use App Router with SSR for all authenticated pages. Client-side
+rendering is only permitted for real-time interactions (e.g., video player progress updates).
+
+### V. API-First with Swagger Documentation
+
+Every backend endpoint MUST be documented via Swagger/OpenAPI (auto-generated by NestJS
+decorators). All request/response shapes MUST be defined as DTOs validated with
+`class-validator` and transformed with `class-transformer`. Undocumented endpoints are not
+permitted in production.
+
+All API responses MUST follow a consistent JSON structure. The public certificate
+verification endpoint (`GET /api/certificates/:code`) MUST NOT require authentication.
+
+---
+
+## Technical Constraints & Standards
+
+- **Stack**: Next.js + TypeScript (frontend) · NestJS + TypeScript (backend) · PostgreSQL via Prisma ORM
+- **Deployment**: Vercel (frontend) · Railway (backend + database)
+- **CORS**: Restricted to the frontend domain only — wildcard origins are prohibited
+- **Performance**: Page load target < 3 seconds
+- **MVP Scope**: ~50 users · ~20 videos · desktop + tablet focus
+- **Soft Delete**: Users MUST use `isActive = false` — hard deletes of user records are prohibited
+- **Certificate Codes**: Format `CERT-{YEAR}-{5 alphanumeric chars}` — unique per user per track
+- **Progress Sync**: Frontend sends progress payload every 30 seconds during playback
+
+---
+
+## Development Workflow
+
+- SpecKit is the mandatory feature development process: `specify → clarify → plan → tasks → implement`
+- Feature branches MUST follow naming convention: `feature/NNN-short-description` (sequential numbering)
+- No commits are made without explicit user authorization
+- All implementation tasks MUST be defined in `tasks.md` and reviewed before coding begins
+- Each feature MUST have a `spec.md` (technology-agnostic) before a `plan.md` is created
+
+---
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other practices and conventions in the project. Principles I
+(Security-First) and II (Role-Based Access Control) are NON-NEGOTIABLE and cannot be amended
+without a full security review and explicit written justification.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Amendment procedure**:
+1. Identify the principle or section to amend and the reason
+2. Increment version: MAJOR for principle removal/redefinition · MINOR for additions · PATCH for clarifications
+3. Update this file and record the amendment in `PROGRESSO.md`
+4. Review and update dependent templates in `.specify/templates/`
+
+**Compliance**: All `/speckit-plan` runs MUST include a Constitution Check section verifying
+that the planned implementation does not violate Principles I–V before proceeding to Phase 0
+research.
+
+---
+
+**Version**: 1.0.0 | **Ratified**: 2026-04-22 | **Last Amended**: 2026-04-22
