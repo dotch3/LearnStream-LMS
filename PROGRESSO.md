@@ -512,6 +512,58 @@ Commita todos os artefatos da feature (specs + código).
 
 ---
 
+---
+
+## Step 10 — Feature 004-progress (2026-04-23)
+
+### Branch: `004-progress-tracking`
+
+### Artefatos gerados
+
+| Artefato | Caminho |
+|----------|---------|
+| Spec | `specs/004-progress/spec.md` |
+| Plan | `specs/004-progress/plan.md` |
+| Research | `specs/004-progress/research.md` |
+| Data Model | `specs/004-progress/data-model.md` |
+| API Contract | `specs/004-progress/contracts/progress-api.md` |
+| Quickstart | `specs/004-progress/quickstart.md` |
+| Tasks | `specs/004-progress/tasks.md` (18 tasks, todas ✅) |
+
+### Código implementado
+
+**Backend** (`backend/`):
+- `prisma/schema.prisma` — adicionado modelo `VideoProgress` com `@@unique([userId, videoId])`; relações adicionadas a `User` e `Video`
+- `src/progress/progress.constants.ts` — `WATCH_COMPLETE_THRESHOLD = 80` (named constant)
+- `src/progress/progress.module.ts` — ProgressModule importando PrismaModule + AuthModule
+- `src/progress/progress.service.ts` — `report()` com Math.max + WATCH_COMPLETE_THRESHOLD; `getTrackProgress()` com cálculo on-the-fly
+- `src/progress/progress.controller.ts` — 3 endpoints: POST /api/progress, GET /api/progress/tracks/:id, GET /api/progress/users/:userId/tracks/:id
+- `src/progress/dto/report-progress.dto.ts` — ReportProgressDto
+- `src/progress/dto/video-progress-response.dto.ts` — VideoProgressResponseDto
+- `src/app.module.ts` — importa ProgressModule
+
+**Frontend** (`frontend/src/`):
+- `app/dashboard/tracks/[id]/videos/[videoId]/page.tsx` — player YouTube IFrame com setInterval 30s para reportar progresso; pausa limpa o intervalo; erros silenciosos (não interrompem playback)
+
+### Pendências
+
+- Migrações pendentes (requerem PostgreSQL ativo):
+  - `npx prisma migrate dev --name add-tracks-videos`
+  - `npx prisma migrate dev --name add-video-progress`
+- Validação dos 11 cenários do quickstart.md contra o servidor ao vivo
+
+### Lições aprendidas desta feature
+
+| Lição | Detalhe |
+|-------|---------|
+| `userId_videoId` compound key | Prisma gera o nome `userId_videoId` para `@@unique([userId, videoId])` — usado em `where: { userId_videoId: { userId, videoId } }` |
+| `upsert` com Math.max em 2 passos | Prisma `upsert` não suporta `GREATEST()` nativo — buscar registro existente primeiro, calcular max, depois upsert |
+| YouTube IFrame API + Next.js Script | Usar `<Script strategy="afterInteractive" onReady={...} />` e verificar `window.YT?.Player` antes de inicializar o player |
+| Progresso silencioso no frontend | Erros de POST /api/progress NUNCA devem interromper o playback — `try/catch` sem handler |
+| Constante vs magic number | WATCH_COMPLETE_THRESHOLD em arquivo próprio — nunca `>= 80` inline no service |
+
+---
+
 ### Lições aprendidas da 001-auth
 
 | Lição | Detalhe |
