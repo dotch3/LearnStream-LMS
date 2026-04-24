@@ -1,98 +1,97 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# LearnStream-LMS — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS REST API for the LearnStream platform. Handles authentication, course management, progress tracking, certificate generation, and all business logic.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+→ [Back to project overview](../README.md)
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## API Modules
 
-## Project setup
+| Module | Prefix | Description |
+|--------|--------|-------------|
+| `auth` | `/api/auth` | Login, refresh token, logout |
+| `users` | `/api/users` | User management (admin only) |
+| `tracks` | `/api/tracks` | Course tracks CRUD |
+| `videos` | `/api/videos` | Videos within tracks |
+| `progress` | `/api/progress` | Watch progress reporting and querying |
+| `certificates` | `/api/certificates` | PDF certificate generation and verification |
 
-```bash
-$ npm install
+Full API documentation is available at `http://localhost:3000/api/docs` (Swagger UI) when the server is running.
+
+---
+
+## Environment Variables
+
+Create a `.env` file in this directory:
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/learnstream_db"
+
+# JWT
+JWT_SECRET="your-access-token-secret"
+JWT_REFRESH_SECRET="your-refresh-token-secret"
+JWT_EXPIRES_IN="15m"
+JWT_REFRESH_EXPIRES_IN="7d"
+
+# App
+PORT=3000
+FRONTEND_URL="http://localhost:3001"
 ```
 
-## Compile and run the project
+---
+
+## Database Setup
+
+The project uses PostgreSQL via Prisma ORM. Create a local database first, then run:
 
 ```bash
-# development
-$ npm run start
+# Apply all migrations
+npx prisma migrate dev
 
-# watch mode
-$ npm run start:dev
+# Regenerate the Prisma client after schema changes
+npx prisma generate
 
-# production mode
-$ npm run start:prod
+# Inspect the DB in a browser UI
+npx prisma studio
 ```
 
-## Run tests
+---
+
+## Running the Server
 
 ```bash
-# unit tests
-$ npm run test
+npm install
 
-# e2e tests
-$ npm run test:e2e
+# Development (watch mode)
+npm run start:dev
 
-# test coverage
-$ npm run test:cov
+# Production build
+npm run build
+npm run start:prod
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Project Structure
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```
+src/
+├── auth/           # JWT strategy, guards, refresh token rotation
+├── users/          # User CRUD, role assignment
+├── tracks/         # Track CRUD with role-aware filtering
+├── videos/         # Video CRUD, YouTube URL validation
+├── progress/       # Watch progress reporting and track completion checks
+├── certificates/   # PDF generation, code generation, public verification
+└── prisma/         # PrismaService and PrismaModule
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## Key Design Decisions
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- **Prisma 7 + driver adapter**: `PrismaPg` adapter in `PrismaService`; `datasource.url` set via `prisma.config.ts` (with dotenv) for migrations
+- **Route ordering**: In `CertificatesController`, static routes (`my`, `admin`) are declared before the parameterized route (`:code`) to prevent NestJS from shadowing them
+- **PDF on demand**: Certificates are generated fresh on each request from DB data — no file storage required
+- **Progress never decrements**: Watch percentage is stored as `Math.max(existing, incoming)`

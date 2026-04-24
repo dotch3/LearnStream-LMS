@@ -22,6 +22,7 @@ model User {
   updatedAt     DateTime        @updatedAt
   refreshTokens RefreshToken[]
   progress      VideoProgress[]
+  certificates  Certificate[]
 }
 
 model RefreshToken {
@@ -35,15 +36,16 @@ model RefreshToken {
 }
 
 model Track {
-  id           String   @id @default(uuid())
+  id           String        @id @default(uuid())
   name         String
   description  String?
   thumbnailUrl String?
-  isActive     Boolean  @default(true)
-  order        Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isActive     Boolean       @default(true)
+  order        Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   videos       Video[]
+  certificates Certificate[]
 
   @@map("tracks")
 }
@@ -85,4 +87,21 @@ model VideoProgress {
 
   @@unique([userId, videoId])
   @@map("video_progress")
+}
+
+model Certificate {
+  id                  String   @id @default(uuid())
+  code                String   @unique
+  completedVideoCount Int
+  issuedAt            DateTime @default(now())
+  createdAt           DateTime @default(now())
+
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trackId             String
+  track               Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+  @@map("certificates")
 }

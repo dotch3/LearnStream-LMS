@@ -1,12 +1,12 @@
 import path from 'node:path';
 import { defineConfig } from 'prisma/config';
+import { config as loadEnv } from 'dotenv';
+
+loadEnv({ path: path.join(__dirname, '.env') });
 
 export default defineConfig({
   schema: path.join(__dirname, 'prisma', 'schema.prisma'),
-  migrate: {
-    async adapter(env: NodeJS.ProcessEnv) {
-      const { PrismaPg } = await import('@prisma/adapter-pg');
-      return new PrismaPg({ connectionString: env['DATABASE_URL'] });
-    },
+  datasource: {
+    url: process.env.DATABASE_URL!,
   },
 });

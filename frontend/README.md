@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LearnStream-LMS — Frontend
 
-## Getting Started
+Next.js 15 app for the LearnStream platform. Provides the viewer dashboard and admin panel, communicating with the backend API.
 
-First, run the development server:
+→ [Back to project overview](../README.md)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Pages
+
+### Viewer (authenticated, role: VIEWER or ADMIN)
+
+| Route | Description |
+|-------|-------------|
+| `/dashboard/tracks` | List of available training tracks |
+| `/dashboard/tracks/[id]` | Track detail with video list and progress |
+| `/dashboard/tracks/[id]/videos/[videoId]` | Video player with automatic progress sync |
+| `/dashboard/certificates` | List of earned certificates |
+
+### Admin (authenticated, role: ADMIN)
+
+| Route | Description |
+|-------|-------------|
+| `/admin/tracks` | Manage tracks (create, edit, reorder, activate) |
+| `/admin/tracks/[id]/videos` | Manage videos within a track |
+
+### Public
+
+| Route | Description |
+|-------|-------------|
+| `/login` | Email + password login |
+
+---
+
+## Environment Variables
+
+Create a `.env.local` file in this directory:
+
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3000"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Running the App
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
 
-## Learn More
+# Development (defaults to http://localhost:3000; use --port 3001 if the backend is also running locally)
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# Production build
+npm run build
+npm run start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Key Conventions
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **App Router**: All pages use the Next.js App Router (`app/` directory). SSR for authenticated pages, client components only where interactivity is required (video player, forms)
+- **HTTP client**: All API calls use the named export `{ api }` from `@/lib/axios` — never a default import
+- **Token storage**: Access tokens are kept in memory only — never in `localStorage` or `sessionStorage`
+- **Video player**: YouTube IFrame API loaded via `<Script strategy="afterInteractive">`. Progress reported every 30 seconds during playback
