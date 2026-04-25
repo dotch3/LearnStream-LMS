@@ -21,6 +21,7 @@ import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -114,6 +115,21 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return this.usersService.update(id, dto);
+  }
+
+  @Patch(':id/password')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: "Reset a user's password (ADMIN only)" })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 403, description: 'Forbidden — ADMIN only' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  adminResetPassword(
+    @Param('id') id: string,
+    @Body() dto: AdminResetPasswordDto,
+  ): Promise<{ message: string }> {
+    return this.usersService.adminResetPassword(id, dto.password);
   }
 
   @Patch(':id/deactivate')
