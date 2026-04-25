@@ -32,8 +32,9 @@ export class CertificatesService {
 
   private generateCode(): string {
     const year = new Date().getFullYear();
-    const suffix = Array.from({ length: 5 }, () =>
-      CHARS[randomInt(CHARS.length)],
+    const suffix = Array.from(
+      { length: 5 },
+      () => CHARS[randomInt(CHARS.length)],
     ).join('');
     return `CERT-${year}-${suffix}`;
   }
@@ -60,7 +61,12 @@ export class CertificatesService {
 
       // Inner border
       doc
-        .rect(margin + 8, margin + 8, pageWidth - (margin + 8) * 2, pageHeight - (margin + 8) * 2)
+        .rect(
+          margin + 8,
+          margin + 8,
+          pageWidth - (margin + 8) * 2,
+          pageHeight - (margin + 8) * 2,
+        )
         .strokeColor('#2c3e50')
         .lineWidth(1)
         .stroke();
@@ -71,7 +77,10 @@ export class CertificatesService {
         .fontSize(28)
         .fillColor('#2c3e50')
         .font('Helvetica-Bold')
-        .text('CERTIFICATE OF COMPLETION', margin + 20, y, { align: 'center', width: pageWidth - (margin + 20) * 2 });
+        .text('CERTIFICATE OF COMPLETION', margin + 20, y, {
+          align: 'center',
+          width: pageWidth - (margin + 20) * 2,
+        });
 
       y += 60;
 
@@ -79,7 +88,10 @@ export class CertificatesService {
         .fontSize(14)
         .fillColor('#555555')
         .font('Helvetica')
-        .text('This certifies that', margin + 20, y, { align: 'center', width: pageWidth - (margin + 20) * 2 });
+        .text('This certifies that', margin + 20, y, {
+          align: 'center',
+          width: pageWidth - (margin + 20) * 2,
+        });
 
       y += 50;
 
@@ -87,7 +99,10 @@ export class CertificatesService {
         .fontSize(26)
         .fillColor('#1a252f')
         .font('Helvetica-Bold')
-        .text(data.recipientName, margin + 20, y, { align: 'center', width: pageWidth - (margin + 20) * 2 });
+        .text(data.recipientName, margin + 20, y, {
+          align: 'center',
+          width: pageWidth - (margin + 20) * 2,
+        });
 
       y += 50;
 
@@ -95,7 +110,10 @@ export class CertificatesService {
         .fontSize(14)
         .fillColor('#555555')
         .font('Helvetica')
-        .text('has successfully completed', margin + 20, y, { align: 'center', width: pageWidth - (margin + 20) * 2 });
+        .text('has successfully completed', margin + 20, y, {
+          align: 'center',
+          width: pageWidth - (margin + 20) * 2,
+        });
 
       y += 40;
 
@@ -103,7 +121,10 @@ export class CertificatesService {
         .fontSize(20)
         .fillColor('#1a252f')
         .font('Helvetica-Bold')
-        .text(data.trackName, margin + 20, y, { align: 'center', width: pageWidth - (margin + 20) * 2 });
+        .text(data.trackName, margin + 20, y, {
+          align: 'center',
+          width: pageWidth - (margin + 20) * 2,
+        });
 
       y += 50;
 
@@ -111,10 +132,15 @@ export class CertificatesService {
         .fontSize(13)
         .fillColor('#555555')
         .font('Helvetica')
-        .text(`comprising ${data.completedVideoCount} training video${data.completedVideoCount !== 1 ? 's' : ''}`, margin + 20, y, {
-          align: 'center',
-          width: pageWidth - (margin + 20) * 2,
-        });
+        .text(
+          `comprising ${data.completedVideoCount} training video${data.completedVideoCount !== 1 ? 's' : ''}`,
+          margin + 20,
+          y,
+          {
+            align: 'center',
+            width: pageWidth - (margin + 20) * 2,
+          },
+        );
 
       y += 70;
 
@@ -124,7 +150,10 @@ export class CertificatesService {
         .fontSize(12)
         .fillColor('#333333')
         .font('Helvetica')
-        .text(`Issued: ${issuedDate}`, margin + 20, y, { align: 'center', width: pageWidth - (margin + 20) * 2 });
+        .text(`Issued: ${issuedDate}`, margin + 20, y, {
+          align: 'center',
+          width: pageWidth - (margin + 20) * 2,
+        });
 
       y += 25;
 
@@ -132,7 +161,10 @@ export class CertificatesService {
         .fontSize(12)
         .fillColor('#333333')
         .font('Helvetica-Bold')
-        .text(`Verification Code: ${data.code}`, margin + 20, y, { align: 'center', width: pageWidth - (margin + 20) * 2 });
+        .text(`Verification Code: ${data.code}`, margin + 20, y, {
+          align: 'center',
+          width: pageWidth - (margin + 20) * 2,
+        });
 
       y += 25;
 
@@ -140,19 +172,32 @@ export class CertificatesService {
         .fontSize(10)
         .fillColor('#777777')
         .font('Helvetica')
-        .text('Verify at: https://learnstream.app/verify', margin + 20, y, { align: 'center', width: pageWidth - (margin + 20) * 2 });
+        .text('Verify at: https://learnstream.app/verify', margin + 20, y, {
+          align: 'center',
+          width: pageWidth - (margin + 20) * 2,
+        });
 
       doc.end();
     });
   }
 
-  private async _generate(userId: string, trackId: string): Promise<{ buffer: Buffer; code: string }> {
-    const track = await this.prisma.track.findUnique({ where: { id: trackId } });
+  private async _generate(
+    userId: string,
+    trackId: string,
+  ): Promise<{ buffer: Buffer; code: string }> {
+    const track = await this.prisma.track.findUnique({
+      where: { id: trackId },
+    });
     if (!track) throw new NotFoundException('Track not found');
 
-    const progress = await this.progressService.getTrackProgress(userId, trackId);
+    const progress = await this.progressService.getTrackProgress(
+      userId,
+      trackId,
+    );
     if (progress.totalActive === 0 || !progress.trackComplete) {
-      throw new ForbiddenException('Not eligible: not all active videos are completed');
+      throw new ForbiddenException(
+        'Not eligible: not all active videos are completed',
+      );
     }
 
     // Idempotency: return existing certificate if already issued
@@ -173,11 +218,18 @@ export class CertificatesService {
     }
 
     // Generate unique code with retry on collision
-    let cert: { id: string; code: string; completedVideoCount: number; issuedAt: Date } | null = null;
+    let cert: {
+      id: string;
+      code: string;
+      completedVideoCount: number;
+      issuedAt: Date;
+    } | null = null;
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = this.generateCode();
       try {
-        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
         cert = await this.prisma.certificate.create({
           data: {
             code,
@@ -195,21 +247,33 @@ export class CertificatesService {
         });
         return { buffer, code: cert.code };
       } catch (err) {
-        if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002' && attempt < 4) {
+        if (
+          err instanceof PrismaClientKnownRequestError &&
+          err.code === 'P2002' &&
+          attempt < 4
+        ) {
           continue;
         }
         throw err;
       }
     }
 
-    throw new InternalServerErrorException('Failed to generate unique certificate code');
+    throw new InternalServerErrorException(
+      'Failed to generate unique certificate code',
+    );
   }
 
-  async generate(userId: string, trackId: string): Promise<{ buffer: Buffer; code: string }> {
+  async generate(
+    userId: string,
+    trackId: string,
+  ): Promise<{ buffer: Buffer; code: string }> {
     return this._generate(userId, trackId);
   }
 
-  async generateForUser(userId: string, trackId: string): Promise<{ buffer: Buffer; code: string }> {
+  async generateForUser(
+    userId: string,
+    trackId: string,
+  ): Promise<{ buffer: Buffer; code: string }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     return this._generate(userId, trackId);

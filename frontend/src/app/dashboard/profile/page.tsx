@@ -1,9 +1,60 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/contexts/auth.context';
 import { api } from '@/lib/axios';
 
+function EyeIcon({ open }: { open: boolean }) {
+  return open ? (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  ) : (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+    </svg>
+  );
+}
+
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  minLength,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  minLength?: number;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? 'text' : 'password'}
+        required
+        minLength={minLength}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={() => setShow((v) => !v)}
+        className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+      >
+        <EyeIcon open={show} />
+      </button>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
+  const { user } = useAuth();
+
   const [name, setName] = useState('');
   const [nameMsg, setNameMsg] = useState('');
   const [nameError, setNameError] = useState('');
@@ -44,53 +95,87 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="p-6 max-w-md flex flex-col gap-10">
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Update Display Name</h2>
-        {nameError && <p className="mb-2 text-red-600">{nameError}</p>}
-        {nameMsg && <p className="mb-2 text-green-600">{nameMsg}</p>}
-        <form onSubmit={handleUpdateProfile} className="flex flex-col gap-3">
-          <input
-            className="border rounded px-3 py-2"
-            placeholder="New display name"
-            required
-            minLength={2}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Update Name
-          </button>
-        </form>
-      </section>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-2xl mx-auto px-6 py-10">
 
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Change Password</h2>
-        {pwError && <p className="mb-2 text-red-600">{pwError}</p>}
-        {pwMsg && <p className="mb-2 text-green-600">{pwMsg}</p>}
-        <form onSubmit={handleChangePassword} className="flex flex-col gap-3">
-          <input
-            type="password"
-            className="border rounded px-3 py-2"
-            placeholder="Current password"
-            required
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-          />
-          <input
-            type="password"
-            className="border rounded px-3 py-2"
-            placeholder="New password (min 6 chars)"
-            required
-            minLength={6}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Change Password
-          </button>
-        </form>
-      </section>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+          <p className="mt-1 text-gray-500">Manage your account settings.</p>
+        </div>
+
+        {/* Account info */}
+        {user && (
+          <div className="mb-6 flex items-center gap-4 rounded-xl bg-white border border-gray-200 shadow-sm p-5">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xl font-bold text-indigo-700">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">{user.name}</p>
+              <p className="text-sm text-gray-500">{user.email}</p>
+              <span className="mt-1 inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                {user.role}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Update name */}
+        <div className="mb-6 rounded-xl bg-white border border-gray-200 shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Update Display Name</h2>
+          <form onSubmit={handleUpdateProfile} className="space-y-3">
+            <input
+              type="text"
+              required
+              minLength={2}
+              placeholder="New display name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            {nameError && <p className="text-sm text-red-600">{nameError}</p>}
+            {nameMsg && <p className="text-sm text-green-600">{nameMsg}</p>}
+            <button
+              type="submit"
+              className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              Update Name
+            </button>
+          </form>
+        </div>
+
+        {/* Change password */}
+        <div className="rounded-xl bg-white border border-gray-200 shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Change Password</h2>
+          <form onSubmit={handleChangePassword} className="space-y-3">
+            <div>
+              <label className="mb-1 block text-sm text-gray-600">Current password</label>
+              <PasswordInput
+                value={currentPassword}
+                onChange={setCurrentPassword}
+                placeholder="Enter current password"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-gray-600">New password</label>
+              <PasswordInput
+                value={newPassword}
+                onChange={setNewPassword}
+                placeholder="Min 6 characters"
+                minLength={6}
+              />
+            </div>
+            {pwError && <p className="text-sm text-red-600">{pwError}</p>}
+            {pwMsg && <p className="text-sm text-green-600">{pwMsg}</p>}
+            <button
+              type="submit"
+              className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              Change Password
+            </button>
+          </form>
+        </div>
+
+      </div>
     </div>
   );
 }

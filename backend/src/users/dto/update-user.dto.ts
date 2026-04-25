@@ -3,7 +3,9 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional } from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
 
-class CreateUserWithoutPasswordDto extends OmitType(CreateUserDto, ['password'] as const) {}
+class CreateUserWithoutPasswordDto extends OmitType(CreateUserDto, [
+  'password',
+] as const) {}
 
 export class UpdateUserDto extends PartialType(CreateUserWithoutPasswordDto) {
   @ApiPropertyOptional()

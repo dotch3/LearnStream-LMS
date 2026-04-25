@@ -29,14 +29,14 @@ interface AuthRequest extends Request {
 }
 
 @ApiTags('certificates')
-@Controller('certificates')
+@Controller('api/certificates')
 export class CertificatesController {
   constructor(private readonly certificatesService: CertificatesService) {}
 
   // Route order is critical: static segments (my, admin) before parameterized (:code)
 
   @Get('my')
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'List authenticated viewer own certificates' })
   @ApiResponse({ status: 200, description: 'Array of certificates' })
   getMyCertificates(@Req() req: AuthRequest) {
@@ -47,8 +47,11 @@ export class CertificatesController {
   @Get('admin')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Admin: list all certificates with optional filters and pagination' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary:
+      'Admin: list all certificates with optional filters and pagination',
+  })
   @ApiQuery({ name: 'userId', required: false })
   @ApiQuery({ name: 'trackId', required: false })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -60,11 +63,17 @@ export class CertificatesController {
   }
 
   @Post('tracks/:trackId')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Viewer generates own certificate for a completed track (idempotent)' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary:
+      'Viewer generates own certificate for a completed track (idempotent)',
+  })
   @ApiProduces('application/pdf')
   @ApiResponse({ status: 200, description: 'PDF certificate file' })
-  @ApiResponse({ status: 403, description: 'Not eligible: not all active videos are completed' })
+  @ApiResponse({
+    status: 403,
+    description: 'Not eligible: not all active videos are completed',
+  })
   @ApiResponse({ status: 404, description: 'Track not found' })
   async generateCertificate(
     @Req() req: AuthRequest,
@@ -72,17 +81,25 @@ export class CertificatesController {
     @Res() res: Response,
   ) {
     const userId = req.user.sub;
-    const { buffer, code } = await this.certificatesService.generate(userId, trackId);
+    const { buffer, code } = await this.certificatesService.generate(
+      userId,
+      trackId,
+    );
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="certificate-${code}.pdf"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="certificate-${code}.pdf"`,
+    );
     res.send(buffer);
   }
 
   @Post('admin/users/:userId/tracks/:trackId')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Admin generates certificate for an eligible user (idempotent)' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Admin generates certificate for an eligible user (idempotent)',
+  })
   @ApiProduces('application/pdf')
   @ApiResponse({ status: 200, description: 'PDF certificate file' })
   @ApiResponse({ status: 403, description: 'Not admin or user not eligible' })
@@ -92,16 +109,25 @@ export class CertificatesController {
     @Param('trackId') trackId: string,
     @Res() res: Response,
   ) {
-    const { buffer, code } = await this.certificatesService.generateForUser(userId, trackId);
+    const { buffer, code } = await this.certificatesService.generateForUser(
+      userId,
+      trackId,
+    );
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="certificate-${code}.pdf"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="certificate-${code}.pdf"`,
+    );
     res.send(buffer);
   }
 
   // MUST be last — parameterized route would shadow static routes declared above
   @Get(':code')
   @Public()
-  @ApiOperation({ summary: 'Public: verify a certificate by code (no authentication required)' })
+  @ApiOperation({
+    summary:
+      'Public: verify a certificate by code (no authentication required)',
+  })
   @ApiResponse({ status: 200, description: 'Certificate verification info' })
   @ApiResponse({ status: 404, description: 'Certificate not found' })
   verifyByCode(@Param('code') code: string) {

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
@@ -9,6 +10,7 @@ import { VideosModule } from './videos/videos.module';
 import { ProgressModule } from './progress/progress.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { SetupModule } from './setup/setup.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -22,6 +24,12 @@ import { SetupModule } from './setup/setup.module';
     ProgressModule,
     CertificatesModule,
     SetupModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule {}

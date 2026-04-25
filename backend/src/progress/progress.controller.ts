@@ -21,7 +21,7 @@ interface AuthRequest extends Request {
 }
 
 @ApiTags('progress')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('api/progress')
 export class ProgressController {

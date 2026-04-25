@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { api } from '@/lib/axios';
+import { api, setAuthTokens as setAxiosTokens, clearAuthTokens as clearAxiosTokens } from '@/lib/axios';
 
 interface User {
   id: string;
@@ -47,9 +47,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshToken: string;
         user: User;
       }>('/auth/login', { email, password });
-      setTokens(res.data.accessToken, res.data.refreshToken, res.data.user);
+      const expiresAt = Date.now() + 14 * 60 * 1000;
+      setState({ accessToken: res.data.accessToken, expiresAt, user: res.data.user });
+      setAxiosTokens(res.data.accessToken, expiresAt);
+      localStorage.setItem('refreshToken', res.data.refreshToken);
     },
-    [setTokens],
+    [],
   );
 
   const logout = useCallback(async () => {
@@ -57,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await api.post('/auth/logout');
     } finally {
       setState({ accessToken: null, expiresAt: null, user: null });
+      clearAxiosTokens();
       localStorage.removeItem('refreshToken');
     }
   }, []);

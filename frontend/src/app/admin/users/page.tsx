@@ -36,7 +36,21 @@ export default function AdminUsersPage() {
     }
   };
 
-  useEffect(() => { loadUsers(page); }, [page]);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.get(`/api/users?page=${page}&perPage=20`);
+        if (mounted) {
+          setUsers(res.data.data);
+          setMeta(res.data.meta);
+        }
+      } catch {
+        if (mounted) setError('Failed to load users.');
+      }
+    })();
+    return () => { mounted = true; };
+  }, [page]);
 
   const handleDeactivate = async (id: string) => {
     try {

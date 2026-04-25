@@ -84,9 +84,7 @@ export class ProgressService {
     const progressMap = new Map(progressRecords.map((p) => [p.videoId, p]));
     const completedCount = progressRecords.filter((p) => p.completed).length;
     const totalActive = activeVideos.length;
-    const overallPercentage = Math.round(
-      (completedCount / totalActive) * 100,
-    );
+    const overallPercentage = Math.round((completedCount / totalActive) * 100);
 
     const videos = activeVideos.map((v) => {
       const prog = progressMap.get(v.id);

@@ -31,17 +31,6 @@ export default function AdminTrackVideosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  async function load() {
-    try {
-      const res = await api.get<TrackDetail>(`/api/tracks/${params.id}`);
-      setTrack(res.data);
-    } catch {
-      setError('Track not found.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function toggleActive(video: VideoItem) {
     await api.patch(`/api/videos/${video.id}`, { isActive: !video.isActive });
     setTrack((prev) => {
@@ -65,7 +54,18 @@ export default function AdminTrackVideosPage() {
   }
 
   useEffect(() => {
-    load();
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.get<TrackDetail>(`/api/tracks/${params.id}`);
+        if (mounted) setTrack(res.data);
+      } catch {
+        if (mounted) setError('Track not found.');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
   }, [params.id]);
 
   if (loading) return <div className="p-8">Loading...</div>;

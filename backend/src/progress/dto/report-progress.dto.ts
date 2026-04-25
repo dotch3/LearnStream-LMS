@@ -6,7 +6,10 @@ export class ReportProgressDto {
   @IsUUID()
   videoId: string;
 
-  @ApiProperty({ example: 240, description: 'Seconds watched (max position reached)' })
+  @ApiProperty({
+    example: 240,
+    description: 'Seconds watched (max position reached)',
+  })
   @IsInt()
   @Min(0)
   watchedSeconds: number;

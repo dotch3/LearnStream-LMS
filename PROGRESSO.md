@@ -4,6 +4,21 @@ Registro do progresso do projeto, passo a passo.
 
 ---
 
+## 005-certificates — Concluído (2026-04-24)
+
+- CertificatesModule criado com 5 endpoints REST
+- PDF gerado on-demand via pdfkit (sem armazenamento de arquivo)
+- Idempotência: findUnique em `@@unique([userId, trackId])` antes de criar registro
+- Código único `CERT-YYYY-XXXXX` com retry até 5 tentativas em colisão P2002
+- Elegibilidade verificada via ProgressService (getTrackProgress)
+- Endpoint público GET /api/certificates/:code com @Public() (sem auth)
+- Rota ordering declarada corretamente: `my`, `admin` antes de `:code`
+- Migration `initial-schema` aplicada ao banco `learnstream_db` (primeira migration do projeto)
+- prisma.config.ts corrigido para Prisma 7: `datasource.url` via dotenv + defineConfig
+- Frontend: dashboard/certificates/page.tsx (listagem do viewer)
+
+---
+
 ## Step 0 — Plano: Integrar /docs existentes ao SpecKit
 
 ### Contexto

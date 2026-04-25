@@ -91,7 +91,12 @@ Located in `docs/planning/` (git-ignored, for internal reference only):
 - PostgreSQL via Prisma ORM — `User` and `RefreshToken` tables (001-auth)
 - TypeScript 5.x / Node.js 20 LTS + NestJS (existing), Prisma 7 + @prisma/adapter-pg (existing), class-validator, class-transformer, @nestjs/swagger — all already installed (003-tracks-videos)
 - PostgreSQL — two new tables: `tracks`, `videos` (Prisma migration `add-tracks-videos`) (003-tracks-videos)
+- TypeScript 5.x / Node.js 20 LTS + NestJS (existing), Prisma 7 + @prisma/adapter-pg (existing), class-validator, class-transformer, @nestjs/swagger (existing), **pdfkit** (new), @types/pdfkit (new dev) (005-certificates)
+- PostgreSQL via Prisma ORM — new `certificates` table (005-certificates)
+- TypeScript 5.x / Node.js 20 LTS + NestJS (existing), Prisma 7 (existing), bcrypt (existing in auth module), class-validator, @nestjs/swagger (existing) (006-setup-wizard)
+- PostgreSQL — no new tables; setup state derived from `User.role = ADMIN` coun (006-setup-wizard)
 
 ## Recent Changes
 - 001-auth: Added TypeScript 5.x / Node.js 20 LTS
 - 003-tracks-videos: Added TracksModule + VideosModule; `Track` and `Video` Prisma models; extractYoutubeId utility; 6 frontend pages (dashboard/tracks, admin/tracks, admin/videos)
+- 005-certificates: Added CertificatesModule; `Certificate` Prisma model; PDF generation via pdfkit; 5 endpoints (viewer generate, viewer list, admin generate, admin list, public verify); 1 frontend page (dashboard/certificates); first DB migration (`initial-schema`) applied to learnstream_db

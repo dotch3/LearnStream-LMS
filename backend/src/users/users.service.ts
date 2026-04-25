@@ -42,7 +42,10 @@ export class UsersService {
         select: SAFE_SELECT,
       });
     } catch (err) {
-      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
         throw new ConflictException('Email already in use');
       }
       throw err;
@@ -52,7 +55,10 @@ export class UsersService {
   async findAll(
     page: number,
     perPage: number,
-  ): Promise<{ data: UserResponseDto[]; meta: { total: number; page: number; perPage: number; totalPages: number } }> {
+  ): Promise<{
+    data: UserResponseDto[];
+    meta: { total: number; page: number; perPage: number; totalPages: number };
+  }> {
     const safePerPage = Math.min(perPage, 100);
     const skip = (page - 1) * safePerPage;
     const [data, total] = await Promise.all([
@@ -76,7 +82,10 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<UserResponseDto> {
-    const user = await this.prisma.user.findUnique({ where: { id }, select: SAFE_SELECT });
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: SAFE_SELECT,
+    });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
@@ -90,21 +99,31 @@ export class UsersService {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === 'P2002') throw new ConflictException('Email already in use');
+        if (err.code === 'P2002')
+          throw new ConflictException('Email already in use');
         if (err.code === 'P2025') throw new NotFoundException('User not found');
       }
       throw err;
     }
   }
 
-  async deactivate(adminId: string, targetId: string): Promise<{ message: string }> {
+  async deactivate(
+    adminId: string,
+    targetId: string,
+  ): Promise<{ message: string }> {
     if (adminId === targetId) {
       throw new ForbiddenException('Admins cannot deactivate themselves');
     }
     try {
-      await this.prisma.user.update({ where: { id: targetId }, data: { isActive: false } });
+      await this.prisma.user.update({
+        where: { id: targetId },
+        data: { isActive: false },
+      });
     } catch (err) {
-      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === 'P2025'
+      ) {
         throw new NotFoundException('User not found');
       }
       throw err;
@@ -114,9 +133,15 @@ export class UsersService {
 
   async reactivate(id: string): Promise<{ message: string }> {
     try {
-      await this.prisma.user.update({ where: { id }, data: { isActive: true } });
+      await this.prisma.user.update({
+        where: { id },
+        data: { isActive: true },
+      });
     } catch (err) {
-      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === 'P2025'
+      ) {
         throw new NotFoundException('User not found');
       }
       throw err;
@@ -124,7 +149,10 @@ export class UsersService {
     return { message: 'User reactivated successfully' };
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<UserResponseDto> {
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<UserResponseDto> {
     return this.prisma.user.update({
       where: { id: userId },
       data: { name: dto.name },
@@ -132,12 +160,21 @@ export class UsersService {
     });
   }
 
-  async changePassword(userId: string, dto: ChangePasswordDto): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
     const match = await bcrypt.compare(dto.currentPassword, user.password);
-    if (!match) throw new UnauthorizedException('Current password is incorrect');
+    if (!match)
+      throw new UnauthorizedException('Current password is incorrect');
     const hashed = await bcrypt.hash(dto.newPassword, 10);
-    await this.prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashed },
+    });
     return { message: 'Password changed successfully' };
   }
 }

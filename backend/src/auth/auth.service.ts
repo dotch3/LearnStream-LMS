@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -10,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
 import { JwtPayload } from './types/jwt-payload.interface';
+import { Role } from '@prisma/client';
 
 const INVALID_CREDENTIALS = 'Invalid credentials';
 
@@ -37,7 +35,12 @@ export class AuthService {
 
     return {
       ...tokens,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 
@@ -73,7 +76,11 @@ export class AuthService {
       data: { isConsumed: true },
     });
 
-    return this.issueTokenPair(stored.userId, stored.user.email, stored.user.role);
+    return this.issueTokenPair(
+      stored.userId,
+      stored.user.email,
+      stored.user.role,
+    );
   }
 
   async logout(userId: string): Promise<void> {
@@ -90,9 +97,9 @@ export class AuthService {
   private async issueTokenPair(
     userId: string,
     email: string,
-    role: string,
+    role: Role,
   ): Promise<RefreshResponseDto> {
-    const payload: JwtPayload = { sub: userId, email, role: role as any };
+    const payload: JwtPayload = { sub: userId, email, role };
 
     const accessToken = this.jwtService.sign(payload);
 

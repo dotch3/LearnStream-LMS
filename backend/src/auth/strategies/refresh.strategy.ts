@@ -10,8 +10,11 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
     super();
   }
 
-  async validate(req: Request) {
-    const refreshToken = req.body?.refreshToken as string | undefined;
+  async validate(
+    req: Request,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const body = req.body as { refreshToken?: string };
+    const refreshToken = body?.refreshToken;
     if (!refreshToken) throw new UnauthorizedException();
     return this.authService.refresh(refreshToken);
   }

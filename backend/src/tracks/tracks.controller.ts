@@ -30,7 +30,7 @@ interface AuthRequest extends Request {
 }
 
 @ApiTags('tracks')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('api/tracks')
 export class TracksController {

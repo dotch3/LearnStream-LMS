@@ -64,7 +64,10 @@ export class VideosService {
       return await this.prisma.video.update({ where: { id }, data });
     } catch (err) {
       if (err instanceof BadRequestException) throw err;
-      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === 'P2025'
+      ) {
         throw new NotFoundException('Video not found');
       }
       throw err;
@@ -76,7 +79,10 @@ export class VideosService {
       await this.prisma.video.delete({ where: { id } });
       return { message: 'Video deleted successfully' };
     } catch (err) {
-      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === 'P2025'
+      ) {
         throw new NotFoundException('Video not found');
       }
       throw err;

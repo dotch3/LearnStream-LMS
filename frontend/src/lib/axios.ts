@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 // Module-level token store (in-memory, survives re-renders but not page refresh)
 let accessToken: string | null = null;
 let expiresAt: number | null = null;
+let refreshPromise: Promise<string | null> | null = null;
 
 export function setAuthTokens(token: string, exp: number) {
   accessToken = token;
@@ -18,28 +19,50 @@ export function clearAuthTokens() {
 
 export const api = axios.create({ baseURL: BASE_URL });
 
-// Request interceptor: attach Bearer token + silent refresh if near expiry
+async function doRefresh(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const storedRefresh =
+      typeof localStorage !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    if (!storedRefresh) return null;
+    try {
+      const res = await axios.post<{ accessToken: string; refreshToken: string }>(
+        `${BASE_URL}/auth/refresh`,
+        { refreshToken: storedRefresh },
+      );
+      accessToken = res.data.accessToken;
+      expiresAt = Date.now() + 14 * 60 * 1000;
+      localStorage.setItem('refreshToken', res.data.refreshToken);
+      return accessToken;
+    } catch {
+      accessToken = null;
+      expiresAt = null;
+      localStorage.removeItem('refreshToken');
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+// Request interceptor: restore session on page refresh + silent renewal near expiry
 api.interceptors.request.use(async (config) => {
   const now = Date.now();
-  const needsRefresh = expiresAt !== null && expiresAt - now < 60_000;
 
-  if (needsRefresh) {
-    const storedRefresh = localStorage.getItem('refreshToken');
-    if (storedRefresh) {
-      try {
-        const res = await axios.post<{ accessToken: string; refreshToken: string }>(
-          `${BASE_URL}/auth/refresh`,
-          { refreshToken: storedRefresh },
-        );
-        accessToken = res.data.accessToken;
-        expiresAt = Date.now() + 14 * 60 * 1000;
-        localStorage.setItem('refreshToken', res.data.refreshToken);
-      } catch {
-        accessToken = null;
-        expiresAt = null;
-        localStorage.removeItem('refreshToken');
-      }
-    }
+  // No token in memory but refresh token exists → restore session (page refresh case)
+  const hasRefreshToken =
+    typeof localStorage !== 'undefined' && !!localStorage.getItem('refreshToken');
+  const tokenMissing = accessToken === null && hasRefreshToken;
+
+  // Token about to expire → proactive renewal
+  const tokenExpiring = expiresAt !== null && expiresAt - now < 60_000;
+
+  if (tokenMissing || tokenExpiring) {
+    const newToken = await doRefresh();
+    if (newToken) accessToken = newToken;
   }
 
   if (accessToken) {

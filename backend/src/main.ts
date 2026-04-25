@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3001',
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
     credentials: true,
   });
 
@@ -20,15 +20,19 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('VideosYT API')
-    .setDescription('Training platform API')
+    .setTitle('LearnStream LMS — API')
+    .setDescription(
+      'REST API for LearnStream LMS. All protected endpoints require a Bearer token obtained from `POST /auth/login`.',
+    )
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', description: 'Paste the accessToken returned by /auth/login' },
+      'access-token',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
 }
-
-bootstrap();
+void bootstrap();

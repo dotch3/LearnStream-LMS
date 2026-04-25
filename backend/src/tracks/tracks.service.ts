@@ -98,7 +98,10 @@ export class TracksService {
     try {
       return await this.prisma.track.update({ where: { id }, data: dto });
     } catch (err) {
-      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === 'P2025'
+      ) {
         throw new NotFoundException('Track not found');
       }
       throw err;
@@ -110,7 +113,10 @@ export class TracksService {
       await this.prisma.track.delete({ where: { id } });
       return { message: 'Track deleted successfully' };
     } catch (err) {
-      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+      if (
+        err instanceof PrismaClientKnownRequestError &&
+        err.code === 'P2025'
+      ) {
         throw new NotFoundException('Track not found');
       }
       throw err;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Script from 'next/script';
 import { api } from '@/lib/axios';
@@ -52,6 +52,23 @@ export default function VideoPlayerPage() {
   const isPlayingRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const reportProgress = useCallback(async () => {
+    const player = playerRef.current;
+    if (!player || !params.videoId) return;
+    const watchedSeconds = Math.floor(player.getCurrentTime());
+    const totalSeconds = Math.floor(player.getDuration());
+    if (totalSeconds <= 0) return;
+    try {
+      await api.post('/api/progress', {
+        videoId: params.videoId,
+        watchedSeconds,
+        totalSeconds,
+      });
+    } catch {
+      // Silent — errors must not interrupt playback
+    }
+  }, [params.videoId]);
+
   useEffect(() => {
     api
       .get<VideoDetail>(`/api/videos/${params.videoId}`)
@@ -62,7 +79,7 @@ export default function VideoPlayerPage() {
         else setError('Video not found.');
       })
       .finally(() => setLoading(false));
-  }, [params.videoId]);
+  }, [params.videoId, router]);
 
   useEffect(() => {
     if (!apiReady || !video) return;
@@ -99,24 +116,7 @@ export default function VideoPlayerPage() {
       playerRef.current?.destroy();
       playerRef.current = null;
     };
-  }, [apiReady, video]);
-
-  async function reportProgress() {
-    const player = playerRef.current;
-    if (!player || !params.videoId) return;
-    const watchedSeconds = Math.floor(player.getCurrentTime());
-    const totalSeconds = Math.floor(player.getDuration());
-    if (totalSeconds <= 0) return;
-    try {
-      await api.post('/api/progress', {
-        videoId: params.videoId,
-        watchedSeconds,
-        totalSeconds,
-      });
-    } catch {
-      // Silent — errors must not interrupt playback
-    }
-  }
+  }, [apiReady, video, reportProgress]);
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-600">{error}</div>;

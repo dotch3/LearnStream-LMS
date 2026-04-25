@@ -33,7 +33,7 @@ interface AuthenticatedRequest {
 }
 
 @ApiTags('users')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('api/users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
@@ -85,10 +85,7 @@ export class UsersController {
   @ApiQuery({ name: 'perPage', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Paginated user list' })
   @ApiResponse({ status: 403, description: 'Forbidden — ADMIN only' })
-  findAll(
-    @Query('page') page = 1,
-    @Query('perPage') perPage = 20,
-  ) {
+  findAll(@Query('page') page = 1, @Query('perPage') perPage = 20) {
     return this.usersService.findAll(Number(page), Number(perPage));
   }
 
@@ -124,7 +121,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Deactivate a user (ADMIN only)' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: 200, description: 'User deactivated successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden or self-deactivation attempt' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden or self-deactivation attempt',
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   deactivate(
     @Request() req: AuthenticatedRequest,

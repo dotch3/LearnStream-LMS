@@ -24,7 +24,7 @@ interface AuthRequest extends Request {
 }
 
 @ApiTags('videos')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('api/videos')
 export class VideosController {
