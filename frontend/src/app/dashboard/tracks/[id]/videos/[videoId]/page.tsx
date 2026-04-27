@@ -61,15 +61,21 @@ export default function VideoPlayerPage() {
   const [watchPercentage, setWatchPercentage] = useState(0);
   const [prevVideoId, setPrevVideoId] = useState<string | null>(null);
   const [nextVideoId, setNextVideoId] = useState<string | null>(null);
+  const [markingComplete, setMarkingComplete] = useState(false);
 
   const playerRef = useRef<YTPlayer | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Keep a ref to video so reportProgress can access it without stale closure
+  const videoRef = useRef<VideoDetail | null>(null);
 
   // Load video details
   useEffect(() => {
     api
       .get<VideoDetail>(`/api/videos/${params.videoId}`)
-      .then((res) => setVideo(res.data))
+      .then((res) => {
+        setVideo(res.data);
+        videoRef.current = res.data;
+      })
       .catch((err: unknown) => {
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 401) router.push('/login');
@@ -96,10 +102,14 @@ export default function VideoPlayerPage() {
 
   const reportProgress = useCallback(async () => {
     const player = playerRef.current;
-    if (!player || !params.videoId) return;
+    const vid = videoRef.current;
+    if (!player || !params.videoId || !vid) return;
+
     const watchedSeconds = Math.floor(player.getCurrentTime());
-    const totalSeconds = Math.floor(player.getDuration());
+    // Fall back to the stored DB duration when the YT player hasn't loaded metadata yet
+    const totalSeconds = Math.floor(player.getDuration()) || vid.duration;
     if (totalSeconds <= 0) return;
+
     try {
       const res = await api.post<{ percentage: number; completed: boolean }>('/api/progress', {
         videoId: params.videoId,
@@ -110,6 +120,26 @@ export default function VideoPlayerPage() {
       if (res.data.completed) setIsCompleted(true);
     } catch {
       // Silent — errors must not interrupt playback
+    }
+  }, [params.videoId]);
+
+  // Manual "mark as complete" — uses stored duration, no player dependency
+  const handleMarkComplete = useCallback(async () => {
+    const vid = videoRef.current;
+    if (!vid || !params.videoId) return;
+    setMarkingComplete(true);
+    try {
+      const res = await api.post<{ percentage: number; completed: boolean }>('/api/progress', {
+        videoId: params.videoId,
+        watchedSeconds: vid.duration,
+        totalSeconds: vid.duration,
+      });
+      setWatchPercentage(Math.round(res.data.percentage));
+      if (res.data.completed) setIsCompleted(true);
+    } catch {
+      // Silent
+    } finally {
+      setMarkingComplete(false);
     }
   }, [params.videoId]);
 
@@ -188,8 +218,8 @@ export default function VideoPlayerPage() {
         />
       </div>
 
-      {/* Completion badge / progress label */}
-      <div className="mt-2 flex items-center gap-2">
+      {/* Status row */}
+      <div className="mt-2 flex items-center gap-3 flex-wrap">
         {isCompleted ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -198,7 +228,19 @@ export default function VideoPlayerPage() {
             Aula concluída
           </span>
         ) : (
-          <span className="text-sm text-gray-500">{watchPercentage}% assistido</span>
+          <>
+            <span className="text-sm text-gray-500">{watchPercentage}% assistido</span>
+            <button
+              onClick={handleMarkComplete}
+              disabled={markingComplete}
+              className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-white px-3 py-1 text-sm font-medium text-green-700 hover:bg-green-50 disabled:opacity-50 transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              {markingComplete ? 'Salvando...' : 'Marcar como concluída'}
+            </button>
+          </>
         )}
       </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { api, setAuthTokens as setAxiosTokens, clearAuthTokens as clearAxiosTokens } from '@/lib/axios';
 
 interface User {
@@ -54,6 +54,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  // Restore user on page refresh — axios interceptor already restores the token,
+  // but the React context user stays null. One /auth/me call fixes it.
+  useEffect(() => {
+    const rt = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    if (!rt) return;
+    api
+      .get<User>('/auth/me')
+      .then((res) => setState((prev) => ({ ...prev, user: res.data })))
+      .catch(() => localStorage.removeItem('refreshToken'));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const logout = useCallback(async () => {
     try {
