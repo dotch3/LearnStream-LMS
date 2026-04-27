@@ -225,11 +225,11 @@ export default function VideoPlayerPage() {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
-            Aula concluída
+            Lesson complete
           </span>
         ) : (
           <>
-            <span className="text-sm text-gray-500">{watchPercentage}% assistido</span>
+            <span className="text-sm text-gray-500">{watchPercentage}% watched</span>
             <button
               onClick={handleMarkComplete}
               disabled={markingComplete}
@@ -238,7 +238,7 @@ export default function VideoPlayerPage() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
-              {markingComplete ? 'Salvando...' : 'Marcar como concluída'}
+              {markingComplete ? 'Saving...' : 'Mark as complete'}
             </button>
           </>
         )}
@@ -255,7 +255,7 @@ export default function VideoPlayerPage() {
             onClick={() => router.push(`/dashboard/tracks/${params.id}/videos/${prevVideoId}`)}
             className="text-sm text-blue-600 hover:underline"
           >
-            ← Aula anterior
+            ← Previous lesson
           </button>
         ) : (
           <span />
@@ -265,10 +265,10 @@ export default function VideoPlayerPage() {
             onClick={() => router.push(`/dashboard/tracks/${params.id}/videos/${nextVideoId}`)}
             className="text-sm text-blue-600 hover:underline"
           >
-            Próxima aula →
+            Next lesson →
           </button>
         ) : (
-          <span className="text-sm text-gray-400">Última aula do track</span>
+          <span className="text-sm text-gray-400">Last lesson in track</span>
         )}
       </div>
     </div>

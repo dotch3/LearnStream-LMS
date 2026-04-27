@@ -103,7 +103,7 @@ export default function EditUserPage() {
 
   const handleCopyShareText = useCallback(() => {
     const loginUrl = `${window.location.origin}/login`;
-    const text = `LearnStream — Acesso\nLogin: ${loginUrl}\nEmail: ${form.email}\nSenha temporária: ${tempPassword}\n\nAlterare sua senha após o primeiro acesso.`;
+    const text = `LearnStream LMS — Login credentials\nURL: ${loginUrl}\nEmail: ${form.email}\nTemporary password: ${tempPassword}\n\nPlease change your password after your first login.`;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -117,9 +117,9 @@ export default function EditUserPage() {
     setResetSuccess('');
     try {
       await api.patch(`/api/users/${id}/password`, { password: tempPassword });
-      setResetSuccess('Senha redefinida com sucesso.');
+      setResetSuccess('Password reset successfully.');
     } catch {
-      setResetError('Falha ao redefinir senha.');
+      setResetError('Failed to reset password.');
     } finally {
       setResetLoading(false);
     }
@@ -192,9 +192,9 @@ export default function EditUserPage() {
 
       {/* ── Reset Password ─────────────────────────────────────────── */}
       <div className="mt-8 border-t pt-6">
-        <h2 className="text-base font-semibold mb-1">Redefinir senha</h2>
+        <h2 className="text-base font-semibold mb-1">Reset password</h2>
         <p className="text-sm text-gray-500 mb-4">
-          Gere uma senha temporária e compartilhe com o utilizador.
+          Generate a temporary password and share it with the user.
         </p>
 
         <button
@@ -202,14 +202,14 @@ export default function EditUserPage() {
           onClick={handleGeneratePassword}
           className="px-4 py-2 border rounded text-sm hover:bg-gray-50"
         >
-          Gerar senha temporária
+          Generate temporary password
         </button>
 
         {tempPassword && (
           <div className="mt-4 space-y-3">
             {/* Password field with eye + copy */}
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">Senha gerada</span>
+              <span className="text-sm font-medium text-gray-700">Generated password</span>
               <div className="relative flex">
                 <input
                   readOnly
@@ -230,7 +230,7 @@ export default function EditUserPage() {
 
             {/* Shareable text copy */}
             <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-700 font-mono whitespace-pre-wrap leading-relaxed">
-              {`LearnStream — Acesso\nLogin: ${typeof window !== 'undefined' ? window.location.origin : ''}/login\nEmail: ${form.email}\nSenha temporária: ${showTempPassword ? tempPassword : '••••••••••••'}\n\nAltere sua senha após o primeiro acesso.`}
+              {`LearnStream LMS — Login credentials\nURL: ${typeof window !== 'undefined' ? window.location.origin : ''}/login\nEmail: ${form.email}\nTemporary password: ${showTempPassword ? tempPassword : '••••••••••••'}\n\nPlease change your password after your first login.`}
             </div>
 
             <div className="flex gap-2">
@@ -240,7 +240,7 @@ export default function EditUserPage() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded text-sm hover:bg-gray-50"
               >
                 <CopyIcon checked={copied} />
-                {copied ? 'Copiado!' : 'Copiar texto'}
+                {copied ? 'Copied!' : 'Copy text'}
               </button>
 
               <button
@@ -249,7 +249,7 @@ export default function EditUserPage() {
                 disabled={resetLoading}
                 className="px-3 py-1.5 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50"
               >
-                {resetLoading ? 'Aplicando...' : 'Aplicar reset'}
+                {resetLoading ? 'Applying...' : 'Apply reset'}
               </button>
             </div>
 
