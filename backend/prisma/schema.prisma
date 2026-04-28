@@ -46,30 +46,39 @@ model Track {
   order        Int           @default(0)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  videos       Video[]
+  trackVideos  TrackVideo[]
   certificates Certificate[]
 
   @@map("tracks")
 }
 
 model Video {
-  id           String   @id @default(uuid())
+  id           String       @id @default(uuid())
   title        String
   youtubeId    String
   youtubeUrl   String
   description  String?
   thumbnailUrl String?
   duration     Int
-  order        Int      @default(0)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  trackId      String
-  track        Track           @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  trackVideos  TrackVideo[]
   progress     VideoProgress[]
   comments     Comment[]
 
   @@map("videos")
+}
+
+model TrackVideo {
+  trackId String
+  videoId String
+  order   Int    @default(0)
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  video   Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@id([trackId, videoId])
+  @@map("track_videos")
 }
 
 model VideoProgress {

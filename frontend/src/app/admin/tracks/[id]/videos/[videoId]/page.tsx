@@ -26,9 +26,7 @@ export default function AdminVideoFormPage() {
     duration: '',
     order: '0',
   });
-  const [extractedYoutubeId, setExtractedYoutubeId] = useState<string | null>(
-    null,
-  );
+  const [extractedYoutubeId, setExtractedYoutubeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<VideoFormData>>({});
@@ -40,19 +38,22 @@ export default function AdminVideoFormPage() {
       .get(`/api/videos/${params.videoId}`)
       .then((res) => {
         const v = res.data;
+        // order comes from the junction for this track context
+        const trackEntry = (v.tracks as { id: string; name: string; order: number }[])
+          ?.find((t: { id: string }) => t.id === params.id);
         setForm({
           title: v.title ?? '',
           youtubeUrl: v.youtubeUrl ?? '',
           description: v.description ?? '',
           thumbnailUrl: v.thumbnailUrl ?? '',
           duration: String(v.duration ?? ''),
-          order: String(v.order ?? 0),
+          order: String(trackEntry?.order ?? 0),
         });
         setExtractedYoutubeId(v.youtubeId ?? null);
       })
       .catch(() => setApiError('Video not found.'))
       .finally(() => setLoading(false));
-  }, [params.videoId, isNew]);
+  }, [params.videoId, params.id, isNew]);
 
   function validate(): boolean {
     const e: Partial<VideoFormData> = {};
@@ -85,21 +86,25 @@ export default function AdminVideoFormPage() {
         setExtractedYoutubeId(res.data.youtubeId);
         router.push(`/admin/tracks/${params.id}/videos`);
       } else {
+        // Update video fields
         await api.patch(`/api/videos/${params.videoId}`, {
           title: form.title.trim(),
           youtubeUrl: form.youtubeUrl.trim(),
           description: form.description.trim() || undefined,
           thumbnailUrl: form.thumbnailUrl.trim() || undefined,
           duration: Number(form.duration),
+        });
+        // Update order in junction for this track context
+        await api.patch(`/api/tracks/${params.id}/videos/${params.videoId}`, {
           order: Number(form.order),
         });
         router.push(`/admin/tracks/${params.id}/videos`);
       }
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? 'Failed to save video.';
-      setApiError(Array.isArray(msg) ? msg.join(', ') : msg);
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Failed to save video.';
+      setApiError(Array.isArray(msg) ? msg.join(', ') : String(msg));
     } finally {
       setSaving(false);
     }
@@ -135,9 +140,7 @@ export default function AdminVideoFormPage() {
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             className="w-full border rounded px-3 py-2 text-sm"
           />
-          {errors.title && (
-            <p className="text-red-500 text-xs mt-1">{errors.title}</p>
-          )}
+          {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
         </div>
 
         <div>
@@ -149,9 +152,7 @@ export default function AdminVideoFormPage() {
             className="w-full border rounded px-3 py-2 text-sm"
             placeholder="https://www.youtube.com/watch?v=..."
           />
-          {errors.youtubeUrl && (
-            <p className="text-red-500 text-xs mt-1">{errors.youtubeUrl}</p>
-          )}
+          {errors.youtubeUrl && <p className="text-red-500 text-xs mt-1">{errors.youtubeUrl}</p>}
           {extractedYoutubeId && !isNew && (
             <p className="text-gray-400 text-xs mt-1">
               YouTube ID: <span className="font-mono">{extractedYoutubeId}</span>
@@ -178,15 +179,11 @@ export default function AdminVideoFormPage() {
             className="w-full border rounded px-3 py-2 text-sm"
             placeholder="https://..."
           />
-          {errors.thumbnailUrl && (
-            <p className="text-red-500 text-xs mt-1">{errors.thumbnailUrl}</p>
-          )}
+          {errors.thumbnailUrl && <p className="text-red-500 text-xs mt-1">{errors.thumbnailUrl}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Duration (seconds) *
-          </label>
+          <label className="block text-sm font-medium mb-1">Duration (seconds) *</label>
           <input
             type="number"
             value={form.duration}
@@ -195,13 +192,13 @@ export default function AdminVideoFormPage() {
             min={1}
             placeholder="300"
           />
-          {errors.duration && (
-            <p className="text-red-500 text-xs mt-1">{errors.duration}</p>
-          )}
+          {errors.duration && <p className="text-red-500 text-xs mt-1">{errors.duration}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Order</label>
+          <label className="block text-sm font-medium mb-1">
+            Order in this track
+          </label>
           <input
             type="number"
             value={form.order}

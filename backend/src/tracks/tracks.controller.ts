@@ -20,6 +20,7 @@ import { Request } from 'express';
 import { TracksService } from './tracks.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
+import { AddVideoToTrackDto, UpdateVideoOrderDto } from './dto/track-video.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -75,5 +76,32 @@ export class TracksController {
   @ApiOperation({ summary: 'Delete a track (Admin only)' })
   remove(@Param('id') id: string) {
     return this.tracksService.remove(id);
+  }
+
+  // ── Junction management ──────────────────────────────────────
+
+  @Post(':id/videos')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Add existing video to track (Admin only)' })
+  addVideo(@Param('id') trackId: string, @Body() dto: AddVideoToTrackDto) {
+    return this.tracksService.addVideoToTrack(trackId, dto.videoId, dto.order ?? 0);
+  }
+
+  @Delete(':id/videos/:videoId')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Remove video from track without deleting video (Admin only)' })
+  removeVideo(@Param('id') trackId: string, @Param('videoId') videoId: string) {
+    return this.tracksService.removeVideoFromTrack(trackId, videoId);
+  }
+
+  @Patch(':id/videos/:videoId')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Update video order within track (Admin only)' })
+  updateVideoOrder(
+    @Param('id') trackId: string,
+    @Param('videoId') videoId: string,
+    @Body() dto: UpdateVideoOrderDto,
+  ) {
+    return this.tracksService.updateVideoOrder(trackId, videoId, dto.order);
   }
 }

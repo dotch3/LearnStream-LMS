@@ -30,6 +30,12 @@ interface AuthRequest extends Request {
 export class VideosController {
   constructor(private readonly videosService: VideosService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'List all videos (Admin sees inactive too)' })
+  findAll(@Req() req: AuthRequest) {
+    return this.videosService.findAll(req.user.role === Role.ADMIN);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get video detail (role-filtered)' })
   findOne(@Req() req: AuthRequest, @Param('id') id: string) {

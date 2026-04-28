@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
@@ -12,32 +16,37 @@ export class TracksService {
     const skip = (page - 1) * perPage;
     const where = isAdmin ? {} : { isActive: true };
 
-    const countSelect = isAdmin
-      ? { select: { videos: true } }
-      : { select: { videos: { where: { isActive: true } } } };
-
     const [tracks, total] = await this.prisma.$transaction([
       this.prisma.track.findMany({
         where,
         skip,
         take: perPage,
         orderBy: { order: 'asc' },
-        include: { _count: countSelect },
+        include: {
+          trackVideos: {
+            include: { video: { select: { id: true, isActive: true } } },
+          },
+        },
       }),
       this.prisma.track.count({ where }),
     ]);
 
-    const data = tracks.map((t) => ({
-      id: t.id,
-      name: t.name,
-      description: t.description,
-      thumbnailUrl: t.thumbnailUrl,
-      isActive: t.isActive,
-      order: t.order,
-      videoCount: t._count.videos,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-    }));
+    const data = tracks.map((t) => {
+      const videoCount = isAdmin
+        ? t.trackVideos.length
+        : t.trackVideos.filter((tv) => tv.video.isActive).length;
+      return {
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        thumbnailUrl: t.thumbnailUrl,
+        isActive: t.isActive,
+        order: t.order,
+        videoCount,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt,
+      };
+    });
 
     return {
       data,
@@ -54,19 +63,27 @@ export class TracksService {
     const track = await this.prisma.track.findUnique({
       where: { id },
       include: {
-        videos: {
-          where: isAdmin ? undefined : { isActive: true },
+        trackVideos: {
+          where: isAdmin ? undefined : { video: { isActive: true } },
+          include: { video: true },
           orderBy: { order: 'asc' },
         },
-        _count: isAdmin
-          ? { select: { videos: true } }
-          : { select: { videos: { where: { isActive: true } } } },
       },
     });
 
     if (!track || (!isAdmin && !track.isActive)) {
       throw new NotFoundException('Track not found');
     }
+
+    const videos = track.trackVideos.map((tv) => ({
+      id: tv.video.id,
+      title: tv.video.title,
+      youtubeId: tv.video.youtubeId,
+      thumbnailUrl: tv.video.thumbnailUrl,
+      duration: tv.video.duration,
+      order: tv.order,
+      isActive: tv.video.isActive,
+    }));
 
     return {
       id: track.id,
@@ -75,18 +92,10 @@ export class TracksService {
       thumbnailUrl: track.thumbnailUrl,
       isActive: track.isActive,
       order: track.order,
-      videoCount: track._count.videos,
+      videoCount: videos.length,
       createdAt: track.createdAt,
       updatedAt: track.updatedAt,
-      videos: track.videos.map((v) => ({
-        id: v.id,
-        title: v.title,
-        youtubeId: v.youtubeId,
-        thumbnailUrl: v.thumbnailUrl,
-        duration: v.duration,
-        order: v.order,
-        isActive: v.isActive,
-      })),
+      videos,
     };
   }
 
@@ -98,10 +107,7 @@ export class TracksService {
     try {
       return await this.prisma.track.update({ where: { id }, data: dto });
     } catch (err) {
-      if (
-        err instanceof PrismaClientKnownRequestError &&
-        err.code === 'P2025'
-      ) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
         throw new NotFoundException('Track not found');
       }
       throw err;
@@ -113,11 +119,56 @@ export class TracksService {
       await this.prisma.track.delete({ where: { id } });
       return { message: 'Track deleted successfully' };
     } catch (err) {
-      if (
-        err instanceof PrismaClientKnownRequestError &&
-        err.code === 'P2025'
-      ) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
         throw new NotFoundException('Track not found');
+      }
+      throw err;
+    }
+  }
+
+  async addVideoToTrack(trackId: string, videoId: string, order: number) {
+    const [track, video] = await Promise.all([
+      this.prisma.track.findUnique({ where: { id: trackId } }),
+      this.prisma.video.findUnique({ where: { id: videoId } }),
+    ]);
+    if (!track) throw new NotFoundException('Track not found');
+    if (!video) throw new NotFoundException('Video not found');
+
+    try {
+      return await this.prisma.trackVideo.create({
+        data: { trackId, videoId, order },
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('Video is already in this track');
+      }
+      throw err;
+    }
+  }
+
+  async removeVideoFromTrack(trackId: string, videoId: string) {
+    try {
+      await this.prisma.trackVideo.delete({
+        where: { trackId_videoId: { trackId, videoId } },
+      });
+      return { message: 'Video removed from track' };
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+        throw new NotFoundException('Video not in this track');
+      }
+      throw err;
+    }
+  }
+
+  async updateVideoOrder(trackId: string, videoId: string, order: number) {
+    try {
+      return await this.prisma.trackVideo.update({
+        where: { trackId_videoId: { trackId, videoId } },
+        data: { order },
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+        throw new NotFoundException('Video not in this track');
       }
       throw err;
     }

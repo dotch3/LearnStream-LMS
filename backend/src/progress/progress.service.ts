@@ -61,10 +61,13 @@ export class ProgressService {
       throw new NotFoundException('Track not found');
     }
 
-    const activeVideos = await this.prisma.video.findMany({
-      where: { trackId, isActive: true },
+    const junctionEntries = await this.prisma.trackVideo.findMany({
+      where: { trackId, video: { isActive: true } },
+      include: { video: true },
       orderBy: { order: 'asc' },
     });
+
+    const activeVideos = junctionEntries.map((tv) => ({ ...tv.video, order: tv.order }));
 
     if (activeVideos.length === 0) {
       return {

@@ -12,8 +12,7 @@ interface VideoDetail {
   description: string | null;
   youtubeId: string;
   duration: number;
-  order: number;
-  trackId: string;
+  tracks: { id: string; name: string; order: number }[];
 }
 
 interface TrackVideoProgress {
