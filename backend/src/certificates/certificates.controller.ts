@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
@@ -20,12 +21,13 @@ import type { Request, Response } from 'express';
 import { Role } from '@prisma/client';
 import { CertificatesService } from './certificates.service';
 import { AdminCertificatesQueryDto } from './dto/admin-certificates-query.dto';
+import { GenerateCertificateDto } from './dto/generate-certificate.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 interface AuthRequest extends Request {
-  user: { sub: string; email: string; role: Role };
+  user: { userId: string; email: string; role: Role };
 }
 
 @ApiTags('certificates')
@@ -40,7 +42,7 @@ export class CertificatesController {
   @ApiOperation({ summary: 'List authenticated viewer own certificates' })
   @ApiResponse({ status: 200, description: 'Array of certificates' })
   getMyCertificates(@Req() req: AuthRequest) {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     return this.certificatesService.getMyCertificates(userId);
   }
 
@@ -78,12 +80,14 @@ export class CertificatesController {
   async generateCertificate(
     @Req() req: AuthRequest,
     @Param('trackId') trackId: string,
+    @Body() dto: GenerateCertificateDto,
     @Res() res: Response,
   ) {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     const { buffer, code } = await this.certificatesService.generate(
       userId,
       trackId,
+      dto.recipientName,
     );
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(

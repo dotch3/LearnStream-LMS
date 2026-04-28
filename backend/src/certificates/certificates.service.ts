@@ -21,6 +21,7 @@ interface PdfData {
   completedVideoCount: number;
   issuedAt: Date;
   code: string;
+  logoDataUrl?: string;
 }
 
 @Injectable()
@@ -71,7 +72,28 @@ export class CertificatesService {
         .lineWidth(1)
         .stroke();
 
-      let y = margin + 60;
+      let y = margin + 20;
+
+      // Track logo (if provided as base64 data URL)
+      if (data.logoDataUrl?.startsWith('data:')) {
+        try {
+          const base64 = data.logoDataUrl.split(',')[1];
+          const imgBuffer = Buffer.from(base64, 'base64');
+          const logoSize = 70;
+          const logoX = (pageWidth - logoSize) / 2;
+          doc.image(imgBuffer, logoX, y, {
+            width: logoSize,
+            height: logoSize,
+            fit: [logoSize, logoSize],
+          });
+          y += logoSize + 16;
+        } catch {
+          // skip logo if image fails to render
+          y += 40;
+        }
+      } else {
+        y += 40;
+      }
 
       doc
         .fontSize(28)
@@ -184,6 +206,7 @@ export class CertificatesService {
   private async _generate(
     userId: string,
     trackId: string,
+    recipientName?: string,
   ): Promise<{ buffer: Buffer; code: string }> {
     const track = await this.prisma.track.findUnique({
       where: { id: trackId },
@@ -200,50 +223,60 @@ export class CertificatesService {
       );
     }
 
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const resolvedName = (recipientName?.trim() || user!.name).trim();
+
     // Idempotency: return existing certificate if already issued
     const existing = await this.prisma.certificate.findUnique({
       where: { userId_trackId: { userId, trackId } },
-      include: { user: true, track: true },
+      include: { track: true },
     });
 
+    const logoDataUrl = track.thumbnailUrl?.startsWith('data:')
+      ? track.thumbnailUrl
+      : undefined;
+
     if (existing) {
+      // Update recipientName and completedVideoCount in case they changed, keep the same code
+      const updated = await this.prisma.certificate.update({
+        where: { id: existing.id },
+        data: {
+          recipientName: resolvedName,
+          completedVideoCount: progress.completedCount,
+          issuedAt: new Date(),
+        },
+      });
       const buffer = await this.buildPdfBuffer({
-        recipientName: existing.user.name,
-        trackName: existing.track.name,
-        completedVideoCount: existing.completedVideoCount,
-        issuedAt: existing.issuedAt,
+        recipientName: resolvedName,
+        trackName: track.name,
+        completedVideoCount: updated.completedVideoCount,
+        issuedAt: updated.issuedAt,
         code: existing.code,
+        logoDataUrl,
       });
       return { buffer, code: existing.code };
     }
 
     // Generate unique code with retry on collision
-    let cert: {
-      id: string;
-      code: string;
-      completedVideoCount: number;
-      issuedAt: Date;
-    } | null = null;
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = this.generateCode();
       try {
-        const user = await this.prisma.user.findUnique({
-          where: { id: userId },
-        });
-        cert = await this.prisma.certificate.create({
+        const cert = await this.prisma.certificate.create({
           data: {
             code,
             completedVideoCount: progress.completedCount,
+            recipientName: resolvedName,
             userId,
             trackId,
           },
         });
         const buffer = await this.buildPdfBuffer({
-          recipientName: user!.name,
+          recipientName: resolvedName,
           trackName: track.name,
           completedVideoCount: cert.completedVideoCount,
           issuedAt: cert.issuedAt,
           code: cert.code,
+          logoDataUrl,
         });
         return { buffer, code: cert.code };
       } catch (err) {
@@ -266,8 +299,9 @@ export class CertificatesService {
   async generate(
     userId: string,
     trackId: string,
+    recipientName?: string,
   ): Promise<{ buffer: Buffer; code: string }> {
-    return this._generate(userId, trackId);
+    return this._generate(userId, trackId, recipientName);
   }
 
   async generateForUser(
@@ -289,6 +323,7 @@ export class CertificatesService {
       id: c.id,
       code: c.code,
       completedVideoCount: c.completedVideoCount,
+      recipientName: c.recipientName,
       issuedAt: c.issuedAt,
       trackId: c.trackId,
       trackName: c.track.name,

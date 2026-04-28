@@ -1,20 +1,122 @@
 @import "tailwindcss";
 
+/* ── Class-based dark mode ─────────────────────────────────── */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── Design tokens ─────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* page */
+  --ls-bg:          #f0f4ff;
+  --ls-surface:     #ffffff;
+  --ls-surface-2:   #f8faff;
+  --ls-border:      #e2e8f5;
+
+  /* text */
+  --ls-text-1:      #0f172a;
+  --ls-text-2:      #4b6080;
+  --ls-text-3:      #8fa8c8;
+
+  /* accent (logo blue) */
+  --ls-accent:      #1e40af;
+  --ls-accent-h:    #1d3a8e;
+  --ls-accent-muted:#eef2ff;
+  --ls-accent-text: #1e40af;
+
+  /* status */
+  --ls-success:     #16a34a;
+  --ls-error:       #dc2626;
+
+  /* sidebar — always dark in both modes */
+  --ls-sb-bg:       #0b1527;
+  --ls-sb-border:   rgba(255,255,255,0.07);
+  --ls-sb-text:     #c0d4f0;
+  --ls-sb-muted:    #5d7baa;
+  --ls-sb-active:   rgba(255,255,255,0.12);
+  --ls-sb-active-t: #ffffff;
+  --ls-sb-hover:    rgba(255,255,255,0.06);
+}
+
+.dark {
+  --ls-bg:          #080d1a;
+  --ls-surface:     #0f1629;
+  --ls-surface-2:   #142038;
+  --ls-border:      #1e2e50;
+
+  --ls-text-1:      #e8eeff;
+  --ls-text-2:      #8aa3cc;
+  --ls-text-3:      #4a6490;
+
+  --ls-accent:      #5b8af5;
+  --ls-accent-h:    #7ba0f8;
+  --ls-accent-muted:#1a2850;
+  --ls-accent-text: #93b5ff;
+
+  --ls-success:     #22c55e;
+  --ls-error:       #f87171;
+
+  --ls-sb-bg:       #060b14;
+  --ls-sb-border:   rgba(255,255,255,0.05);
+  --ls-sb-text:     #8aacda;
+  --ls-sb-muted:    #3d5a85;
+  --ls-sb-active:   rgba(91,138,245,0.2);
+  --ls-sb-active-t: #93b5ff;
+  --ls-sb-hover:    rgba(255,255,255,0.04);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-
+/* ── Base ──────────────────────────────────────────────────── */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ls-bg);
+  color: var(--ls-text-1);
+  font-family: var(--font-geist-sans, Arial, sans-serif);
+  transition: background-color 0.2s, color 0.2s;
 }
+
+/* ── Dark-mode overrides for common Tailwind patterns ──────── */
+/* These let existing pages get dark mode without touching each file */
+.dark .bg-white          { background-color: var(--ls-surface) !important; }
+.dark .bg-gray-50        { background-color: var(--ls-bg) !important; }
+.dark .bg-gray-100       { background-color: var(--ls-surface-2) !important; }
+.dark .bg-gray-200       { background-color: var(--ls-border) !important; }
+
+.dark .border-gray-100   { border-color: var(--ls-border) !important; }
+.dark .border-gray-200   { border-color: var(--ls-border) !important; }
+.dark .border-gray-300   { border-color: var(--ls-border) !important; }
+
+.dark .text-gray-900     { color: var(--ls-text-1) !important; }
+.dark .text-gray-800     { color: var(--ls-text-1) !important; }
+.dark .text-gray-700     { color: var(--ls-text-2) !important; }
+.dark .text-gray-600     { color: var(--ls-text-2) !important; }
+.dark .text-gray-500     { color: var(--ls-text-2) !important; }
+.dark .text-gray-400     { color: var(--ls-text-3) !important; }
+
+.dark .shadow-sm         { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
+
+/* Accent overrides */
+.dark .bg-indigo-600     { background-color: var(--ls-accent) !important; }
+.dark .bg-indigo-50      { background-color: var(--ls-accent-muted) !important; }
+.dark .text-indigo-600   { color: var(--ls-accent-text) !important; }
+.dark .text-indigo-500   { color: var(--ls-accent-text) !important; }
+.dark .border-indigo-100 { border-color: var(--ls-border) !important; }
+
+/* Input fields */
+.dark input:not([type=checkbox]):not([type=radio]),
+.dark textarea,
+.dark select {
+  background-color: var(--ls-surface-2) !important;
+  border-color: var(--ls-border) !important;
+  color: var(--ls-text-1) !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--ls-text-3) !important;
+}
+
+/* Scrollbar (dark mode) */
+.dark ::-webkit-scrollbar        { width: 6px; height: 6px; }
+.dark ::-webkit-scrollbar-track  { background: var(--ls-bg); }
+.dark ::-webkit-scrollbar-thumb  { background: var(--ls-border); border-radius: 3px; }

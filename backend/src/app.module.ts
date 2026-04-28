@@ -10,6 +10,7 @@ import { VideosModule } from './videos/videos.module';
 import { ProgressModule } from './progress/progress.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { SetupModule } from './setup/setup.module';
+import { CommentsModule } from './comments/comments.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -24,6 +25,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     ProgressModule,
     CertificatesModule,
     SetupModule,
+    CommentsModule,
   ],
   providers: [
     {

@@ -94,6 +94,7 @@ export class ProgressService {
         order: v.order,
         percentage: prog?.percentage ?? 0,
         completed: prog?.completed ?? false,
+        watchedSeconds: prog?.watchedSeconds ?? 0,
         lastWatchedAt: prog?.lastWatchedAt ?? null,
       };
     });

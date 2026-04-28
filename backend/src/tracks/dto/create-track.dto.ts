@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, MinLength, IsOptional, IsUrl, IsInt } from 'class-validator';
+import { IsString, MinLength, IsOptional, IsInt } from 'class-validator';
 
 export class CreateTrackDto {
   @ApiProperty({ example: 'Leadership Foundations', description: 'Track title displayed to students' })
@@ -16,10 +16,10 @@ export class CreateTrackDto {
   description?: string;
 
   @ApiPropertyOptional({
-    example: 'https://img.youtube.com/vi/pTJaacq5YWQ/maxresdefault.jpg',
-    description: 'Cover image URL for the track card',
+    example: 'https://example.com/cover.jpg',
+    description: 'Cover image — either a URL or a base64 data URL from file upload',
   })
-  @IsUrl()
+  @IsString()
   @IsOptional()
   thumbnailUrl?: string;
 

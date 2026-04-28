@@ -17,7 +17,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 
 interface AuthRequest extends Request {
-  user: { sub: string; email: string; role: Role };
+  user: { userId: string; email: string; role: Role };
 }
 
 @ApiTags('progress')
@@ -30,7 +30,7 @@ export class ProgressController {
   @Post()
   @ApiOperation({ summary: 'Report video watch progress (never decrements)' })
   report(@Req() req: AuthRequest, @Body() dto: ReportProgressDto) {
-    return this.progressService.report(req.user.sub, dto);
+    return this.progressService.report(req.user.userId, dto);
   }
 
   @Get('tracks/:trackId')
@@ -39,7 +39,7 @@ export class ProgressController {
     @Req() req: AuthRequest,
     @Param('trackId') trackId: string,
   ) {
-    return this.progressService.getTrackProgress(req.user.sub, trackId);
+    return this.progressService.getTrackProgress(req.user.userId, trackId);
   }
 
   @Get('users/:userId/tracks/:trackId')

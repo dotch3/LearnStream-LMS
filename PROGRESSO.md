@@ -588,3 +588,70 @@ Commita todos os artefatos da feature (specs + código).
 | Tipos `@nestjs/jwt` | `expiresIn` espera `StringValue` — usar `as any` ou cast explícito |
 | `passport-custom` | Necessário para strategies com body (refresh token) — instalar separado |
 | Atualizar `PROGRESSO.md` | Registrar cada passo antes de executar, não só depois |
+
+---
+
+## Step 11 — Feature 006-setup-wizard: melhorias e comentários (2026-04-27)
+
+Branch: `006-setup-wizard`
+
+### Melhorias implementadas
+
+#### Seek detection no player YouTube
+- BUFFERING dispara antes de `getCurrentTime()` estabilizar após seek
+- Solução: `wasSeekingRef = true` no BUFFERING; `updateVisual()` chamado apenas quando o próximo PLAYING dispara
+- Removido guard "nunca decrementa" do visual — seeks para trás agora refletem corretamente
+
+#### Certificados — regeneração e logo do track
+- Backend: `_generate()` agora sempre faz `update` quando cert já existe (atualiza `recipientName`, `completedVideoCount`, `issuedAt`)
+- Backend: `buildPdfBuffer()` renderiza o logo do track (70×70 px, centralizado) se `thumbnailUrl` for data URL base64
+- Frontend track detail page: botão "Earn Certificate" desabilitado (tooltip) até track completo; formulário inline com `certName`; download PDF via blob; link "View in Certificates"
+- Frontend certificates page: download PDF (`responseType: 'blob'`) e download PNG (`html-to-image` com pixel ratio 2x); datas em `en-US`; componentes `CertificateCard` renderizados off-screen
+
+#### Upload de imagem para thumbnail do track
+- Frontend admin track form: drag-and-drop zone → canvas center-crop 400×400 → JPEG base64 data URL
+- Preview com Replace/Remove quando imagem carregada
+- Backend DTO: `thumbnailUrl` mudou de `@IsUrl()` para `@IsString()` para aceitar data URLs
+- Backend cert service: lê `thumbnailUrl` como `logoDataUrl` se começa com `data:`
+
+#### Logo + dark/light mode
+- `frontend/src/app/icon.png` (copiado de `public/logo2.png`) — favicon via convenção App Router do Next.js
+- `frontend/src/app/favicon.ico` deletado (tinha prioridade sobre metadata `icons`)
+- `frontend/src/contexts/theme.context.tsx` — ThemeProvider com localStorage + `prefers-color-scheme`
+- `frontend/src/components/theme-toggle.tsx` — ícone Sol/Lua
+- `frontend/src/app/globals.css` — design tokens CSS (`--ls-bg`, `--ls-surface`, `--ls-accent`, `--ls-sb-*`) + overrides `.dark .bg-white` etc.
+- `frontend/src/app/layout.tsx` — anti-FOUC inline script em `<head>`; `suppressHydrationWarning` em `<html>`
+- Dashboard/Admin layouts: sidebar navy escuro via CSS vars; logo `logo2.png` + ThemeToggle
+- Login page: `logo1.png` centralizado; todas cores via vars; ThemeToggle topo-direito
+
+#### Regras de complexidade de senha
+- Backend DTOs (`change-password.dto.ts`, `create-user.dto.ts`): `@MinLength(8)` + `@Matches` (maiúscula, minúscula, dígito, especial)
+- Frontend profile page: `PASSWORD_RULES` array + `PasswordChecklist` com indicadores verdes/cinza em tempo real; submit desabilitado se alguma regra falhar
+
+### Feature: sistema de comentários por vídeo
+
+#### Backend
+- `prisma/schema.prisma`: modelos `Comment` (self-referential `parentId`, `isDeleted`, relação `replies`) e `CommentReaction` (`@@unique([commentId, userId, emoji])`)
+- Migrations: `add_certificate_recipient_name`, `add_comments`
+- `backend/src/comments/dto/create-comment.dto.ts` — `body` (1–2000 chars), `parentId?` (UUID)
+- `backend/src/comments/dto/update-comment.dto.ts` — `body` (1–2000 chars)
+- `backend/src/comments/dto/toggle-reaction.dto.ts` — `emoji` ∈ `['👍', '😊', '💡', '❤️']`
+- `backend/src/comments/comments.service.ts` — `getVideoComments`, `createComment`, `updateComment`, `deleteComment` (soft), `toggleReaction`; `shape()` com `canEdit`/`canDelete`; `groupReactions()` retorna todos 4 emojis com count + `reactedByMe`
+- `backend/src/comments/comments.controller.ts` — 5 endpoints: GET/POST `/api/videos/:videoId/comments`, PATCH/DELETE `/api/comments/:id`, POST `/api/comments/:id/reactions`
+- `backend/src/comments/comments.module.ts` — CommentsModule registrado em AppModule
+
+#### Frontend
+- `frontend/src/components/comments-section.tsx` — CommentsSection (lista + formulário novo comentário), CommentItem (avatar, header, body/edit, ReactionBar, Reply/Edit/Delete), ReactionBar (4 emojis com highlight), Avatar, `timeAgo()`
+- Integrado em `frontend/src/app/dashboard/tracks/[id]/videos/[videoId]/page.tsx`
+
+### Lições aprendidas
+
+| Lição | Detalhe |
+|-------|---------|
+| Favicon Next.js App Router | `src/app/icon.png` auto-gera `<link rel="icon">`; `favicon.ico` tem prioridade se existir — deletar o .ico |
+| Anti-FOUC tema | Inline `<script>` em `<head>` antes da hidratação React; `suppressHydrationWarning` em `<html>` |
+| Canvas center-crop | `Math.min(w, h)` como tamanho do crop; offset `(w-size)/2, (h-size)/2` para centralizar |
+| Seek detection YouTube IFrame | BUFFERING → `wasSeekingRef = true`; ler posição apenas no próximo PLAYING |
+| Prisma self-referential `onDelete` | Relação `parentId` precisa `onDelete: NoAction, onUpdate: NoAction` para PostgreSQL não reclamar de FK circular |
+| `ReactionSummary` export | Interface em `comments.service.ts` precisa `export` para ser referenciada em arquivos externos (TS4053) |
+| `npx prisma generate` pós-migration | Sempre rodar após editar schema.prisma para sincronizar tipos TypeScript com o cliente Prisma |

@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth.context';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const navItems = [
   {
@@ -25,36 +27,64 @@ const navItems = [
   },
 ];
 
+function SbLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all"
+      style={{
+        background: active ? 'var(--ls-sb-active)' : 'transparent',
+        color: active ? 'var(--ls-sb-active-t)' : 'var(--ls-sb-text)',
+      }}
+      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; }}
+      onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  async function handleLogout() {
-    await logout();
-    router.push('/login');
-  }
-
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col">
-        {/* Logo + badge */}
-        <div className="px-6 py-5 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-lg font-bold text-indigo-600 tracking-tight">LearnStream</span>
-              <span className="ml-1 text-xs text-gray-400 font-medium">LMS</span>
+    <div className="flex min-h-screen" style={{ background: 'var(--ls-bg)' }}>
+      <aside
+        className="w-64 shrink-0 flex flex-col"
+        style={{ background: 'var(--ls-sb-bg)', borderRight: '1px solid var(--ls-sb-border)' }}
+      >
+        {/* Logo + Admin badge */}
+        <div
+          className="flex items-center justify-between px-4 py-4"
+          style={{ borderBottom: '1px solid var(--ls-sb-border)' }}
+        >
+          <Link href="/admin/tracks" className="flex items-center gap-2.5 min-w-0">
+            <Image src="/logo2.png" alt="LearnStream" width={32} height={32} className="shrink-0 rounded-lg" />
+            <div className="min-w-0">
+              <span className="text-sm font-bold tracking-tight" style={{ color: 'var(--ls-sb-active-t)' }}>
+                LearnStream
+              </span>
+              <span
+                className="ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-semibold"
+                style={{ background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }}
+              >
+                Admin
+              </span>
             </div>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Admin</span>
-          </div>
+          </Link>
+          <ThemeToggle />
         </div>
 
         {/* Back to student view */}
         <div className="px-3 pt-3">
           <Link
             href="/dashboard/tracks"
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all"
+            style={{ color: 'var(--ls-sb-muted)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--ls-sb-text)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--ls-sb-muted)'; }}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -64,51 +94,48 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-2 space-y-1">
-          {navItems.map((item) => {
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <span className={active ? 'text-indigo-600' : 'text-gray-400'}>{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-3 py-2 space-y-0.5">
+          {navItems.map((item) => (
+            <SbLink key={item.href} href={item.href} active={pathname.startsWith(item.href)}>
+              <span style={{ opacity: pathname.startsWith(item.href) ? 1 : 0.65 }}>{item.icon}</span>
+              {item.label}
+            </SbLink>
+          ))}
         </nav>
 
-        {/* User */}
-        <div className="border-t border-gray-100 px-4 py-4">
+        {/* User footer */}
+        <div className="px-4 py-4" style={{ borderTop: '1px solid var(--ls-sb-border)' }}>
           {user ? (
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ background: '#f59e0b' }}
+              >
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
-                <p className="truncate text-xs text-gray-400">{user.email}</p>
+                <p className="truncate text-sm font-medium" style={{ color: 'var(--ls-sb-active-t)' }}>{user.name}</p>
+                <p className="truncate text-xs" style={{ color: 'var(--ls-sb-muted)' }}>{user.email}</p>
               </div>
-              <button onClick={handleLogout} title="Log out" className="text-gray-400 hover:text-red-500 transition-colors">
+              <button
+                onClick={async () => { await logout(); router.push('/login'); }}
+                title="Log out"
+                style={{ color: 'var(--ls-sb-muted)' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-sb-muted)'; }}
+              >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
                 </svg>
               </button>
             </div>
           ) : (
-            <div className="h-9 rounded-lg bg-gray-100 animate-pulse" />
+            <div className="h-9 rounded-lg animate-pulse" style={{ background: 'var(--ls-sb-active)' }} />
           )}
         </div>
       </aside>
 
-      {/* Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto" style={{ background: 'var(--ls-bg)' }}>
         {children}
       </main>
     </div>

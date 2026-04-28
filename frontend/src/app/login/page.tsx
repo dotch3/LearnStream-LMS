@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/auth.context';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -22,6 +24,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setupDone = searchParams.get('setup') === 'done';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -43,51 +46,100 @@ function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow">
-        <h1 className="mb-6 text-2xl font-bold text-gray-800">Sign in</h1>
+    <main
+      className="relative flex min-h-screen items-center justify-center px-4"
+      style={{ background: 'var(--ls-bg)' }}
+    >
+      {/* Theme toggle — top right */}
+      <div className="absolute top-4 right-4">
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-lg"
+          style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+        >
+          <ThemeToggle />
+        </div>
+      </div>
+
+      <div
+        className="w-full max-w-sm rounded-2xl p-8 shadow-lg"
+        style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+      >
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <Image src="/logo1.png" alt="LearnStream" width={80} height={80} className="rounded-2xl mb-3" />
+          <p className="text-sm" style={{ color: 'var(--ls-text-3)' }}>Sign in to your account</p>
+        </div>
+
         {setupDone && (
-          <div className="mb-4 rounded bg-green-50 px-3 py-2 text-sm text-green-700">
-            Setup complete — please log in with your admin account.
+          <div
+            className="mb-5 rounded-lg px-4 py-3 text-sm"
+            style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ls-success)', border: '1px solid rgba(34,197,94,0.2)' }}
+          >
+            Setup complete — log in with your admin account.
           </div>
         )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ls-text-2)' }}>
+              Email
+            </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="you@company.com"
+              className="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+              style={{
+                background: 'var(--ls-surface-2)',
+                border: '1px solid var(--ls-border)',
+                color: 'var(--ls-text-1)',
+              }}
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
-            <div className="relative mt-1">
+            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ls-text-2)' }}>
+              Password
+            </label>
+            <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded border border-gray-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2"
+                style={{
+                  background: 'var(--ls-surface-2)',
+                  border: '1px solid var(--ls-border)',
+                  color: 'var(--ls-text-1)',
+                }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
                 tabIndex={-1}
+                className="absolute inset-y-0 right-0 flex items-center px-3 transition-colors"
+                style={{ color: 'var(--ls-text-3)' }}
               >
                 <EyeIcon open={showPassword} />
               </button>
             </div>
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          {error && (
+            <p className="text-sm" style={{ color: 'var(--ls-error)' }}>{error}</p>
+          )}
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+            style={{ background: 'var(--ls-accent)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent-h)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent)'; }}
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>

@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth.context';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const navItems = [
   {
@@ -43,54 +45,67 @@ const navItems = [
   },
 ];
 
+function SbLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all"
+      style={{
+        background: active ? 'var(--ls-sb-active)' : 'transparent',
+        color: active ? 'var(--ls-sb-active-t)' : 'var(--ls-sb-text)',
+      }}
+      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; }}
+      onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  async function handleLogout() {
-    await logout();
-    router.push('/login');
-  }
-
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col">
+    <div className="flex min-h-screen" style={{ background: 'var(--ls-bg)' }}>
+      <aside
+        className="w-64 shrink-0 flex flex-col"
+        style={{ background: 'var(--ls-sb-bg)', borderRight: '1px solid var(--ls-sb-border)' }}
+      >
         {/* Logo */}
-        <div className="px-6 py-5 border-b border-gray-100">
-          <span className="text-lg font-bold text-indigo-600 tracking-tight">LearnStream</span>
-          <span className="ml-1 text-xs text-gray-400 font-medium">LMS</span>
+        <div
+          className="flex items-center justify-between px-4 py-4"
+          style={{ borderBottom: '1px solid var(--ls-sb-border)' }}
+        >
+          <Link href="/dashboard/tracks" className="flex items-center gap-2.5 min-w-0">
+            <Image src="/logo2.png" alt="LearnStream" width={32} height={32} className="shrink-0 rounded-lg" />
+            <span className="text-base font-bold tracking-tight truncate" style={{ color: 'var(--ls-sb-active-t)' }}>
+              LearnStream
+            </span>
+          </Link>
+          <ThemeToggle />
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => {
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <span className={active ? 'text-indigo-600' : 'text-gray-400'}>{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
+          {navItems.map((item) => (
+            <SbLink key={item.href} href={item.href} active={pathname.startsWith(item.href)}>
+              <span style={{ opacity: pathname.startsWith(item.href) ? 1 : 0.65 }}>{item.icon}</span>
+              {item.label}
+            </SbLink>
+          ))}
 
-          {/* Admin link — only for ADMIN role */}
           {user?.role === 'ADMIN' && (
-            <div className="pt-3 mt-3 border-t border-gray-100">
+            <div className="pt-3 mt-2" style={{ borderTop: '1px solid var(--ls-sb-border)' }}>
               <Link
                 href="/admin/tracks"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all"
+                style={{ color: '#f59e0b' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(245,158,11,0.1)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
               >
-                <svg className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <svg className="h-5 w-5 shrink-0" style={{ opacity: 0.8 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -100,21 +115,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
         </nav>
 
-        {/* User section */}
-        <div className="border-t border-gray-100 px-4 py-4">
+        {/* User footer */}
+        <div className="px-4 py-4" style={{ borderTop: '1px solid var(--ls-sb-border)' }}>
           {user ? (
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ background: 'var(--ls-accent)' }}
+              >
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
-                <p className="truncate text-xs text-gray-400">{user.role}</p>
+                <p className="truncate text-sm font-medium" style={{ color: 'var(--ls-sb-active-t)' }}>{user.name}</p>
+                <p className="truncate text-xs capitalize" style={{ color: 'var(--ls-sb-muted)' }}>{user.role.toLowerCase()}</p>
               </div>
               <button
-                onClick={handleLogout}
+                onClick={async () => { await logout(); router.push('/login'); }}
                 title="Log out"
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                style={{ color: 'var(--ls-sb-muted)' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-sb-muted)'; }}
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
@@ -122,13 +142,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
             </div>
           ) : (
-            <div className="h-9 rounded-lg bg-gray-100 animate-pulse" />
+            <div className="h-9 rounded-lg animate-pulse" style={{ background: 'var(--ls-sb-active)' }} />
           )}
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto" style={{ background: 'var(--ls-bg)' }}>
         {children}
       </main>
     </div>

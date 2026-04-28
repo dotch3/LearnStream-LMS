@@ -11,6 +11,9 @@ export class CertificateResponseDto {
   completedVideoCount: number;
 
   @ApiProperty()
+  recipientName: string;
+
+  @ApiProperty()
   issuedAt: Date;
 
   @ApiProperty()

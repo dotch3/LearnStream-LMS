@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { api } from '@/lib/axios';
 
@@ -9,6 +9,40 @@ interface TrackFormData {
   description: string;
   thumbnailUrl: string;
   order: string;
+}
+
+// Resize + center-crop an image File to a square JPEG data URL (400×400).
+function processImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Please select an image file (JPEG, PNG, WebP).'));
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      reject(new Error('Image must be smaller than 3 MB.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read file.'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not load image.'));
+      img.onload = () => {
+        const size = 400;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = e.target!.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function AdminTrackFormPage() {
@@ -26,6 +60,10 @@ export default function AdminTrackFormPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<TrackFormData>>({});
   const [apiError, setApiError] = useState('');
+  const [logoError, setLogoError] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isNew) return;
@@ -44,11 +82,32 @@ export default function AdminTrackFormPage() {
       .finally(() => setLoading(false));
   }, [params.id, isNew]);
 
+  async function handleImageFile(file: File) {
+    setLogoError('');
+    try {
+      const dataUrl = await processImageFile(file);
+      setForm((prev) => ({ ...prev, thumbnailUrl: dataUrl }));
+    } catch (err: unknown) {
+      setLogoError((err as Error).message ?? 'Could not process image.');
+    }
+  }
+
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleImageFile(file);
+    e.target.value = '';
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageFile(file);
+  }
+
   function validate(): boolean {
     const e: Partial<TrackFormData> = {};
     if (!form.name.trim()) e.name = 'Name is required';
-    if (form.thumbnailUrl && !form.thumbnailUrl.startsWith('http'))
-      e.thumbnailUrl = 'Must be a valid URL';
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -62,7 +121,7 @@ export default function AdminTrackFormPage() {
       const payload = {
         name: form.name.trim(),
         description: form.description.trim() || undefined,
-        thumbnailUrl: form.thumbnailUrl.trim() || undefined,
+        thumbnailUrl: form.thumbnailUrl || undefined,
         order: Number(form.order),
       };
       if (isNew) {
@@ -85,6 +144,8 @@ export default function AdminTrackFormPage() {
       </div>
     );
   }
+
+  const hasImage = !!form.thumbnailUrl;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -142,24 +203,79 @@ export default function AdminTrackFormPage() {
               />
             </div>
 
+            {/* ── Logo / Thumbnail ──────────────────────────────────── */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL</label>
-              <input
-                type="url"
-                value={form.thumbnailUrl}
-                onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-                placeholder="https://..."
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              {errors.thumbnailUrl && <p className="mt-1 text-xs text-red-600">{errors.thumbnailUrl}</p>}
-              {form.thumbnailUrl && form.thumbnailUrl.startsWith('http') && (
-                <img
-                  src={form.thumbnailUrl}
-                  alt="preview"
-                  className="mt-2 h-24 w-40 rounded-lg object-cover border border-gray-200"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Track Logo
+              </label>
+              <p className="text-xs text-gray-400 mb-3">
+                Square image recommended — 400×400 px minimum. Used as the track thumbnail and printed on the completion certificate.
+                Upload will be auto-cropped to a square.
+              </p>
+
+              {hasImage ? (
+                /* Preview */
+                <div className="flex items-start gap-4">
+                  <img
+                    src={form.thumbnailUrl}
+                    alt="Track logo preview"
+                    className="h-32 w-32 rounded-xl object-cover border border-gray-200 shadow-sm"
+                  />
+                  <div className="flex flex-col gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      Replace image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, thumbnailUrl: '' }))}
+                      className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
+                    >
+                      Remove
+                    </button>
+                    <p className="text-xs text-gray-400">
+                      {form.thumbnailUrl.startsWith('data:') ? 'Uploaded file' : 'External URL'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* Drop zone */
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors ${
+                    dragOver
+                      ? 'border-indigo-400 bg-indigo-50'
+                      : 'border-gray-300 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50'
+                  }`}
+                >
+                  <svg className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-600">
+                      <span className="text-indigo-600">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">JPEG, PNG, WebP — max 3 MB</p>
+                  </div>
+                </div>
               )}
+
+              {logoError && <p className="mt-2 text-xs text-red-600">{logoError}</p>}
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleFileInput}
+              />
             </div>
 
             <div>
