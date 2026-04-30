@@ -1,0 +1,1 @@
+export const WATCH_COMPLETE_THRESHOLD = 80;
