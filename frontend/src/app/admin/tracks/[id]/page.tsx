@@ -9,6 +9,7 @@ interface TrackFormData {
   description: string;
   thumbnailUrl: string;
   order: string;
+  visibility: 'PUBLIC' | 'LINK_ONLY' | 'DRAFT';
 }
 
 // Resize + center-crop an image File to a square JPEG data URL (400×400).
@@ -55,6 +56,7 @@ export default function AdminTrackFormPage() {
     description: '',
     thumbnailUrl: '',
     order: '1',
+    visibility: 'PUBLIC',
   });
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -76,6 +78,7 @@ export default function AdminTrackFormPage() {
           description: t.description ?? '',
           thumbnailUrl: t.thumbnailUrl ?? '',
           order: String(t.order ?? 1),
+          visibility: t.visibility ?? 'PUBLIC',
         });
       })
       .catch(() => setApiError('Track not found.'))
@@ -123,6 +126,7 @@ export default function AdminTrackFormPage() {
         description: form.description.trim() || undefined,
         thumbnailUrl: form.thumbnailUrl || undefined,
         order: Number(form.order),
+        visibility: form.visibility,
       };
       if (isNew) {
         await api.post('/api/tracks', payload);
@@ -131,7 +135,7 @@ export default function AdminTrackFormPage() {
       }
       router.push('/admin/tracks');
     } catch {
-      setApiError('Failed to save track. Please try again.');
+      setApiError('Failed to save course. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -160,13 +164,13 @@ export default function AdminTrackFormPage() {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
-            Back to Tracks
+            Back to Courses
           </button>
           <h1 className="text-3xl font-bold text-gray-900">
-            {isNew ? 'New Track' : 'Edit Track'}
+            {isNew ? 'New Course' : 'Edit Course'}
           </h1>
           <p className="mt-1 text-gray-500">
-            {isNew ? 'Create a new course track.' : 'Update track details.'}
+            {isNew ? 'Create a new course.' : 'Update course details.'}
           </p>
         </div>
 
@@ -198,7 +202,7 @@ export default function AdminTrackFormPage() {
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={3}
-                placeholder="Brief description of this track..."
+                placeholder="Brief description of this course..."
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
               />
             </div>
@@ -206,10 +210,10 @@ export default function AdminTrackFormPage() {
             {/* ── Logo / Thumbnail ──────────────────────────────────── */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Track Logo
+                Course Logo
               </label>
               <p className="text-xs text-gray-400 mb-3">
-                Square image recommended — 400×400 px minimum. Used as the track thumbnail and printed on the completion certificate.
+                Square image recommended — 400×400 px minimum. Used as the course thumbnail and printed on the completion certificate.
                 Upload will be auto-cropped to a square.
               </p>
 
@@ -290,13 +294,26 @@ export default function AdminTrackFormPage() {
               <p className="mt-1 text-xs text-gray-400">Lower numbers appear first.</p>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+              <select
+                value={form.visibility}
+                onChange={(e) => setForm({ ...form, visibility: e.target.value as TrackFormData['visibility'] })}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="PUBLIC">Public — listed for all users</option>
+                <option value="LINK_ONLY">Link Only — not listed, accessible via direct link</option>
+                <option value="DRAFT">Draft — admin only</option>
+              </select>
+            </div>
+
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
                 disabled={saving}
                 className="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition"
               >
-                {saving ? 'Saving...' : isNew ? 'Create Track' : 'Save Changes'}
+                {saving ? 'Saving...' : isNew ? 'Create Course' : 'Save Changes'}
               </button>
               <button
                 type="button"

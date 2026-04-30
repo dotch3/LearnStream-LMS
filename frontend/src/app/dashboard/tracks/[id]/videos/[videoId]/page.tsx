@@ -330,7 +330,7 @@ export default function VideoPlayerPage() {
             Next lesson →
           </button>
         ) : (
-          <span className="text-sm text-gray-400">Last lesson in track</span>
+          <span className="text-sm text-gray-400">Last lesson in course</span>
         )}
       </div>
 

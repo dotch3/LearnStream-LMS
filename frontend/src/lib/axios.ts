@@ -72,3 +72,18 @@ api.interceptors.request.use(async (config) => {
 
   return config;
 });
+
+// Response interceptor: redirect to login on 401/403
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (typeof window !== 'undefined') {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  },
+);

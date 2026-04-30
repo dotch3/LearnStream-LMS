@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +20,8 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RefreshAuthGuard } from './guards/refresh-auth.guard';
 import { Public } from './decorators/public.decorator';
@@ -34,7 +37,6 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, type: LoginResponseDto })
-  @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
   login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
@@ -47,30 +49,50 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token using refresh token' })
   @ApiResponse({ status: 200, type: RefreshResponseDto })
-  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
   refresh(@Request() req: any): RefreshResponseDto {
     return req.user as RefreshResponseDto;
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('logout')
+  @Get('me')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Logout and invalidate all refresh tokens' })
-  @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async logout(@Request() req: any): Promise<{ message: string }> {
-    await this.authService.logout(req.user.userId);
-    return { message: 'Logged out successfully' };
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({ status: 200, type: LoginResponseDto })
+  getProfile(@Request() req: { user: { id?: string; userId?: string } }) {
+    return this.authService.getProfile(req.user.id ?? req.user.userId ?? '');
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request a password reset email' })
+  @ApiResponse({ status: 200, description: 'Reset email sent if account exists' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
+    await this.authService.forgotPassword(dto.email);
+    return { message: 'If that email is registered, a reset link has been sent.' };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password using token from email' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<{ message: string }> {
+    await this.authService.resetPassword(dto.token, dto.newPassword);
+    return { message: 'Password reset successfully. Please log in.' };
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('me')
+  @Delete('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'User profile' })
-@ApiResponse({ status: 401, description: 'Unauthorized' })
-  getProfile(@Request() req: any) {
-    return this.authService.getProfile(req.user.userId);
+  @ApiOperation({ summary: 'Logout — invalidates all refresh tokens for the current user' })
+  @ApiResponse({ status: 204, description: 'Logged out successfully' })
+  async logout(@Request() req: { user: { id?: string; userId?: string } }): Promise<void> {
+    await this.authService.logout(req.user.id ?? req.user.userId ?? '');
   }
 }

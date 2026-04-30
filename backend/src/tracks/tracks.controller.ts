@@ -23,11 +23,12 @@ import { UpdateTrackDto } from './dto/update-track.dto';
 import { AddVideoToTrackDto, UpdateVideoOrderDto } from './dto/track-video.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { EnrollmentGuard } from '../auth/guards/enrollment.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 
 interface AuthRequest extends Request {
-  user: { sub: string; email: string; role: Role };
+  user: { id: string; sub: string; email: string; role: Role };
 }
 
 @ApiTags('tracks')
@@ -47,14 +48,15 @@ export class TracksController {
     @Query('perPage') perPage = '20',
   ) {
     const isAdmin = req.user.role === Role.ADMIN;
-    return this.tracksService.findAll(isAdmin, Number(page), Number(perPage));
+    return this.tracksService.findAll(isAdmin, Number(page), Number(perPage), req.user.id);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, EnrollmentGuard)
   @ApiOperation({ summary: 'Get track detail with ordered video list' })
   findOne(@Req() req: AuthRequest, @Param('id') id: string) {
     const isAdmin = req.user.role === Role.ADMIN;
-    return this.tracksService.findOne(id, isAdmin);
+    return this.tracksService.findOne(id, isAdmin, req.user.id);
   }
 
   @Post()

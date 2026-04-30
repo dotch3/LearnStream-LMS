@@ -11,6 +11,12 @@
   --ls-surface-2:   #f8faff;
   --ls-border:      #e2e8f5;
 
+  /* convenience aliases */
+  --ls-text:        var(--ls-text-1);
+  --ls-muted:       var(--ls-text-2);
+  --ls-card:        var(--ls-surface);
+  --ls-text-muted:  var(--ls-text-2);
+
   /* text */
   --ls-text-1:      #0f172a;
   --ls-text-2:      #4b6080;
@@ -120,3 +126,9 @@ body {
 .dark ::-webkit-scrollbar        { width: 6px; height: 6px; }
 .dark ::-webkit-scrollbar-track  { background: var(--ls-bg); }
 .dark ::-webkit-scrollbar-thumb  { background: var(--ls-border); border-radius: 3px; }
+
+/* Toast animation */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

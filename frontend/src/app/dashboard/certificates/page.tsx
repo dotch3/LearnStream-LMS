@@ -151,7 +151,7 @@ export default function CertificatesPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Certificates</h1>
-          <p className="mt-1 text-gray-500">Certificates earned by completing tracks.</p>
+          <p className="mt-1 text-gray-500">Certificates earned by completing courses.</p>
         </div>
 
         {/* Loading */}
@@ -187,12 +187,12 @@ export default function CertificatesPage() {
               </svg>
             </div>
             <h2 className="text-lg font-semibold text-gray-700">No certificates yet</h2>
-            <p className="mt-1 text-sm text-gray-400">Complete all videos in a track to earn your certificate.</p>
+            <p className="mt-1 text-sm text-gray-400">Complete all videos in a course to earn your certificate.</p>
             <button
               onClick={() => router.push('/dashboard/tracks')}
               className="mt-5 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
-              Browse Tracks
+              Browse Courses
             </button>
           </div>
         )}

@@ -3,18 +3,19 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import { TrackVisibility } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
 @Injectable()
 export class TracksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(isAdmin: boolean, page: number, perPage: number) {
+  async findAll(isAdmin: boolean, page: number, perPage: number, userId?: string) {
     const skip = (page - 1) * perPage;
-    const where = isAdmin ? {} : { isActive: true };
+    const where = isAdmin ? {} : { visibility: TrackVisibility.PUBLIC };
 
     const [tracks, total] = await this.prisma.$transaction([
       this.prisma.track.findMany({
@@ -26,6 +27,7 @@ export class TracksService {
           trackVideos: {
             include: { video: { select: { id: true, isActive: true } } },
           },
+          ...(userId ? { enrollments: { where: { userId }, select: { status: true } } } : {}),
         },
       }),
       this.prisma.track.count({ where }),
@@ -35,16 +37,20 @@ export class TracksService {
       const videoCount = isAdmin
         ? t.trackVideos.length
         : t.trackVideos.filter((tv) => tv.video.isActive).length;
+      const enrollmentStatus = userId
+        ? ((t as typeof t & { enrollments?: { status: string }[] }).enrollments?.[0]?.status ?? 'NONE')
+        : undefined;
       return {
         id: t.id,
         name: t.name,
         description: t.description,
         thumbnailUrl: t.thumbnailUrl,
-        isActive: t.isActive,
+        visibility: t.visibility,
         order: t.order,
         videoCount,
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
+        ...(userId !== undefined ? { enrollmentStatus } : {}),
       };
     });
 
@@ -59,7 +65,7 @@ export class TracksService {
     };
   }
 
-  async findOne(id: string, isAdmin: boolean) {
+  async findOne(id: string, isAdmin: boolean, userId?: string) {
     const track = await this.prisma.track.findUnique({
       where: { id },
       include: {
@@ -68,10 +74,12 @@ export class TracksService {
           include: { video: true },
           orderBy: { order: 'asc' },
         },
+        ...(userId ? { enrollments: { where: { userId }, select: { status: true } } } : {}),
       },
     });
 
-    if (!track || (!isAdmin && !track.isActive)) {
+    if (!track) throw new NotFoundException('Track not found');
+    if (!isAdmin && track.visibility === TrackVisibility.DRAFT) {
       throw new NotFoundException('Track not found');
     }
 
@@ -85,17 +93,22 @@ export class TracksService {
       isActive: tv.video.isActive,
     }));
 
+    const enrollmentStatus = userId
+      ? ((track as typeof track & { enrollments?: { status: string }[] }).enrollments?.[0]?.status ?? 'NONE')
+      : undefined;
+
     return {
       id: track.id,
       name: track.name,
       description: track.description,
       thumbnailUrl: track.thumbnailUrl,
-      isActive: track.isActive,
+      visibility: track.visibility,
       order: track.order,
       videoCount: videos.length,
       createdAt: track.createdAt,
       updatedAt: track.updatedAt,
       videos,
+      ...(userId !== undefined ? { enrollmentStatus } : {}),
     };
   }
 

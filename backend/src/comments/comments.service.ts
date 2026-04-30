@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ALLOWED_EMOJIS } from './dto/toggle-reaction.dto';
@@ -48,7 +50,11 @@ export interface CommentDto {
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
+  ) {}
 
   private groupReactions(reactions: ReactionRow[], currentUserId: string): ReactionSummary[] {
     const map = new Map<string, { count: number; mine: boolean }>(
@@ -125,7 +131,12 @@ export class CommentsService {
     videoId: string,
     dto: CreateCommentDto,
   ): Promise<CommentDto> {
-    const video = await this.prisma.video.findUnique({ where: { id: videoId } });
+    const video = await this.prisma.video.findUnique({
+      where: { id: videoId },
+      include: {
+        trackVideos: { include: { track: { select: { id: true } } }, take: 1 },
+      },
+    });
     if (!video) throw new NotFoundException('Video not found');
 
     if (dto.parentId) {
@@ -147,8 +158,61 @@ export class CommentsService {
       include: COMMENT_INCLUDE,
     });
 
-    // Prisma's include for self-referential doesn't nest replies on a newly created comment
+    // Send reply notifications (fire-and-forget)
+    if (dto.parentId) {
+      void this.notifyReply(userId, dto.parentId, dto.body, video.title, videoId, video.trackVideos[0]?.track?.id);
+    }
+
     return this.shape({ ...comment, replies: [] }, userId, Role.VIEWER);
+  }
+
+  private async notifyReply(
+    replierId: string,
+    parentId: string,
+    replyBody: string,
+    videoTitle: string,
+    videoId: string,
+    trackId: string | undefined,
+  ): Promise<void> {
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3001');
+    const videoUrl = trackId
+      ? `${frontendUrl}/dashboard/tracks/${trackId}/videos/${videoId}`
+      : `${frontendUrl}/dashboard`;
+
+    const [parent, existingReplies, replier] = await Promise.all([
+      this.prisma.comment.findUnique({
+        where: { id: parentId },
+        include: { author: { select: { id: true, name: true, email: true } } },
+      }),
+      this.prisma.comment.findMany({
+        where: { parentId, isDeleted: false, authorId: { not: replierId } },
+        include: { author: { select: { id: true, name: true, email: true } } },
+        distinct: ['authorId'],
+      }),
+      this.prisma.user.findUnique({ where: { id: replierId }, select: { name: true } }),
+    ]);
+
+    if (!parent || !replier) return;
+
+    // Collect unique recipients: parent author + existing reply authors, excluding the replier
+    const seen = new Set<string>([replierId]);
+    const recipients: { email: string; name: string }[] = [];
+
+    const addRecipient = (u: { id: string; name: string; email: string }) => {
+      if (!seen.has(u.id)) {
+        seen.add(u.id);
+        recipients.push({ email: u.email, name: u.name });
+      }
+    };
+
+    if (parent.author) addRecipient(parent.author);
+    for (const reply of existingReplies) {
+      if (reply.author) addRecipient(reply.author);
+    }
+
+    if (recipients.length > 0) {
+      await this.mail.sendReplyNotification(recipients, replier.name, videoTitle, replyBody, videoUrl);
+    }
   }
 
   async updateComment(

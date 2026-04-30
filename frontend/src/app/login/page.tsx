@@ -143,6 +143,16 @@ function LoginForm() {
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
+
+          <div className="text-center mt-3">
+            <a
+              href="/forgot-password"
+              className="text-xs hover:underline"
+              style={{ color: 'var(--ls-accent)' }}
+            >
+              Forgot password?
+            </a>
+          </div>
         </form>
       </div>
     </main>

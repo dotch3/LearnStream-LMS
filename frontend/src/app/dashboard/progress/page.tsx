@@ -109,12 +109,12 @@ export default function ProgressPage() {
               </svg>
             </div>
             <h2 className="text-lg font-semibold text-gray-700">No courses available yet</h2>
-            <p className="mt-1 text-sm text-gray-400">Start watching a track to see your progress here.</p>
+            <p className="mt-1 text-sm text-gray-400">Start watching a course to see your progress here.</p>
             <button
               onClick={() => router.push('/dashboard/tracks')}
               className="mt-5 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
-              Browse Tracks
+              Browse Courses
             </button>
           </div>
         )}
@@ -126,7 +126,7 @@ export default function ProgressPage() {
             {/* Stats bar */}
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'Total Tracks', value: tracks.length },
+                { label: 'Total Courses', value: tracks.length },
                 { label: 'In Progress', value: started.length - completed.length },
                 { label: 'Completed', value: completed.length },
               ].map((s) => (

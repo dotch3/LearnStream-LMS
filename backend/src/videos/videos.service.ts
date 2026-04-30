@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { TrackVisibility } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
@@ -47,7 +48,7 @@ export class VideosService {
 
     if (!video) throw new NotFoundException('Video not found');
 
-    const activeTracks = video.trackVideos.map((tv) => tv.track).filter((t) => t.isActive);
+    const activeTracks = video.trackVideos.map((tv) => tv.track).filter((t) => t.visibility !== TrackVisibility.DRAFT);
     if (!isAdmin && (!video.isActive || activeTracks.length === 0)) {
       throw new NotFoundException('Video not found');
     }

@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await api.post('/auth/logout');
+      await api.delete('/auth/logout');
     } finally {
       setState({ accessToken: null, expiresAt: null, user: null });
       clearAxiosTokens();

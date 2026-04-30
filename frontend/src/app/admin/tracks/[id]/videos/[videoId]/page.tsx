@@ -197,7 +197,7 @@ export default function AdminVideoFormPage() {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Order in this track
+            Order in this course
           </label>
           <input
             type="number"

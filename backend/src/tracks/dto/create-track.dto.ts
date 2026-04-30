@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, MinLength, IsOptional, IsInt } from 'class-validator';
+import { TrackVisibility } from '@prisma/client';
+import { IsEnum, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateTrackDto {
   @ApiProperty({ example: 'Leadership Foundations', description: 'Track title displayed to students' })
@@ -27,4 +28,9 @@ export class CreateTrackDto {
   @IsInt()
   @IsOptional()
   order?: number;
+
+  @ApiPropertyOptional({ enum: TrackVisibility, description: 'Visibility: PUBLIC | LINK_ONLY | DRAFT' })
+  @IsEnum(TrackVisibility)
+  @IsOptional()
+  visibility?: TrackVisibility;
 }

@@ -8,7 +8,9 @@ export async function middleware(request: NextRequest) {
     const res = await fetch(`${apiUrl}/setup/status`, { cache: 'no-store' });
     const data = (await res.json()) as { isSetupComplete: boolean };
 
-    if (!data.isSetupComplete && pathname !== '/setup') {
+    const publicPaths = ['/setup', '/invite'];
+    const isPublic = publicPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
+    if (!data.isSetupComplete && !isPublic) {
       return NextResponse.redirect(new URL('/setup', request.url));
     }
 

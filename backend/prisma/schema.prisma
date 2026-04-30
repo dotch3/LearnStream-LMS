@@ -11,6 +11,24 @@ enum Role {
   VIEWER
 }
 
+enum TrackVisibility {
+  PUBLIC
+  LINK_ONLY
+  DRAFT
+}
+
+enum EnrollmentStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+enum NotificationType {
+  ENROLLMENT_APPROVED
+  ENROLLMENT_DENIED
+  NEW_ENROLLMENT_REQUEST
+}
+
 model User {
   id               String            @id @default(uuid())
   name             String
@@ -20,11 +38,14 @@ model User {
   isActive         Boolean           @default(true)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  refreshTokens    RefreshToken[]
-  progress         VideoProgress[]
-  certificates     Certificate[]
-  comments         Comment[]
-  commentReactions CommentReaction[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  progress            VideoProgress[]
+  certificates        Certificate[]
+  comments            Comment[]
+  commentReactions    CommentReaction[]
+  enrollments         Enrollment[]
+  notifications       Notification[]
 }
 
 model RefreshToken {
@@ -38,16 +59,18 @@ model RefreshToken {
 }
 
 model Track {
-  id           String        @id @default(uuid())
+  id           String          @id @default(uuid())
   name         String
   description  String?
   thumbnailUrl String?
-  isActive     Boolean       @default(true)
-  order        Int           @default(0)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  trackVideos  TrackVideo[]
-  certificates Certificate[]
+  visibility   TrackVisibility @default(PUBLIC)
+  order        Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  trackVideos          TrackVideo[]
+  certificates         Certificate[]
+  enrollments          Enrollment[]
+  enrollmentCodeTracks EnrollmentCodeTrack[]
 
   @@map("tracks")
 }
@@ -119,6 +142,19 @@ model Certificate {
   @@map("certificates")
 }
 
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
 model Comment {
   id        String   @id @default(uuid())
   body      String
@@ -154,4 +190,73 @@ model CommentReaction {
 
   @@unique([commentId, userId, emoji])
   @@map("comment_reactions")
+}
+
+model Enrollment {
+  id          String           @id @default(uuid())
+  status      EnrollmentStatus @default(PENDING)
+  requestedAt DateTime         @default(now())
+  resolvedAt  DateTime?
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trackId String
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+  @@map("enrollments")
+}
+
+model EnrollmentCode {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  label     String?
+  maxUses   Int?
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  tracks EnrollmentCodeTrack[]
+
+  @@map("enrollment_codes")
+}
+
+model EnrollmentCodeTrack {
+  codeId  String
+  trackId String
+
+  code  EnrollmentCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  track Track          @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@id([codeId, trackId])
+  @@map("enrollment_code_tracks")
+}
+
+model InviteToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  email     String
+  role      Role      @default(VIEWER)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("invite_tokens")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }

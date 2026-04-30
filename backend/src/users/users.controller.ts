@@ -28,6 +28,13 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
+import { InvitesService } from '../invites/invites.service';
+import { IsEmail, IsEnum } from 'class-validator';
+
+class InviteUserDto {
+  @IsEmail() email!: string;
+  @IsEnum(Role) role!: Role;
+}
 
 interface AuthenticatedRequest {
   user: { userId: string; email: string; role: Role };
@@ -38,7 +45,10 @@ interface AuthenticatedRequest {
 @Controller('api/users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly invitesService: InvitesService,
+  ) {}
 
   // ─── Self-service endpoints (/me/*) — MUST be before /:id ────────────────
 
@@ -158,5 +168,13 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   reactivate(@Param('id') id: string): Promise<{ message: string }> {
     return this.usersService.reactivate(id);
+  }
+
+  @Post('invite')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Send invite email to a new user (ADMIN only)' })
+  async invite(@Body() dto: InviteUserDto): Promise<{ message: string; inviteUrl: string }> {
+    const { inviteUrl } = await this.invitesService.create(dto.email, dto.role);
+    return { message: 'Invite sent', inviteUrl };
   }
 }

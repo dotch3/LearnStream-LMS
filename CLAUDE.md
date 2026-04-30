@@ -95,6 +95,8 @@ Located in `docs/planning/` (git-ignored, for internal reference only):
 - PostgreSQL via Prisma ORM — new `certificates` table (005-certificates)
 - TypeScript 5.x / Node.js 20 LTS + NestJS (existing), Prisma 7 (existing), bcrypt (existing in auth module), class-validator, @nestjs/swagger (existing) (006-setup-wizard)
 - PostgreSQL — no new tables; setup state derived from `User.role = ADMIN` coun (006-setup-wizard)
+- TypeScript 5.x / Node.js 20 LTS (backend + frontend) + NestJS (backend), Next.js App Router (frontend), Prisma 7, class-validator, nodemailer (existing) (009-course-enrollment)
+- PostgreSQL via Prisma ORM — 4 new tables + Track schema change (009-course-enrollment)
 
 ## Recent Changes
 - 001-auth: Added TypeScript 5.x / Node.js 20 LTS

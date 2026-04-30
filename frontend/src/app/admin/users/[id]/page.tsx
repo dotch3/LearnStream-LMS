@@ -11,6 +11,50 @@ interface UserForm {
   isActive: boolean;
 }
 
+/* ── Confirm dialog ────────────────────────────────────────── */
+interface ConfirmDialogProps {
+  open: boolean;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  loading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmDialog({ open, title, description, confirmLabel, loading, onConfirm, onCancel }: ConfirmDialogProps) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
+      <div
+        className="relative z-10 w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+        style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+      >
+        <h3 className="text-base font-semibold mb-1" style={{ color: 'var(--ls-text)' }}>{title}</h3>
+        <p className="text-sm mb-6" style={{ color: 'var(--ls-text-muted)' }}>{description}</p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm rounded-lg border"
+            style={{ color: 'var(--ls-text)', borderColor: 'var(--ls-border)', background: 'var(--ls-surface)' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="px-4 py-2 text-sm rounded-lg text-white font-medium bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            {loading ? 'Applying…' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Icons ─────────────────────────────────────────────────── */
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -36,6 +80,7 @@ function CopyIcon({ checked }: { checked: boolean }) {
   );
 }
 
+/* ── Helpers ───────────────────────────────────────────────── */
 function generateTempPassword(): string {
   const upper = 'ABCDEFGHJKMNPQRSTUVWXYZ';
   const lower = 'abcdefghjkmnpqrstuvwxyz';
@@ -43,12 +88,27 @@ function generateTempPassword(): string {
   const special = '!@#$';
   const all = upper + lower + digits + special;
   const rand = (set: string) => set[Math.floor(Math.random() * set.length)];
-  // Guarantee at least one of each category
   const required = [rand(upper), rand(lower), rand(digits), rand(special)];
   const rest = Array.from({ length: 8 }, () => rand(all));
   return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
 }
 
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-sm font-medium" style={{ color: 'var(--ls-text)' }}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const inputStyle = {
+  background: 'var(--ls-input-bg)',
+  color: 'var(--ls-text)',
+  borderColor: 'var(--ls-border)',
+};
+
+/* ── Page ──────────────────────────────────────────────────── */
 export default function EditUserPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -58,13 +118,13 @@ export default function EditUserPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Reset password section
   const [tempPassword, setTempPassword] = useState('');
   const [showTempPassword, setShowTempPassword] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState('');
   const [resetError, setResetError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     api
@@ -103,7 +163,7 @@ export default function EditUserPage() {
 
   const handleCopyShareText = useCallback(() => {
     const loginUrl = `${window.location.origin}/login`;
-    const text = `LearnStream LMS — Login credentials\nURL: ${loginUrl}\nEmail: ${form.email}\nTemporary password: ${tempPassword}\n\nPlease change your password after your first login.`;
+    const text = `LearnStream — Login credentials\nURL: ${loginUrl}\nEmail: ${form.email}\nTemporary password: ${tempPassword}\n\nPlease change your password after your first login.`;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -118,6 +178,7 @@ export default function EditUserPage() {
     try {
       await api.patch(`/api/users/${id}/password`, { password: tempPassword });
       setResetSuccess('Password reset successfully.');
+      setConfirmOpen(false);
     } catch {
       setResetError('Failed to reset password.');
     } finally {
@@ -126,138 +187,183 @@ export default function EditUserPage() {
   };
 
   return (
-    <div className="p-6 max-w-md">
-      <h1 className="text-2xl font-bold mb-6">Edit User</h1>
+    <>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Apply password reset?"
+        description={`This will immediately change ${form.name}'s password to the generated one. They won't be able to log in with their old password.`}
+        confirmLabel="Apply reset"
+        loading={resetLoading}
+        onConfirm={handleApplyReset}
+        onCancel={() => setConfirmOpen(false)}
+      />
 
-      {error && <p className="mb-4 text-red-600">{error}</p>}
-      {success && <p className="mb-4 text-green-600">{success}</p>}
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Name</span>
-          <input
-            className="border rounded px-3 py-2"
-            required
-            minLength={2}
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Email</span>
-          <input
-            type="email"
-            className="border rounded px-3 py-2"
-            required
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Role</span>
-          <select
-            className="border rounded px-3 py-2"
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
-          >
-            <option value="VIEWER">Viewer</option>
-            <option value="ADMIN">Admin</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.isActive}
-            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-          />
-          <span className="text-sm font-medium">Active</span>
-        </label>
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Save Changes'}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push('/admin/users')}
-            className="px-4 py-2 border rounded hover:bg-gray-50"
-          >
-            Back
-          </button>
-        </div>
-      </form>
-
-      {/* ── Reset Password ─────────────────────────────────────────── */}
-      <div className="mt-8 border-t pt-6">
-        <h2 className="text-base font-semibold mb-1">Reset password</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Generate a temporary password and share it with the user.
-        </p>
-
+      <div className="p-8 max-w-lg mx-auto">
         <button
-          type="button"
-          onClick={handleGeneratePassword}
-          className="px-4 py-2 border rounded text-sm hover:bg-gray-50"
+          onClick={() => router.push('/admin/users')}
+          className="text-sm mb-5 block hover:underline"
+          style={{ color: 'var(--ls-accent)' }}
         >
-          Generate temporary password
+          ← Back to Users
         </button>
 
-        {tempPassword && (
-          <div className="mt-4 space-y-3">
-            {/* Password field with eye + copy */}
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">Generated password</span>
-              <div className="relative flex">
-                <input
-                  readOnly
-                  type={showTempPassword ? 'text' : 'password'}
-                  value={tempPassword}
-                  className="flex-1 border rounded-l px-3 py-2 text-sm bg-gray-50 font-mono"
-                />
+        <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--ls-text)' }}>Edit User</h1>
+
+        {/* ── User details card ── */}
+        <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
+          {error && (
+            <div className="mb-4 px-4 py-3 rounded-lg text-sm text-red-700 bg-red-50 border border-red-200">{error}</div>
+          )}
+          {success && (
+            <div className="mb-4 px-4 py-3 rounded-lg text-sm text-green-700 bg-green-50 border border-green-200">{success}</div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <Field label="Full name">
+              <input
+                className="border rounded-lg px-3 py-2 text-sm w-full"
+                style={inputStyle}
+                required
+                minLength={2}
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </Field>
+
+            <Field label="Email">
+              <input
+                type="email"
+                className="border rounded-lg px-3 py-2 text-sm w-full"
+                style={inputStyle}
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </Field>
+
+            <Field label="Role">
+              <select
+                className="border rounded-lg px-3 py-2 text-sm w-full"
+                style={inputStyle}
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+              >
+                <option value="VIEWER">Viewer</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </Field>
+
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                className="w-4 h-4 rounded"
+              />
+              <span className="text-sm font-medium" style={{ color: 'var(--ls-text)' }}>Account active</span>
+            </label>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+                style={{ background: 'var(--ls-accent)' }}
+                onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent-h)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent)'; }}
+              >
+                {loading ? 'Saving…' : 'Save Changes'}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/admin/users')}
+                className="px-5 py-2 rounded-lg border text-sm"
+                style={{ borderColor: 'var(--ls-border)', color: 'var(--ls-text)', background: 'transparent' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* ── Reset password card ── */}
+        <div className="rounded-2xl p-6" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
+          <h2 className="text-base font-semibold mb-1" style={{ color: 'var(--ls-text)' }}>Reset password</h2>
+          <p className="text-sm mb-4" style={{ color: 'var(--ls-text-muted)' }}>
+            Generate a temporary password and share it with the user.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleGeneratePassword}
+            className="px-4 py-2 border rounded-lg text-sm transition-colors"
+            style={{ borderColor: 'var(--ls-border)', color: 'var(--ls-text)', background: 'var(--ls-bg)' }}
+          >
+            Generate temporary password
+          </button>
+
+          {tempPassword && (
+            <div className="mt-5 space-y-4">
+              {/* Password field */}
+              <Field label="Generated password">
+                <div className="flex">
+                  <input
+                    readOnly
+                    type={showTempPassword ? 'text' : 'password'}
+                    value={tempPassword}
+                    className="flex-1 border rounded-l-lg px-3 py-2 text-sm font-mono"
+                    style={{ ...inputStyle, background: 'var(--ls-bg)' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowTempPassword((v) => !v)}
+                    className="border-y border-r rounded-r-lg px-3"
+                    style={{ borderColor: 'var(--ls-border)', color: 'var(--ls-text-muted)', background: 'var(--ls-bg)' }}
+                    tabIndex={-1}
+                  >
+                    <EyeIcon open={showTempPassword} />
+                  </button>
+                </div>
+              </Field>
+
+              {/* Shareable text */}
+              <div
+                className="rounded-lg p-3 text-xs font-mono whitespace-pre-wrap leading-relaxed"
+                style={{ background: 'var(--ls-bg)', color: 'var(--ls-text-muted)', border: '1px solid var(--ls-border)' }}
+              >
+                {`LearnStream — Login credentials\nURL: ${typeof window !== 'undefined' ? window.location.origin : ''}/login\nEmail: ${form.email}\nTemporary password: ${showTempPassword ? tempPassword : '••••••••••••'}\n\nPlease change your password after your first login.`}
+              </div>
+
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowTempPassword((v) => !v)}
-                  className="border-y border-r rounded-r px-3 text-gray-400 hover:text-gray-600"
-                  tabIndex={-1}
+                  onClick={handleCopyShareText}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-sm transition-colors"
+                  style={{ borderColor: 'var(--ls-border)', color: 'var(--ls-text)', background: 'var(--ls-bg)' }}
                 >
-                  <EyeIcon open={showTempPassword} />
+                  <CopyIcon checked={copied} />
+                  {copied ? 'Copied!' : 'Copy text'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setConfirmOpen(true)}
+                  className="px-3 py-1.5 rounded-lg text-sm text-white font-medium bg-red-600 hover:bg-red-700 transition-colors"
+                >
+                  Apply reset
                 </button>
               </div>
+
+              {resetSuccess && (
+                <div className="px-4 py-3 rounded-lg text-sm text-green-700 bg-green-50 border border-green-200">{resetSuccess}</div>
+              )}
+              {resetError && (
+                <div className="px-4 py-3 rounded-lg text-sm text-red-700 bg-red-50 border border-red-200">{resetError}</div>
+              )}
             </div>
-
-            {/* Shareable text copy */}
-            <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-700 font-mono whitespace-pre-wrap leading-relaxed">
-              {`LearnStream LMS — Login credentials\nURL: ${typeof window !== 'undefined' ? window.location.origin : ''}/login\nEmail: ${form.email}\nTemporary password: ${showTempPassword ? tempPassword : '••••••••••••'}\n\nPlease change your password after your first login.`}
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleCopyShareText}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded text-sm hover:bg-gray-50"
-              >
-                <CopyIcon checked={copied} />
-                {copied ? 'Copied!' : 'Copy text'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleApplyReset}
-                disabled={resetLoading}
-                className="px-3 py-1.5 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50"
-              >
-                {resetLoading ? 'Applying...' : 'Apply reset'}
-              </button>
-            </div>
-
-            {resetSuccess && <p className="text-sm text-green-600">{resetSuccess}</p>}
-            {resetError && <p className="text-sm text-red-600">{resetError}</p>}
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

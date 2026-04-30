@@ -9,6 +9,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -27,12 +28,15 @@ const SAFE_SELECT = {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
-  async create(dto: CreateUserDto): Promise<UserResponseDto> {
+  async create(dto: CreateUserDto): Promise<UserResponseDto & { emailSent: boolean }> {
     const password = await bcrypt.hash(dto.password, 10);
     try {
-      return await this.prisma.user.create({
+      const user = await this.prisma.user.create({
         data: {
           email: dto.email,
           password,
@@ -41,6 +45,8 @@ export class UsersService {
         },
         select: SAFE_SELECT,
       });
+      const emailSent = await this.mail.sendWelcome(user.email, user.name, dto.password);
+      return { ...user, emailSent };
     } catch (err) {
       if (
         err instanceof PrismaClientKnownRequestError &&
