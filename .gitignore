@@ -58,3 +58,9 @@ coverage/
 # Misc
 # ========================
 *.tsbuildinfo
+
+# ========================
+# Claude Code (local only)
+# ========================
+.claude/projects/
+.claude/settings.local.json
