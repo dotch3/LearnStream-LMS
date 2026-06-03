@@ -173,9 +173,9 @@ export default function AdminInvitesPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            { label: 'Pending', count: counts.pending, ...STATUS_STYLES.pending },
-            { label: 'Accepted', count: counts.accepted, ...STATUS_STYLES.accepted },
-            { label: 'Expired', count: counts.expired, ...STATUS_STYLES.expired },
+            { count: counts.pending, ...STATUS_STYLES.pending },
+            { count: counts.accepted, ...STATUS_STYLES.accepted },
+            { count: counts.expired, ...STATUS_STYLES.expired },
           ].map(({ label, count, bg, color }) => (
             <div
               key={label}
