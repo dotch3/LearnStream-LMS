@@ -21,13 +21,32 @@ Full API documentation is available at `http://localhost:3000/api/docs` (Swagger
 
 ---
 
-## Environment Variables
+## Local Development
 
-Create a `.env` file in this directory:
+### Option 1 — Docker (recommended)
+
+Requires Docker Desktop. From the project root:
+
+```bash
+docker compose up
+```
+
+The backend will be available at `http://localhost:3000`. No manual database setup needed — PostgreSQL runs as a container and migrations apply automatically.
+
+### Option 2 — Manual setup
+
+Requires a local PostgreSQL instance. Create the database and user:
+
+```sql
+CREATE USER learnstream WITH PASSWORD 'learnstream_dev';
+CREATE DATABASE learnstream_db OWNER learnstream;
+```
+
+Then create `backend/.env`:
 
 ```env
 # Database
-DATABASE_URL="postgresql://user:password@localhost:5432/learnstream_db"
+DATABASE_URL="postgresql://learnstream:learnstream_dev@localhost:5432/learnstream_db"
 
 # JWT
 JWT_SECRET="your-access-token-secret"
@@ -40,14 +59,18 @@ PORT=3000
 FRONTEND_URL="http://localhost:3001"
 ```
 
----
-
-## Database Setup
-
-The project uses PostgreSQL via Prisma ORM. Create a local database first, then run:
+Apply migrations and start:
 
 ```bash
-# Apply all migrations
+npm install
+npx prisma migrate dev
+npm run start:dev
+```
+
+### Prisma utilities
+
+```bash
+# Apply migrations
 npx prisma migrate dev
 
 # Regenerate the Prisma client after schema changes

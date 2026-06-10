@@ -94,7 +94,7 @@ export class AuthService {
       data: { tokenHash, userId: user.id, expiresAt },
     });
 
-    await this.mail.sendPasswordReset(user.email, user.name, rawToken);
+    await this.mail.sendPasswordReset(user.email, user.name, rawToken, user.preferredLocale);
   }
 
   async resetPassword(rawToken: string, newPassword: string): Promise<void> {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { ActionBtn } from '@/components/admin/action-btn';
 import { useToast } from '@/components/toast';
@@ -15,27 +16,20 @@ interface Invite {
   status: 'pending' | 'accepted' | 'expired';
 }
 
-const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  pending:  { label: 'Pending',  bg: 'rgba(245,158,11,0.15)',  color: '#f59e0b' },
-  accepted: { label: 'Accepted', bg: 'rgba(34,197,94,0.15)',   color: '#22c55e' },
-  expired:  { label: 'Expired',  bg: 'rgba(107,114,128,0.15)', color: '#6b7280' },
-};
-
-const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
-  ADMIN:  { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
-  VIEWER: { bg: 'rgba(99,102,241,0.15)',  color: '#818cf8' },
-};
-
 type Filter = 'ALL' | 'pending' | 'accepted' | 'expired';
 
 function CopyLinkModal({
   inviteUrl,
   email,
   onClose,
+  t,
+  tCommon,
 }: {
   inviteUrl: string;
   email: string;
   onClose: () => void;
+  t: ReturnType<typeof useTranslations>;
+  tCommon: ReturnType<typeof useTranslations>;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -48,9 +42,9 @@ function CopyLinkModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.45)' }}>
       <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
-        <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--ls-text-1)' }}>Invite Link</h2>
+        <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--ls-text-1)' }}>{t('inviteLink')}</h2>
         <p className="text-sm mb-4" style={{ color: 'var(--ls-text-2)' }}>
-          Share with <strong>{email}</strong>. A new 72-hour link was generated.
+          {t('inviteLinkDesc', { email })}
         </p>
         <div
           className="rounded-lg px-3 py-2.5 text-xs font-mono break-all mb-4 select-all"
@@ -69,14 +63,14 @@ function CopyLinkModal({
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
-                Copied!
+                {tCommon('copied')}
               </>
             ) : (
               <>
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
                 </svg>
-                Copy Link
+                {tCommon('copyLink')}
               </>
             )}
           </button>
@@ -85,7 +79,7 @@ function CopyLinkModal({
             className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
             style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text-2)' }}
           >
-            Done
+            {tCommon('done')}
           </button>
         </div>
       </div>
@@ -94,12 +88,31 @@ function CopyLinkModal({
 }
 
 export default function AdminInvitesPage() {
+  const t = useTranslations('admin.invites');
+  const tCommon = useTranslations('common');
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('ALL');
   const [acting, setActing] = useState<string | null>(null);
   const [linkModal, setLinkModal] = useState<{ inviteUrl: string; email: string } | null>(null);
   const { showToast } = useToast();
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending:  t('pending'),
+    accepted: t('accepted'),
+    expired:  t('expired'),
+  };
+
+  const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
+    pending:  { bg: 'rgba(245,158,11,0.15)',  color: '#f59e0b' },
+    accepted: { bg: 'rgba(34,197,94,0.15)',   color: '#22c55e' },
+    expired:  { bg: 'rgba(107,114,128,0.15)', color: '#6b7280' },
+  };
+
+  const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
+    ADMIN:  { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+    VIEWER: { bg: 'rgba(99,102,241,0.15)',  color: '#818cf8' },
+  };
 
   const load = async () => {
     setLoading(true);
@@ -118,14 +131,13 @@ export default function AdminInvitesPage() {
     try {
       const { data } = await api.post<{ inviteUrl: string }>(`/api/invites/${inv.id}/regenerate`);
       setLinkModal({ inviteUrl: data.inviteUrl, email: inv.email });
-      // Update expiry in local state (status stays pending, expiry extended)
       setInvites((prev) => prev.map((i) =>
         i.id === inv.id
           ? { ...i, status: 'pending', expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString() }
           : i,
       ));
     } catch {
-      showToast('Failed to regenerate link', 'error');
+      showToast(t('errorLoad'), 'error');
     } finally {
       setActing(null);
     }
@@ -136,9 +148,9 @@ export default function AdminInvitesPage() {
     try {
       await api.delete(`/api/invites/${id}`);
       setInvites((prev) => prev.filter((i) => i.id !== id));
-      showToast(`Invite for ${email} removed`, 'info');
+      showToast(`${t('remove')}: ${email}`, 'info');
     } catch {
-      showToast('Failed to remove invite', 'error');
+      showToast(t('errorLoad'), 'error');
     } finally {
       setActing(null);
     }
@@ -159,37 +171,34 @@ export default function AdminInvitesPage() {
           inviteUrl={linkModal.inviteUrl}
           email={linkModal.email}
           onClose={() => setLinkModal(null)}
+          t={t}
+          tCommon={tCommon}
         />
       )}
 
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>Invites</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--ls-muted)' }}>
-            Track sent invitations — pending, accepted, and expired
-          </p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{t('title')}</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--ls-muted)' }}>{t('subtitle')}</p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          {[
-            { count: counts.pending, ...STATUS_STYLES.pending },
-            { count: counts.accepted, ...STATUS_STYLES.accepted },
-            { count: counts.expired, ...STATUS_STYLES.expired },
-          ].map(({ label, count, bg, color }) => (
-            <div
-              key={label}
-              className="rounded-xl px-5 py-4"
-              style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}
-            >
-              <p className="text-2xl font-bold" style={{ color }}>{count}</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>{label}</p>
-              <div className="mt-2 h-1 rounded-full w-full" style={{ background: bg }} />
-            </div>
-          ))}
+          {(['pending', 'accepted', 'expired'] as const).map((key) => {
+            const s = STATUS_STYLES[key];
+            return (
+              <div
+                key={key}
+                className="rounded-xl px-5 py-4"
+                style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}
+              >
+                <p className="text-2xl font-bold" style={{ color: s.color }}>{counts[key]}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>{STATUS_LABELS[key]}</p>
+                <div className="mt-2 h-1 rounded-full w-full" style={{ background: s.bg }} />
+              </div>
+            );
+          })}
         </div>
 
-        {/* Filter tabs */}
         <div className="flex gap-1 mb-5 p-1 rounded-lg w-fit" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
           {(['ALL', 'pending', 'accepted', 'expired'] as Filter[]).map((f) => (
             <button
@@ -201,7 +210,7 @@ export default function AdminInvitesPage() {
                 color: filter === f ? 'var(--ls-sb-active-t)' : 'var(--ls-muted)',
               }}
             >
-              {f === 'ALL' ? 'All' : STATUS_STYLES[f].label}
+              {f === 'ALL' ? tCommon('all') : STATUS_LABELS[f]}
             </button>
           ))}
         </div>
@@ -214,19 +223,19 @@ export default function AdminInvitesPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-xl py-16 text-center" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
-            <p className="text-base" style={{ color: 'var(--ls-muted)' }}>No invites found</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--ls-muted)' }}>Send invites from the Users page</p>
+            <p className="text-base" style={{ color: 'var(--ls-muted)' }}>{t('noFound')}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--ls-muted)' }}>{t('sendFromUsers')}</p>
           </div>
         ) : (
           <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>Email</th>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>Role</th>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>Sent</th>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>Expires / Used</th>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>Status</th>
+                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('emailCol')}</th>
+                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('roleCol')}</th>
+                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('sentCol')}</th>
+                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('expiresUsedCol')}</th>
+                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
@@ -266,7 +275,7 @@ export default function AdminInvitesPage() {
                           className="rounded-full px-2.5 py-1 text-xs font-semibold"
                           style={{ background: s.bg, color: s.color }}
                         >
-                          {s.label}
+                          {STATUS_LABELS[inv.status]}
                         </span>
                       </td>
                       <td className="px-5 py-3">
@@ -274,13 +283,13 @@ export default function AdminInvitesPage() {
                           <div className="flex gap-1 justify-end">
                             <ActionBtn
                               onClick={() => handleGetLink(inv)}
-                              label="Get Link"
+                              label={t('getLink')}
                               variant="primary"
                               disabled={acting === inv.id}
                             />
                             <ActionBtn
                               onClick={() => handleDelete(inv.id, inv.email)}
-                              label="Remove"
+                              label={t('remove')}
                               variant="danger"
                               disabled={acting === inv.id}
                             />

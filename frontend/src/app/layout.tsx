@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
+import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth.context";
 import { ThemeProvider } from "@/contexts/theme.context";
+import { LocaleProvider } from "@/contexts/locale.context";
 import { ToastProvider } from "@/components/toast";
+import { ThemeScript } from "@/components/theme-script";
+import en from "../../messages/en.json";
+import pt from "../../messages/pt.json";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -13,32 +19,36 @@ export const metadata: Metadata = {
   description: "Your professional learning platform",
 };
 
-// Runs before React hydration — prevents flash of wrong theme
-const themeScript = `
-(function(){try{
-  var t=localStorage.getItem('ls-theme');
-  if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){
-    document.documentElement.classList.add('dark');
-  }
-}catch(e){}})();
-`;
+const messageMap = { en, pt } as const;
+type Locale = keyof typeof messageMap;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+function resolveLocale(raw: string | undefined): Locale {
+  if (raw === 'en' || raw === 'pt') return raw;
+  return 'en';
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const locale = resolveLocale(cookieStore.get('NEXT_LOCALE')?.value);
+  const messages = messageMap[locale];
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>
-          <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <ThemeScript />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <LocaleProvider locale={locale}>
+            <ThemeProvider>
+              <AuthProvider>
+                <ToastProvider>{children}</ToastProvider>
+              </AuthProvider>
+            </ThemeProvider>
+          </LocaleProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

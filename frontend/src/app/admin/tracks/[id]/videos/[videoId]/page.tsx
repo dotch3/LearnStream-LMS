@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 
 interface VideoFormData {
@@ -17,6 +18,8 @@ export default function AdminVideoFormPage() {
   const router = useRouter();
   const params = useParams<{ id: string; videoId: string }>();
   const isNew = params.videoId === 'new';
+  const t = useTranslations('admin.videos');
+  const tCommon = useTranslations('common');
 
   const [form, setForm] = useState<VideoFormData>({
     title: '',
@@ -38,9 +41,8 @@ export default function AdminVideoFormPage() {
       .get(`/api/videos/${params.videoId}`)
       .then((res) => {
         const v = res.data;
-        // order comes from the junction for this track context
         const trackEntry = (v.tracks as { id: string; name: string; order: number }[])
-          ?.find((t: { id: string }) => t.id === params.id);
+          ?.find((tr: { id: string }) => tr.id === params.id);
         setForm({
           title: v.title ?? '',
           youtubeUrl: v.youtubeUrl ?? '',
@@ -51,18 +53,18 @@ export default function AdminVideoFormPage() {
         });
         setExtractedYoutubeId(v.youtubeId ?? null);
       })
-      .catch(() => setApiError('Video not found.'))
+      .catch(() => setApiError(t('notFound')))
       .finally(() => setLoading(false));
-  }, [params.videoId, params.id, isNew]);
+  }, [params.videoId, params.id, isNew, t]);
 
   function validate(): boolean {
     const e: Partial<VideoFormData> = {};
-    if (!form.title.trim()) e.title = 'Title is required';
-    if (!form.youtubeUrl.trim()) e.youtubeUrl = 'YouTube URL is required';
+    if (!form.title.trim()) e.title = t('titleRequired');
+    if (!form.youtubeUrl.trim()) e.youtubeUrl = t('youtubeUrlRequired');
     if (!form.duration || isNaN(Number(form.duration)) || Number(form.duration) < 1)
-      e.duration = 'Duration must be a positive number (seconds)';
+      e.duration = t('durationRequired');
     if (form.thumbnailUrl && !form.thumbnailUrl.startsWith('http'))
-      e.thumbnailUrl = 'Must be a valid URL';
+      e.thumbnailUrl = t('thumbnailUrlInvalid');
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -86,7 +88,6 @@ export default function AdminVideoFormPage() {
         setExtractedYoutubeId(res.data.youtubeId);
         router.push(`/admin/tracks/${params.id}/videos`);
       } else {
-        // Update video fields
         await api.patch(`/api/videos/${params.videoId}`, {
           title: form.title.trim(),
           youtubeUrl: form.youtubeUrl.trim(),
@@ -94,7 +95,6 @@ export default function AdminVideoFormPage() {
           thumbnailUrl: form.thumbnailUrl.trim() || undefined,
           duration: Number(form.duration),
         });
-        // Update order in junction for this track context
         await api.patch(`/api/tracks/${params.id}/videos/${params.videoId}`, {
           order: Number(form.order),
         });
@@ -103,107 +103,112 @@ export default function AdminVideoFormPage() {
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Failed to save video.';
+        t('saveError');
       setApiError(Array.isArray(msg) ? msg.join(', ') : String(msg));
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-8">{tCommon('loading')}</div>;
 
   return (
     <div className="p-8 max-w-xl mx-auto">
       <button
         onClick={() => router.push(`/admin/tracks/${params.id}/videos`)}
-        className="text-sm text-blue-600 hover:underline mb-4 block"
+        className="text-sm mb-4 flex items-center gap-1 transition-opacity hover:opacity-70"
+        style={{ color: 'var(--ls-accent-text)' }}
       >
-        ← Back to Videos
+        ← {t('backToVideos')}
       </button>
 
-      <h1 className="text-2xl font-bold mb-6">
-        {isNew ? 'Add Video' : 'Edit Video'}
+      <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--ls-text-1)' }}>
+        {isNew ? t('addVideo') : t('editVideo')}
       </h1>
 
       {apiError && (
-        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded text-sm">
+        <div className="mb-4 p-3 rounded text-sm" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--ls-error)' }}>
           {apiError}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Title *</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('name')} *</label>
           <input
             type="text"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
           />
-          {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+          {errors.title && <p className="text-xs mt-1" style={{ color: 'var(--ls-error)' }}>{errors.title}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">YouTube URL *</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('youtubeUrl')} *</label>
           <input
             type="text"
             value={form.youtubeUrl}
             onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
             placeholder="https://www.youtube.com/watch?v=..."
           />
-          {errors.youtubeUrl && <p className="text-red-500 text-xs mt-1">{errors.youtubeUrl}</p>}
+          {errors.youtubeUrl && <p className="text-xs mt-1" style={{ color: 'var(--ls-error)' }}>{errors.youtubeUrl}</p>}
           {extractedYoutubeId && !isNew && (
-            <p className="text-gray-400 text-xs mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--ls-text-2)' }}>
               YouTube ID: <span className="font-mono">{extractedYoutubeId}</span>
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('description')}</label>
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             rows={3}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none"
+            style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Thumbnail URL</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('thumbnailUrl')}</label>
           <input
             type="text"
             value={form.thumbnailUrl}
             onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
             placeholder="https://..."
           />
-          {errors.thumbnailUrl && <p className="text-red-500 text-xs mt-1">{errors.thumbnailUrl}</p>}
+          {errors.thumbnailUrl && <p className="text-xs mt-1" style={{ color: 'var(--ls-error)' }}>{errors.thumbnailUrl}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Duration (seconds) *</label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('duration')} *</label>
           <input
             type="number"
             value={form.duration}
             onChange={(e) => setForm({ ...form, duration: e.target.value })}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
             min={1}
             placeholder="300"
           />
-          {errors.duration && <p className="text-red-500 text-xs mt-1">{errors.duration}</p>}
+          {errors.duration && <p className="text-xs mt-1" style={{ color: 'var(--ls-error)' }}>{errors.duration}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Order in this course
-          </label>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('orderInCourse')}</label>
           <input
             type="number"
             value={form.order}
             onChange={(e) => setForm({ ...form, order: e.target.value })}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
             min={0}
           />
         </div>
@@ -212,16 +217,18 @@ export default function AdminVideoFormPage() {
           <button
             type="submit"
             disabled={saving}
-            className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 text-sm disabled:opacity-50"
+            className="px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: 'var(--ls-accent)' }}
           >
-            {saving ? 'Saving...' : isNew ? 'Add Video' : 'Save Changes'}
+            {saving ? t('savingVideo') : isNew ? t('addVideo') : t('save')}
           </button>
           <button
             type="button"
             onClick={() => router.push(`/admin/tracks/${params.id}/videos`)}
-            className="px-5 py-2 rounded border text-sm hover:bg-gray-50"
+            className="px-5 py-2 rounded-lg text-sm"
+            style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}
           >
-            Cancel
+            {tCommon('cancel')}
           </button>
         </div>
       </form>

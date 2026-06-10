@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { ActionBtn } from '@/components/admin/action-btn';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
@@ -19,12 +20,6 @@ interface TracksResponse {
   data: TrackSummary[];
   meta: { total: number; page: number; perPage: number; totalPages: number };
 }
-
-const VISIBILITY_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  PUBLIC:    { label: 'Public',     bg: 'rgba(34,197,94,0.12)',  color: 'var(--ls-success)' },
-  LINK_ONLY: { label: 'Link Only',  bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
-  DRAFT:     { label: 'Draft',      bg: 'var(--ls-surface-2)',   color: 'var(--ls-text-2)' },
-};
 
 const EditIcon = () => (
   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
@@ -49,6 +44,8 @@ const TrashIcon = () => (
 
 export default function AdminTracksPage() {
   const router = useRouter();
+  const t = useTranslations('admin.tracks');
+  const tCommon = useTranslations('common');
   const [tracks, setTracks] = useState<TrackSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -56,15 +53,21 @@ export default function AdminTracksPage() {
     open: false, track: null, loading: false,
   });
 
+  const VISIBILITY_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+    PUBLIC:    { label: t('visibility.PUBLIC'),    bg: 'rgba(34,197,94,0.12)',  color: 'var(--ls-success)' },
+    LINK_ONLY: { label: t('visibility.LINK_ONLY'), bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
+    DRAFT:     { label: t('visibility.DRAFT'),     bg: 'var(--ls-surface-2)',   color: 'var(--ls-text-2)' },
+  };
+
   useEffect(() => {
     let mounted = true;
     api
       .get<TracksResponse>('/api/tracks', { params: { page: 1, perPage: 100 } })
       .then((res) => { if (mounted) setTracks(res.data.data); })
-      .catch(() => { if (mounted) setError('Failed to load courses.'); })
+      .catch(() => { if (mounted) setError(t('errorLoad')); })
       .finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
-  }, []);
+  }, [t]);
 
   const openDelete = (track: TrackSummary) => setDialog({ open: true, track, loading: false });
 
@@ -73,7 +76,7 @@ export default function AdminTracksPage() {
     setDialog((d) => ({ ...d, loading: true }));
     try {
       await api.delete(`/api/tracks/${dialog.track.id}`);
-      setTracks((prev) => prev.filter((t) => t.id !== dialog.track!.id));
+      setTracks((prev) => prev.filter((tr) => tr.id !== dialog.track!.id));
       setDialog({ open: false, track: null, loading: false });
     } finally {
       setDialog((d) => ({ ...d, loading: false, open: false }));
@@ -84,9 +87,9 @@ export default function AdminTracksPage() {
     <>
       <ConfirmDialog
         open={dialog.open}
-        title="Delete course?"
-        description={`"${dialog.track?.name}" and all its video associations will be deleted. This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t('deleteTitle')}
+        description={t('deleteDesc', { name: dialog.track?.name ?? '' })}
+        confirmLabel={tCommon('delete')}
         variant="danger"
         loading={dialog.loading}
         onConfirm={handleDelete}
@@ -96,8 +99,8 @@ export default function AdminTracksPage() {
       <div className="max-w-5xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold" style={{ color: 'var(--ls-text-1)' }}>Courses</h1>
-            <p className="mt-1" style={{ color: 'var(--ls-text-2)' }}>Manage courses, videos and student enrollments.</p>
+            <h1 className="text-3xl font-bold" style={{ color: 'var(--ls-text-1)' }}>{t('title')}</h1>
+            <p className="mt-1" style={{ color: 'var(--ls-text-2)' }}>{t('subtitle')}</p>
           </div>
           <button
             onClick={() => router.push('/admin/tracks/new')}
@@ -107,7 +110,7 @@ export default function AdminTracksPage() {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            New Course
+            {t('new')}
           </button>
         </div>
 
@@ -135,14 +138,14 @@ export default function AdminTracksPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold" style={{ color: 'var(--ls-text-1)' }}>No courses yet</h2>
-            <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-2)' }}>Create your first course to start adding videos.</p>
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--ls-text-1)' }}>{t('empty')}</h2>
+            <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('emptySubtitle')}</p>
             <button
               onClick={() => router.push('/admin/tracks/new')}
               className="mt-5 rounded-xl px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               style={{ background: 'var(--ls-accent)' }}
             >
-              Create first course
+              {t('createFirst')}
             </button>
           </div>
         )}
@@ -152,9 +155,9 @@ export default function AdminTracksPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-bg)' }}>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Course</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Visibility</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Videos</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('courseCol')}</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('visibilityCol')}</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('videosCol')}</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
@@ -191,31 +194,31 @@ export default function AdminTracksPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-text-2)' }}>
-                        {track.videoCount} video{track.videoCount !== 1 ? 's' : ''}
+                        {track.videoCount} {track.videoCount !== 1 ? t('videosCol').toLowerCase() : t('videosCol').replace(/s$/i, '')}
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-0.5">
                           <ActionBtn
                             onClick={() => router.push(`/admin/tracks/${track.id}/videos`)}
-                            label="Videos"
+                            label={t('videosBtn')}
                             variant="primary"
                             icon={<VideosIcon />}
                           />
                           <ActionBtn
                             onClick={() => router.push(`/admin/tracks/${track.id}/enrollments`)}
-                            label="Students"
+                            label={t('studentsBtn')}
                             variant="success"
                             icon={<StudentsIcon />}
                           />
                           <ActionBtn
                             onClick={() => router.push(`/admin/tracks/${track.id}`)}
-                            label="Edit"
+                            label={tCommon('edit')}
                             variant="warning"
                             icon={<EditIcon />}
                           />
                           <ActionBtn
                             onClick={() => openDelete(track)}
-                            label="Delete"
+                            label={tCommon('delete')}
                             variant="danger"
                             icon={<TrashIcon />}
                           />

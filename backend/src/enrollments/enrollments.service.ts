@@ -36,27 +36,28 @@ export class EnrollmentsService {
         where: { id: existing.id },
         data: { status: EnrollmentStatus.PENDING, resolvedAt: null, requestedAt: new Date() },
       });
-      await this.notifyAdmins(userId, track.name);
+      await this.notifyAdmins(userId, track.id, track.name);
       return updated;
     }
 
     const enrollment = await this.prisma.enrollment.create({
       data: { userId, trackId, status: EnrollmentStatus.PENDING },
     });
-    await this.notifyAdmins(userId, track.name);
+    await this.notifyAdmins(userId, track.id, track.name);
     return enrollment;
   }
 
-  private async notifyAdmins(requesterId: string, trackName: string) {
+  private async notifyAdmins(requesterId: string, trackId: string, trackName: string) {
     const requester = await this.prisma.user.findUnique({ where: { id: requesterId }, select: { name: true } });
+    const requesterName = requester?.name ?? 'A user';
     const admins = await this.prisma.user.findMany({ where: { role: Role.ADMIN }, select: { id: true } });
     for (const admin of admins) {
       await this.notifications.create(
         admin.id,
         NotificationType.NEW_ENROLLMENT_REQUEST,
         'New enrollment request',
-        `${requester?.name ?? 'A user'} requested access to ${trackName}`,
-        { requesterId },
+        `${requesterName} requested access to ${trackName}`,
+        { requesterId, trackId, trackName, requesterName },
       );
     }
   }
@@ -75,7 +76,7 @@ export class EnrollmentsService {
         take: safePerPage,
         orderBy: { requestedAt: 'desc' },
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: { select: { id: true, name: true, email: true, preferredLocale: true } },
           track: { select: { id: true, name: true } },
         },
       }),
@@ -117,7 +118,7 @@ export class EnrollmentsService {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true, preferredLocale: true } },
         track: { select: { name: true } },
       },
     });
@@ -133,8 +134,9 @@ export class EnrollmentsService {
       NotificationType.ENROLLMENT_APPROVED,
       'Course access approved',
       `Your request for "${enrollment.track.name}" was approved`,
+      { trackId: enrollment.trackId, trackName: enrollment.track.name },
     );
-    void this.mail.sendEnrollmentApproved(enrollment.user.email, enrollment.user.name, enrollment.track.name);
+    void this.mail.sendEnrollmentApproved(enrollment.user.email, enrollment.user.name, enrollment.track.name, enrollment.user.preferredLocale);
     return updated;
   }
 
@@ -176,7 +178,7 @@ export class EnrollmentsService {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true, preferredLocale: true } },
         track: { select: { name: true } },
       },
     });
@@ -192,8 +194,9 @@ export class EnrollmentsService {
       NotificationType.ENROLLMENT_DENIED,
       'Course access not approved',
       `Your request for "${enrollment.track.name}" was not approved`,
+      { trackId: enrollment.trackId, trackName: enrollment.track.name },
     );
-    void this.mail.sendEnrollmentDenied(enrollment.user.email, enrollment.user.name, enrollment.track.name);
+    void this.mail.sendEnrollmentDenied(enrollment.user.email, enrollment.user.name, enrollment.track.name, enrollment.user.preferredLocale);
     return updated;
   }
 }

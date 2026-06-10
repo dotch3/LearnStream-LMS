@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { ActionBtn } from '@/components/admin/action-btn';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
@@ -66,12 +67,13 @@ type DialogAction = 'remove' | 'delete' | null;
 export default function AdminTrackVideosPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const t = useTranslations('admin.videos');
+  const tCommon = useTranslations('common');
 
   const [track, setTrack] = useState<TrackDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Confirm dialog
   const [dialog, setDialog] = useState<{
     action: DialogAction;
     videoId: string;
@@ -79,7 +81,6 @@ export default function AdminTrackVideosPage() {
     loading: boolean;
   }>({ action: null, videoId: '', videoTitle: '', loading: false });
 
-  // Add existing video modal
   const [showAddModal, setShowAddModal] = useState(false);
   const [allVideos, setAllVideos] = useState<VideoListItem[]>([]);
   const [addingVideoId, setAddingVideoId] = useState('');
@@ -87,7 +88,6 @@ export default function AdminTrackVideosPage() {
   const [addError, setAddError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
 
-  // Inline order editing
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editOrderValue, setEditOrderValue] = useState('');
 
@@ -98,13 +98,13 @@ export default function AdminTrackVideosPage() {
         const res = await api.get<TrackDetail>(`/api/tracks/${params.id}`);
         if (mounted) setTrack(res.data);
       } catch {
-        if (mounted) setError('Course not found.');
+        if (mounted) setError(t('courseNotFound'));
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
-  }, [params.id]);
+  }, [params.id, t]);
 
   async function toggleActive(video: VideoItem) {
     await api.patch(`/api/videos/${video.id}`, { isActive: !video.isActive });
@@ -158,7 +158,7 @@ export default function AdminTrackVideosPage() {
   }
 
   async function handleAddVideo() {
-    if (!addingVideoId) { setAddError('Select a video.'); return; }
+    if (!addingVideoId) { setAddError(t('selectVideo')); return; }
     setAddLoading(true);
     setAddError('');
     try {
@@ -167,7 +167,7 @@ export default function AdminTrackVideosPage() {
       setTrack(res.data);
       setShowAddModal(false);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to add video.';
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('saveError');
       setAddError(Array.isArray(msg) ? msg.join(', ') : String(msg));
     } finally {
       setAddLoading(false);
@@ -184,15 +184,15 @@ export default function AdminTrackVideosPage() {
 
   const dialogConfig = {
     remove: {
-      title: 'Remove from course?',
-      description: `"${dialog.videoTitle}" will be removed from this course but not deleted from the system.`,
-      confirmLabel: 'Remove',
+      title: t('removeTitle'),
+      description: t('removeDesc', { title: dialog.videoTitle }),
+      confirmLabel: t('removeLbl'),
       variant: 'warning' as const,
     },
     delete: {
-      title: 'Delete video permanently?',
-      description: `"${dialog.videoTitle}" will be permanently deleted from the system. This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: t('deleteVideoTitle'),
+      description: t('deleteVideoDesc', { title: dialog.videoTitle }),
+      confirmLabel: tCommon('delete'),
       variant: 'danger' as const,
     },
   };
@@ -218,12 +218,12 @@ export default function AdminTrackVideosPage() {
           className="text-sm mb-1 flex items-center gap-1 transition-opacity hover:opacity-70"
           style={{ color: 'var(--ls-accent-text)' }}
         >
-          ← Back to Courses
+          ← {t('backToCourses')}
         </button>
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text-1)' }}>Videos</h1>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text-1)' }}>{t('videosHeading')}</h1>
             <p className="text-sm mt-0.5" style={{ color: 'var(--ls-text-2)' }}>{track.name}</p>
           </div>
           <div className="flex gap-2">
@@ -237,7 +237,7 @@ export default function AdminTrackVideosPage() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
               </svg>
-              Students
+              {tCommon('students')}
             </button>
             <button
               onClick={openAddModal}
@@ -249,7 +249,7 @@ export default function AdminTrackVideosPage() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
               </svg>
-              Add existing
+              {t('addExisting')}
             </button>
             <button
               onClick={() => router.push(`/admin/tracks/${params.id}/videos/new`)}
@@ -259,7 +259,7 @@ export default function AdminTrackVideosPage() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              New video
+              {t('newVideo')}
             </button>
           </div>
         </div>
@@ -269,17 +269,17 @@ export default function AdminTrackVideosPage() {
             className="flex flex-col items-center justify-center rounded-xl py-16 text-center"
             style={{ border: '2px dashed var(--ls-border)' }}
           >
-            <p className="text-sm" style={{ color: 'var(--ls-text-2)' }}>No videos yet. Add one above.</p>
+            <p className="text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('noVideos')}</p>
           </div>
         ) : (
           <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}>
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-bg)' }}>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Order</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Title</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Duration</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Status</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('orderCol')}</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('titleCol')}</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('durationCol')}</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{tCommon('status')}</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
@@ -294,7 +294,6 @@ export default function AdminTrackVideosPage() {
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                   >
-                    {/* Order */}
                     <td className="px-5 py-3">
                       {editingOrderId === video.id ? (
                         <div className="flex items-center gap-1">
@@ -321,24 +320,20 @@ export default function AdminTrackVideosPage() {
                           style={{ color: 'var(--ls-text-2)', background: 'var(--ls-surface-2)' }}
                           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-text-1)'; }}
                           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-text-2)'; }}
-                          title="Click to edit order"
                         >
                           {video.order}
                         </button>
                       )}
                     </td>
 
-                    {/* Title */}
                     <td className="px-5 py-3">
                       <span className="font-medium" style={{ color: 'var(--ls-text-1)' }}>{video.title}</span>
                     </td>
 
-                    {/* Duration */}
                     <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-text-2)' }}>
                       {formatDuration(video.duration)}
                     </td>
 
-                    {/* Status badge */}
                     <td className="px-5 py-3">
                       <span
                         className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
@@ -352,34 +347,33 @@ export default function AdminTrackVideosPage() {
                           className="w-1.5 h-1.5 rounded-full"
                           style={{ background: video.isActive ? 'var(--ls-success)' : 'var(--ls-text-3)' }}
                         />
-                        {video.isActive ? 'Active' : 'Inactive'}
+                        {video.isActive ? tCommon('active') : tCommon('inactive')}
                       </span>
                     </td>
 
-                    {/* Actions */}
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-0.5">
                         <ActionBtn
                           onClick={() => router.push(`/admin/tracks/${params.id}/videos/${video.id}`)}
-                          label="Edit"
+                          label={tCommon('edit')}
                           variant="primary"
                           icon={<EditIcon />}
                         />
                         <ActionBtn
                           onClick={() => toggleActive(video)}
-                          label={video.isActive ? 'Deactivate' : 'Activate'}
+                          label={video.isActive ? t('deactivate') : t('activate')}
                           variant={video.isActive ? 'warning' : 'success'}
                           icon={video.isActive ? <EyeOffIcon /> : <EyeOnIcon />}
                         />
                         <ActionBtn
                           onClick={() => openDialog('remove', video.id, video.title)}
-                          label="Remove"
+                          label={t('removeLbl')}
                           variant="neutral"
                           icon={<RemoveIcon />}
                         />
                         <ActionBtn
                           onClick={() => openDialog('delete', video.id, video.title)}
-                          label="Delete"
+                          label={tCommon('delete')}
                           variant="danger"
                           icon={<DeleteIcon />}
                         />
@@ -392,7 +386,6 @@ export default function AdminTrackVideosPage() {
           </div>
         )}
 
-        {/* Add existing video modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div
@@ -400,31 +393,31 @@ export default function AdminTrackVideosPage() {
               style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
             >
               <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--ls-text-1)' }}>
-                Add existing video to course
+                {t('addExistingTitle')}
               </h2>
 
               {allVideos.length === 0 ? (
-                <p className="text-sm mb-4" style={{ color: 'var(--ls-text-2)' }}>All videos are already in this course.</p>
+                <p className="text-sm mb-4" style={{ color: 'var(--ls-text-2)' }}>{t('allInCourse')}</p>
               ) : (
                 <>
                   <div className="mb-3">
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>Video</label>
+                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('videoLabel')}</label>
                     <select
                       value={addingVideoId}
                       onChange={(e) => setAddingVideoId(e.target.value)}
                       className="w-full rounded-lg px-3 py-2 text-sm"
                       style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
                     >
-                      <option value="">— Select a video —</option>
+                      <option value="">{t('selectVideo')}</option>
                       {allVideos.map((v) => (
                         <option key={v.id} value={v.id}>
-                          {v.title} {v.tracks.length > 0 ? `(in: ${v.tracks.map((t) => t.name).join(', ')})` : ''}
+                          {v.title} {v.tracks.length > 0 ? `(in: ${v.tracks.map((tr) => tr.name).join(', ')})` : ''}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div className="mb-4">
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>Order in this course</label>
+                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('orderInCourse')}</label>
                     <input
                       type="number"
                       value={addOrder}
@@ -445,7 +438,7 @@ export default function AdminTrackVideosPage() {
                   className="px-4 py-2 rounded-lg text-sm"
                   style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}
                 >
-                  Cancel
+                  {tCommon('cancel')}
                 </button>
                 {allVideos.length > 0 && (
                   <button
@@ -454,7 +447,7 @@ export default function AdminTrackVideosPage() {
                     className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
                     style={{ background: 'var(--ls-accent)' }}
                   >
-                    {addLoading ? 'Adding…' : 'Add to course'}
+                    {addLoading ? t('addingVideo') : t('addToCourse')}
                   </button>
                 )}
               </div>

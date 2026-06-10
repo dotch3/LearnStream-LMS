@@ -3,8 +3,10 @@
 import Image from 'next/image';
 import { useState, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/auth.context';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LocaleSwitcher } from '@/components/locale-switcher';
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -20,6 +22,7 @@ function EyeIcon({ open }: { open: boolean }) {
 }
 
 function LoginForm() {
+  const t = useTranslations('auth');
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,7 +42,7 @@ function LoginForm() {
       await login(email, password);
       router.push('/');
     } catch {
-      setError('Invalid credentials. Please try again.');
+      setError(t('login.error'));
     } finally {
       setLoading(false);
     }
@@ -50,8 +53,8 @@ function LoginForm() {
       className="relative flex min-h-screen items-center justify-center px-4"
       style={{ background: 'var(--ls-bg)' }}
     >
-      {/* Theme toggle — top right */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <LocaleSwitcher />
         <div
           className="flex h-9 w-9 items-center justify-center rounded-lg"
           style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
@@ -67,7 +70,7 @@ function LoginForm() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <Image src="/logo1.png" alt="LearnStream" width={80} height={80} className="rounded-2xl mb-3" />
-          <p className="text-sm" style={{ color: 'var(--ls-text-3)' }}>Sign in to your account</p>
+          <p className="text-sm" style={{ color: 'var(--ls-text-3)' }}>{t('login.subtitle')}</p>
         </div>
 
         {setupDone && (
@@ -75,21 +78,21 @@ function LoginForm() {
             className="mb-5 rounded-lg px-4 py-3 text-sm"
             style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ls-success)', border: '1px solid rgba(34,197,94,0.2)' }}
           >
-            Setup complete — log in with your admin account.
+            {t('login.setupDone')}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ls-text-2)' }}>
-              Email
+              {t('email')}
             </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
+              placeholder={t('login.emailPlaceholder')}
               className="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
               style={{
                 background: 'var(--ls-surface-2)',
@@ -101,7 +104,7 @@ function LoginForm() {
 
           <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ls-text-2)' }}>
-              Password
+              {t('password')}
             </label>
             <div className="relative">
               <input
@@ -141,7 +144,7 @@ function LoginForm() {
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent-h)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent)'; }}
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? t('login.submitting') : t('login.submit')}
           </button>
 
           <div className="text-center mt-3">
@@ -150,7 +153,7 @@ function LoginForm() {
               className="text-xs hover:underline"
               style={{ color: 'var(--ls-accent)' }}
             >
-              Forgot password?
+              {t('login.forgotPassword')}
             </a>
           </div>
         </form>

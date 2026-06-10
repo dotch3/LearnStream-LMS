@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
+
+interface NotifData {
+  trackId?: string;
+  trackName?: string;
+  requesterName?: string;
+  requesterId?: string;
+}
 
 interface Notification {
   id: string;
@@ -11,22 +20,53 @@ interface Notification {
   body: string;
   read: boolean;
   createdAt: string;
+  data?: NotifData | null;
+}
+
+function getNotificationLink(type: string, data?: NotifData | null): string | null {
+  switch (type) {
+    case 'NEW_ENROLLMENT_REQUEST':
+      return data?.trackId ? `/admin/tracks/${data.trackId}/enrollments` : '/admin/requests';
+    case 'ENROLLMENT_APPROVED':
+      return data?.trackId ? `/dashboard/tracks/${data.trackId}` : '/dashboard/tracks';
+    case 'ENROLLMENT_DENIED':
+      return '/dashboard/tracks';
+    default:
+      return null;
+  }
+}
+
+type T = ReturnType<typeof useTranslations>;
+
+function getNotifText(t: T, type: string, data?: NotifData | null, fallbackTitle?: string, fallbackBody?: string) {
+  const trackName = data?.trackName ?? '?';
+  const requesterName = data?.requesterName ?? '?';
+  switch (type) {
+    case 'NEW_ENROLLMENT_REQUEST':
+      return { title: t('newEnrollTitle'), body: t('newEnrollBody', { requesterName, trackName }) };
+    case 'ENROLLMENT_APPROVED':
+      return { title: t('approvedTitle'), body: t('approvedBody', { trackName }) };
+    case 'ENROLLMENT_DENIED':
+      return { title: t('deniedTitle'), body: t('deniedBody', { trackName }) };
+    default:
+      return { title: fallbackTitle ?? type, body: fallbackBody ?? '' };
+  }
 }
 
 export function NotificationsBell() {
+  const t = useTranslations('dashboard.notifications');
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const fetchCount = async () => {
     try {
       const { data } = await api.get('/api/notifications/unread-count');
       setCount(data.count);
-    } catch {
-      // silent
-    }
+    } catch { /* silent */ }
   };
 
   const fetchItems = async () => {
@@ -51,15 +91,14 @@ export function NotificationsBell() {
     setCount(0);
   };
 
-  useEffect(() => {
-    fetchCount();
-  }, []);
+  const handleClick = async (n: Notification) => {
+    if (!n.read) await markRead(n.id);
+    const link = getNotificationLink(n.type, n.data);
+    if (link) { setOpen(false); router.push(link); }
+  };
 
-  useEffect(() => {
-    if (!open) return;
-    fetchItems();
-  }, [open]);
-
+  useEffect(() => { fetchCount(); }, []);
+  useEffect(() => { if (open) fetchItems(); }, [open]);
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -76,7 +115,7 @@ export function NotificationsBell() {
         style={{ color: 'var(--ls-sb-muted)' }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-        title="Notifications"
+        title={t('title')}
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
@@ -97,15 +136,11 @@ export function NotificationsBell() {
           style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
         >
           <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--ls-border)' }}>
-            <span className="text-sm font-semibold" style={{ color: 'var(--ls-text-1)' }}>Notifications</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--ls-text-1)' }}>{t('title')}</span>
             <div className="flex items-center gap-3">
               {count > 0 && (
-                <button
-                  onClick={markAll}
-                  className="text-xs cursor-pointer"
-                  style={{ color: 'var(--ls-accent)' }}
-                >
-                  Mark all read
+                <button onClick={markAll} className="text-xs cursor-pointer" style={{ color: 'var(--ls-accent)' }}>
+                  {t('markAllRead')}
                 </button>
               )}
               <button
@@ -114,7 +149,6 @@ export function NotificationsBell() {
                 style={{ color: 'var(--ls-text-2)' }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                title="Close"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -125,34 +159,42 @@ export function NotificationsBell() {
 
           <div className="max-h-72 overflow-y-auto">
             {loading && (
-              <div className="py-6 text-center text-sm" style={{ color: 'var(--ls-text-2)' }}>Loading…</div>
+              <div className="py-6 text-center text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('loading')}</div>
             )}
             {!loading && items.length === 0 && (
-              <div className="py-8 text-center text-sm" style={{ color: 'var(--ls-text-2)' }}>No notifications</div>
+              <div className="py-8 text-center text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('empty')}</div>
             )}
-            {!loading && items.map((n) => (
-              <button
-                key={n.id}
-                className="w-full text-left px-4 py-3 transition-colors"
-                style={{
-                  background: n.read ? 'transparent' : 'var(--ls-sb-hover)',
-                  borderBottom: '1px solid var(--ls-border)',
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = n.read ? 'transparent' : 'var(--ls-sb-hover)'; }}
-                onClick={() => markRead(n.id)}
-              >
-                <div className="flex items-start gap-2">
-                  {!n.read && (
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--ls-accent)' }} />
-                  )}
-                  <div className={!n.read ? '' : 'pl-4'}>
-                    <p className="text-sm font-medium" style={{ color: 'var(--ls-text-1)' }}>{n.title}</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--ls-text-2)' }}>{n.body}</p>
+            {!loading && items.map((n) => {
+              const link = getNotificationLink(n.type, n.data);
+              const { title, body } = getNotifText(t, n.type, n.data, n.title, n.body);
+              return (
+                <button
+                  key={n.id}
+                  className="w-full text-left px-4 py-3 transition-colors"
+                  style={{
+                    background: n.read ? 'transparent' : 'var(--ls-sb-hover)',
+                    borderBottom: '1px solid var(--ls-border)',
+                    cursor: link ? 'pointer' : 'default',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = n.read ? 'transparent' : 'var(--ls-sb-hover)'; }}
+                  onClick={() => handleClick(n)}
+                >
+                  <div className="flex items-start gap-2">
+                    {!n.read && (
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--ls-accent)' }} />
+                    )}
+                    <div className={!n.read ? '' : 'pl-4'}>
+                      <p className="text-sm font-medium" style={{ color: 'var(--ls-text-1)' }}>{title}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--ls-text-2)' }}>{body}</p>
+                      {link && (
+                        <p className="text-xs mt-1 font-medium" style={{ color: 'var(--ls-accent)' }}>→ {t('viewLink')}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
 
           <div className="px-4 py-2.5" style={{ borderTop: '1px solid var(--ls-border)' }}>
@@ -162,7 +204,7 @@ export function NotificationsBell() {
               style={{ color: 'var(--ls-accent)' }}
               onClick={() => setOpen(false)}
             >
-              See all notifications
+              {t('seeAll')}
             </Link>
           </div>
         </div>

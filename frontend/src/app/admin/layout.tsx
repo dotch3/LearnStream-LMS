@@ -3,13 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/auth.context';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationsBell } from '@/components/notifications-bell';
 
-const navItems = [
+const NAV_ITEMS = [
   {
-    label: 'Courses',
+    key: 'tracks' as const,
     href: '/admin/tracks',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -18,7 +19,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Users',
+    key: 'users' as const,
     href: '/admin/users',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -27,7 +28,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Requests',
+    key: 'requests' as const,
     href: '/admin/requests',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -36,7 +37,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Codes',
+    key: 'codes' as const,
     href: '/admin/codes',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -45,7 +46,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Invites',
+    key: 'invites' as const,
     href: '/admin/invites',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -76,6 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const t = useTranslations('adminNav');
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ls-bg)' }}>
@@ -120,16 +122,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
-            Student view
+            {t('studentView')}
           </Link>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-2 space-y-0.5">
-          {navItems.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <SbLink key={item.href} href={item.href} active={pathname.startsWith(item.href)}>
               <span style={{ opacity: pathname.startsWith(item.href) ? 1 : 0.65 }}>{item.icon}</span>
-              {item.label}
+              {t(item.key)}
             </SbLink>
           ))}
         </nav>
@@ -150,7 +152,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <button
                 onClick={async () => { await logout(); router.push('/login'); }}
-                title="Log out"
+                title={t('logout')}
                 style={{ color: 'var(--ls-sb-muted)' }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-sb-muted)'; }}

@@ -17,6 +17,9 @@ export class UserResponseDto {
   @ApiProperty()
   isActive!: boolean;
 
+  @ApiProperty({ example: 'en' })
+  preferredLocale!: string;
+
   @ApiProperty()
   createdAt!: Date;
 

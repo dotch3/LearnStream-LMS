@@ -1,7 +1,8 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -18,6 +19,7 @@ function EyeIcon({ open }: { open: boolean }) {
 
 export default function SetupPage() {
   const router = useRouter();
+  const t = useTranslations('setup');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,13 +29,25 @@ export default function SetupPage() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+    fetch(`${apiUrl}/setup/status`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.isSetupComplete) router.replace('/login');
+        else setChecking(false);
+      })
+      .catch(() => setChecking(false));
+  }, [router]);
 
   function validate(): boolean {
     const errors: Record<string, string> = {};
-    if (!name.trim()) errors.name = 'Full name is required.';
-    if (!email.trim()) errors.email = 'Email is required.';
-    if (password.length < 8) errors.password = 'Password must be at least 8 characters.';
-    if (password !== confirm) errors.confirm = 'Passwords do not match.';
+    if (!name.trim()) errors.name = t('errors.nameRequired');
+    if (!email.trim()) errors.email = t('errors.emailRequired');
+    if (password.length < 8) errors.password = t('errors.passwordLength');
+    if (password !== confirm) errors.confirm = t('errors.passwordMismatch');
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -58,7 +72,7 @@ export default function SetupPage() {
       }
 
       if (res.status === 404) {
-        setError('Setup is already complete. Redirecting to login…');
+        setError(t('alreadyDone'));
         setTimeout(() => router.push('/login'), 2000);
         return;
       }
@@ -70,25 +84,27 @@ export default function SetupPage() {
         return;
       }
 
-      setError('Unexpected error. Please try again.');
+      setError(t('alreadyDone'));
     } catch {
-      setError('Could not reach the server. Please check your connection.');
+      setError(t('alreadyDone'));
     } finally {
       setLoading(false);
     }
   }
 
+  if (checking) return null;
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">LearnStream-LMS</h1>
-          <p className="mt-1 text-sm text-gray-500">Create your admin account to get started</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t('subtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700">{t('name')}</label>
             <input
               type="text"
               required
@@ -100,7 +116,7 @@ export default function SetupPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">{t('email')}</label>
             <input
               type="email"
               required
@@ -112,7 +128,7 @@ export default function SetupPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">{t('password')}</label>
             <div className="relative mt-1">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -135,7 +151,7 @@ export default function SetupPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-700">{t('confirmPassword')}</label>
             <div className="relative mt-1">
               <input
                 type={showConfirm ? 'text' : 'password'}
@@ -165,7 +181,7 @@ export default function SetupPage() {
             disabled={loading}
             className="w-full rounded bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            {loading ? 'Creating account…' : 'Create admin account'}
+            {loading ? t('submitting') : t('submit')}
           </button>
         </form>
       </div>

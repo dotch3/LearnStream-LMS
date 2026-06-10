@@ -182,11 +182,11 @@ export class CommentsService {
     const [parent, existingReplies, replier] = await Promise.all([
       this.prisma.comment.findUnique({
         where: { id: parentId },
-        include: { author: { select: { id: true, name: true, email: true } } },
+        include: { author: { select: { id: true, name: true, email: true, preferredLocale: true } } },
       }),
       this.prisma.comment.findMany({
         where: { parentId, isDeleted: false, authorId: { not: replierId } },
-        include: { author: { select: { id: true, name: true, email: true } } },
+        include: { author: { select: { id: true, name: true, email: true, preferredLocale: true } } },
         distinct: ['authorId'],
       }),
       this.prisma.user.findUnique({ where: { id: replierId }, select: { name: true } }),
@@ -196,12 +196,12 @@ export class CommentsService {
 
     // Collect unique recipients: parent author + existing reply authors, excluding the replier
     const seen = new Set<string>([replierId]);
-    const recipients: { email: string; name: string }[] = [];
+    const recipients: { email: string; name: string; locale?: string }[] = [];
 
-    const addRecipient = (u: { id: string; name: string; email: string }) => {
+    const addRecipient = (u: { id: string; name: string; email: string; preferredLocale?: string }) => {
       if (!seen.has(u.id)) {
         seen.add(u.id);
-        recipients.push({ email: u.email, name: u.name });
+        recipients.push({ email: u.email, name: u.name, locale: u.preferredLocale });
       }
     };
 

@@ -22,6 +22,7 @@ const SAFE_SELECT = {
   email: true,
   role: true,
   isActive: true,
+  preferredLocale: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -159,9 +160,11 @@ export class UsersService {
     userId: string,
     dto: UpdateProfileDto,
   ): Promise<UserResponseDto> {
+    const data: { name: string; preferredLocale?: string } = { name: dto.name };
+    if (dto.locale) data.preferredLocale = dto.locale;
     return this.prisma.user.update({
       where: { id: userId },
-      data: { name: dto.name },
+      data,
       select: SAFE_SELECT,
     });
   }

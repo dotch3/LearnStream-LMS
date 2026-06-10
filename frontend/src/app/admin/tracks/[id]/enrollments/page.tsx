@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { ActionBtn } from '@/components/admin/action-btn';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
@@ -28,10 +29,10 @@ interface TrackInfo {
   name: string;
 }
 
-const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  APPROVED: { label: 'Enrolled',  bg: 'rgba(34,197,94,0.12)',   color: 'var(--ls-success)' },
-  PENDING:  { label: 'Pending',   bg: 'rgba(245,158,11,0.12)',  color: '#f59e0b' },
-  DENIED:   { label: 'Denied',    bg: 'rgba(239,68,68,0.12)',   color: 'var(--ls-error)' },
+const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
+  APPROVED: { bg: 'rgba(34,197,94,0.12)',  color: 'var(--ls-success)' },
+  PENDING:  { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
+  DENIED:   { bg: 'rgba(239,68,68,0.12)',  color: 'var(--ls-error)' },
 };
 
 const TrashIcon = () => (
@@ -63,6 +64,14 @@ function Avatar({ name }: { name: string }) {
 export default function AdminTrackEnrollmentsPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const t = useTranslations('admin.enrollments');
+  const tCommon = useTranslations('common');
+
+  const STATUS_LABELS: Record<string, string> = {
+    APPROVED: t('statusEnrolled'),
+    PENDING:  t('statusPending'),
+    DENIED:   t('statusDenied'),
+  };
 
   const [track, setTrack] = useState<TrackInfo | null>(null);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -73,12 +82,10 @@ export default function AdminTrackEnrollmentsPage() {
   const [acting, setActing] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  // Remove dialog
   const [removeDialog, setRemoveDialog] = useState<{ open: boolean; enrollment: Enrollment | null; loading: boolean }>({
     open: false, enrollment: null, loading: false,
   });
 
-  // Add student modal
   const [showAdd, setShowAdd] = useState(false);
   const [allUsers, setAllUsers] = useState<UserOption[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -121,7 +128,10 @@ export default function AdminTrackEnrollmentsPage() {
       setEnrollments((prev) =>
         prev.map((e) => e.id === enrollmentId ? { ...e, status: action === 'approve' ? 'APPROVED' : 'DENIED' } : e)
       );
-      showToast(action === 'approve' ? 'Enrollment approved' : 'Enrollment denied', action === 'approve' ? 'success' : 'warning');
+      showToast(
+        action === 'approve' ? t('enrollApproved') : t('enrollDenied'),
+        action === 'approve' ? 'success' : 'warning',
+      );
     } finally {
       setActing(null);
     }
@@ -136,10 +146,10 @@ export default function AdminTrackEnrollmentsPage() {
       await api.delete(`/api/enrollments/${removeDialog.enrollment.id}`);
       setEnrollments((prev) => prev.filter((e) => e.id !== removeDialog.enrollment!.id));
       setRemoveDialog({ open: false, enrollment: null, loading: false });
-      showToast('Enrollment removed', 'info');
+      showToast(t('enrollRemoved'), 'info');
     } catch {
       setRemoveDialog((d) => ({ ...d, loading: false }));
-      showToast('Failed to remove enrollment', 'error');
+      showToast(t('removeError'), 'error');
     }
   };
 
@@ -159,17 +169,17 @@ export default function AdminTrackEnrollmentsPage() {
   };
 
   const handleAdd = async () => {
-    if (!selectedUserId) { setAddError('Select a student.'); return; }
+    if (!selectedUserId) { setAddError(t('selectStudent')); return; }
     setAddLoading(true);
     setAddError('');
     try {
       await api.post('/api/enrollments/admin-enroll', { trackId: params.id, userId: selectedUserId });
       setShowAdd(false);
       load(page, filter);
-      showToast('Student enrolled successfully', 'success');
+      showToast(t('enrollSuccess'), 'success');
     } catch (e: unknown) {
       const m = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setAddError(Array.isArray(m) ? m.join(', ') : String(m ?? 'Failed to enroll student'));
+      setAddError(Array.isArray(m) ? m.join(', ') : String(m ?? t('enrollError')));
     } finally {
       setAddLoading(false);
     }
@@ -183,9 +193,9 @@ export default function AdminTrackEnrollmentsPage() {
     <>
       <ConfirmDialog
         open={removeDialog.open}
-        title="Remove enrollment?"
-        description={`${removeDialog.enrollment?.userName} will lose access to this course.`}
-        confirmLabel="Remove"
+        title={t('removeTitle')}
+        description={t('removeDesc', { name: removeDialog.enrollment?.userName ?? '' })}
+        confirmLabel={t('removeLbl')}
         variant="danger"
         loading={removeDialog.loading}
         onConfirm={handleRemove}
@@ -195,20 +205,20 @@ export default function AdminTrackEnrollmentsPage() {
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
-            <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--ls-text-1)' }}>Add Student</h2>
+            <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--ls-text-1)' }}>{t('addStudent')}</h2>
 
             <input
               className="w-full rounded-lg px-3 py-2 text-sm mb-3 outline-none"
               style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
-              placeholder="Search by name or email…"
+              placeholder={t('searchPlaceholder')}
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
             />
 
             {usersLoading ? (
-              <div className="py-4 text-center text-sm" style={{ color: 'var(--ls-text-2)' }}>Loading users…</div>
+              <div className="py-4 text-center text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('loadingUsers')}</div>
             ) : filtered.length === 0 ? (
-              <div className="py-4 text-center text-sm" style={{ color: 'var(--ls-text-2)' }}>No users available to add</div>
+              <div className="py-4 text-center text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('noUsers')}</div>
             ) : (
               <div className="max-h-56 overflow-y-auto rounded-lg mb-3" style={{ border: '1px solid var(--ls-border)' }}>
                 {filtered.map((u, i) => (
@@ -242,7 +252,7 @@ export default function AdminTrackEnrollmentsPage() {
 
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-lg text-sm" style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}>
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 disabled={addLoading || !selectedUserId}
@@ -250,7 +260,7 @@ export default function AdminTrackEnrollmentsPage() {
                 className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
                 style={{ background: 'var(--ls-accent)' }}
               >
-                {addLoading ? 'Enrolling…' : 'Enroll Student'}
+                {addLoading ? t('enrolling') : t('enrollStudent')}
               </button>
             </div>
           </div>
@@ -263,12 +273,12 @@ export default function AdminTrackEnrollmentsPage() {
           className="text-sm mb-1 flex items-center gap-1 transition-opacity hover:opacity-70"
           style={{ color: 'var(--ls-accent-text)' }}
         >
-          ← Back to Courses
+          ← {t('backToCourses')}
         </button>
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text-1)' }}>Enrollments</h1>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text-1)' }}>{t('title')}</h1>
             <p className="text-sm mt-0.5" style={{ color: 'var(--ls-text-2)' }}>{track?.name ?? '…'}</p>
           </div>
           <button
@@ -279,11 +289,10 @@ export default function AdminTrackEnrollmentsPage() {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
             </svg>
-            Add Student
+            {t('addStudent')}
           </button>
         </div>
 
-        {/* Filter tabs */}
         <div className="flex gap-1 mb-5 p-1 rounded-lg w-fit" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
           {(['ALL', 'APPROVED', 'PENDING', 'DENIED'] as const).map((f) => (
             <button
@@ -295,7 +304,7 @@ export default function AdminTrackEnrollmentsPage() {
                 color: filter === f ? 'var(--ls-sb-active-t)' : 'var(--ls-text-2)',
               }}
             >
-              {f === 'ALL' ? 'All' : STATUS_BADGE[f].label}
+              {f === 'ALL' ? tCommon('all') : STATUS_LABELS[f]}
             </button>
           ))}
         </div>
@@ -306,22 +315,23 @@ export default function AdminTrackEnrollmentsPage() {
           </div>
         ) : enrollments.length === 0 ? (
           <div className="rounded-xl py-16 text-center" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
-            <p className="text-sm" style={{ color: 'var(--ls-text-2)' }}>No enrollments found</p>
+            <p className="text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('noFound')}</p>
           </div>
         ) : (
           <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}>
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-bg)' }}>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Student</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Status</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>Enrolled</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('studentCol')}</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('statusCol')}</th>
+                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('enrolledCol')}</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
               <tbody>
                 {enrollments.map((e, i) => {
-                  const badge = STATUS_BADGE[e.status];
+                  const styles = STATUS_STYLES[e.status];
+                  const label = STATUS_LABELS[e.status];
                   return (
                     <tr
                       key={e.id}
@@ -339,9 +349,9 @@ export default function AdminTrackEnrollmentsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: badge.bg, color: badge.color }}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: badge.color }} />
-                          {badge.label}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: styles.bg, color: styles.color }}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: styles.color }} />
+                          {label}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-text-2)' }}>
@@ -351,46 +361,17 @@ export default function AdminTrackEnrollmentsPage() {
                         <div className="flex items-center justify-end gap-0.5">
                           {e.status === 'PENDING' && (
                             <>
-                              <ActionBtn
-                                onClick={() => act(e.id, 'approve')}
-                                label="Approve"
-                                variant="success"
-                                disabled={acting === e.id}
-                                icon={<CheckIcon />}
-                              />
-                              <ActionBtn
-                                onClick={() => act(e.id, 'deny')}
-                                label="Deny"
-                                variant="warning"
-                                disabled={acting === e.id}
-                                icon={<XIcon />}
-                              />
+                              <ActionBtn onClick={() => act(e.id, 'approve')} label={t('approve')} variant="success" disabled={acting === e.id} icon={<CheckIcon />} />
+                              <ActionBtn onClick={() => act(e.id, 'deny')} label={t('deny')} variant="warning" disabled={acting === e.id} icon={<XIcon />} />
                             </>
                           )}
                           {e.status === 'DENIED' && (
-                            <ActionBtn
-                              onClick={() => act(e.id, 'approve')}
-                              label="Approve"
-                              variant="success"
-                              disabled={acting === e.id}
-                              icon={<CheckIcon />}
-                            />
+                            <ActionBtn onClick={() => act(e.id, 'approve')} label={t('approve')} variant="success" disabled={acting === e.id} icon={<CheckIcon />} />
                           )}
                           {e.status === 'APPROVED' && (
-                            <ActionBtn
-                              onClick={() => act(e.id, 'deny')}
-                              label="Revoke"
-                              variant="warning"
-                              disabled={acting === e.id}
-                              icon={<XIcon />}
-                            />
+                            <ActionBtn onClick={() => act(e.id, 'deny')} label={t('revoke')} variant="warning" disabled={acting === e.id} icon={<XIcon />} />
                           )}
-                          <ActionBtn
-                            onClick={() => openRemove(e)}
-                            label="Remove"
-                            variant="danger"
-                            icon={<TrashIcon />}
-                          />
+                          <ActionBtn onClick={() => openRemove(e)} label={t('removeLbl')} variant="danger" icon={<TrashIcon />} />
                         </div>
                       </td>
                     </tr>
@@ -403,10 +384,10 @@ export default function AdminTrackEnrollmentsPage() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 text-sm" style={{ color: 'var(--ls-text-2)' }}>
-            <span>Page {page} of {totalPages}</span>
+            <span>{t('pageOf', { page, total: totalPages })}</span>
             <div className="flex gap-2">
-              <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40" style={{ borderColor: 'var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text-1)' }}>← Previous</button>
-              <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40" style={{ borderColor: 'var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text-1)' }}>Next →</button>
+              <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40" style={{ borderColor: 'var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text-1)' }}>← {tCommon('previous')}</button>
+              <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40" style={{ borderColor: 'var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text-1)' }}>{tCommon('next')} →</button>
             </div>
           </div>
         )}

@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth.context';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
+import { LocaleSwitcher } from '@/components/locale-switcher';
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -49,29 +51,22 @@ function PasswordInput({
   );
 }
 
-const PASSWORD_RULES = [
-  { label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
-  { label: 'Uppercase letter (A–Z)', test: (p: string) => /[A-Z]/.test(p) },
-  { label: 'Lowercase letter (a–z)', test: (p: string) => /[a-z]/.test(p) },
-  { label: 'Number (0–9)',           test: (p: string) => /\d/.test(p) },
-  { label: 'Special character (!@#$…)', test: (p: string) => /[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/.test(p) },
+const PASSWORD_RULE_KEYS = [
+  { key: 'minChars', test: (p: string) => p.length >= 8 },
+  { key: 'uppercase', test: (p: string) => /[A-Z]/.test(p) },
+  { key: 'lowercase', test: (p: string) => /[a-z]/.test(p) },
+  { key: 'number', test: (p: string) => /\d/.test(p) },
+  { key: 'special', test: (p: string) => /[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/.test(p) },
 ];
 
-function validatePassword(p: string): string | null {
-  for (const rule of PASSWORD_RULES) {
-    if (!rule.test(p)) return rule.label;
-  }
-  return null;
-}
-
-function PasswordChecklist({ password }: { password: string }) {
+function PasswordChecklist({ password, tRules }: { password: string; tRules: ReturnType<typeof useTranslations> }) {
   if (!password) return null;
   return (
     <ul className="mt-2 space-y-1">
-      {PASSWORD_RULES.map((rule) => {
+      {PASSWORD_RULE_KEYS.map((rule) => {
         const ok = rule.test(password);
         return (
-          <li key={rule.label} className="flex items-center gap-1.5 text-xs">
+          <li key={rule.key} className="flex items-center gap-1.5 text-xs">
             {ok ? (
               <svg className="h-3.5 w-3.5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -81,7 +76,7 @@ function PasswordChecklist({ password }: { password: string }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             )}
-            <span className={ok ? 'text-green-600' : 'text-gray-400'}>{rule.label}</span>
+            <span className={ok ? 'text-green-600' : 'text-gray-400'}>{tRules(rule.key as Parameters<typeof tRules>[0])}</span>
           </li>
         );
       })}
@@ -91,13 +86,20 @@ function PasswordChecklist({ password }: { password: string }) {
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const t = useTranslations('dashboard.profile');
+  const tRules = useTranslations('auth.passwordRules');
 
   const [name, setName] = useState('');
   const [nameMsg, setNameMsg] = useState('');
   const [nameError, setNameError] = useState('');
 
+  useEffect(() => {
+    if (user?.name) setName(user.name);
+  }, [user?.name]);
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [pwMsg, setPwMsg] = useState('');
   const [pwError, setPwError] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
@@ -108,10 +110,9 @@ export default function ProfilePage() {
     setNameError('');
     try {
       await api.patch('/api/users/me/profile', { name });
-      setNameMsg('Name updated successfully.');
-      setName('');
+      setNameMsg(t('nameUpdated'));
     } catch {
-      setNameError('Failed to update name.');
+      setNameError(t('nameError'));
     }
   };
 
@@ -120,47 +121,53 @@ export default function ProfilePage() {
     setPwMsg('');
     setPwError('');
 
-    const validationError = validatePassword(newPassword);
-    if (validationError) {
-      setPwError(`New password does not meet requirements: ${validationError}.`);
+    if (newPassword !== confirmPassword) {
+      setPwError(t('passwordMismatch'));
+      return;
+    }
+
+    const failedRule = PASSWORD_RULE_KEYS.find((r) => !r.test(newPassword));
+    if (failedRule) {
+      setPwError(tRules(failedRule.key as Parameters<typeof tRules>[0]));
       return;
     }
 
     setPwLoading(true);
     try {
       await api.patch('/api/users/me/password', { currentPassword, newPassword });
-      setPwMsg('Password changed successfully.');
+      setPwMsg(t('passwordChanged'));
       setCurrentPassword('');
       setNewPassword('');
+      setConfirmPassword('');
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       const msg = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       if (status === 401) {
-        setPwError('Current password is incorrect.');
+        setPwError(t('incorrectPassword'));
       } else if (Array.isArray(msg)) {
         setPwError(msg.join(' '));
       } else if (typeof msg === 'string') {
         setPwError(msg);
       } else {
-        setPwError('Failed to change password.');
+        setPwError(t('passwordError'));
       }
     } finally {
       setPwLoading(false);
     }
   };
 
-  const allRulesPass = PASSWORD_RULES.every((r) => r.test(newPassword));
+  const allRulesPass = PASSWORD_RULE_KEYS.every((r) => r.test(newPassword));
+  const passwordsMatch = !confirmPassword || newPassword === confirmPassword;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-6 py-10">
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-          <p className="mt-1 text-gray-500">Manage your account settings.</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="mt-1 text-gray-500">{t('subtitle')}</p>
         </div>
 
-        {/* Account info */}
         {user && (
           <div className="mb-6 flex items-center gap-4 rounded-xl bg-white border border-gray-200 shadow-sm p-5">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xl font-bold text-indigo-700">
@@ -176,15 +183,20 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Update name */}
+        <div className="mb-6 rounded-xl bg-white border border-gray-200 shadow-sm p-5">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">{t('language')}</h2>
+          <p className="text-sm text-gray-500 mb-3">{t('languageSubtitle')}</p>
+          <LocaleSwitcher />
+        </div>
+
         <div className="mb-6 rounded-xl bg-white border border-gray-200 shadow-sm p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Update Display Name</h2>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">{t('updateDisplayName')}</h2>
           <form onSubmit={handleUpdateProfile} className="space-y-3">
             <input
               type="text"
               required
               minLength={2}
-              placeholder="New display name"
+              placeholder={t('namePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -195,32 +207,42 @@ export default function ProfilePage() {
               type="submit"
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
-              Update Name
+              {t('updateName')}
             </button>
           </form>
         </div>
 
-        {/* Change password */}
         <div className="rounded-xl bg-white border border-gray-200 shadow-sm p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-1">Change Password</h2>
-          <p className="text-sm text-gray-400 mb-4">Your new password must meet all requirements below.</p>
+          <h2 className="text-base font-semibold text-gray-900 mb-1">{t('changePassword')}</h2>
+          <p className="text-sm text-gray-400 mb-4">{t('passwordRequirements')}</p>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Current password</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">{t('currentPassword')}</label>
               <PasswordInput
                 value={currentPassword}
                 onChange={setCurrentPassword}
-                placeholder="Enter current password"
+                placeholder={t('currentPassword')}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">New password</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">{t('newPassword')}</label>
               <PasswordInput
                 value={newPassword}
                 onChange={setNewPassword}
-                placeholder="Enter new password"
+                placeholder={t('newPassword')}
               />
-              <PasswordChecklist password={newPassword} />
+              <PasswordChecklist password={newPassword} tRules={tRules} />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">{t('confirmPassword')}</label>
+              <PasswordInput
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                placeholder={t('confirmPassword')}
+              />
+              {confirmPassword && !passwordsMatch && (
+                <p className="mt-1 text-xs text-red-500">{t('passwordMismatch')}</p>
+              )}
             </div>
 
             {pwError && <p className="text-sm text-red-600">{pwError}</p>}
@@ -228,10 +250,10 @@ export default function ProfilePage() {
 
             <button
               type="submit"
-              disabled={pwLoading || (newPassword.length > 0 && !allRulesPass)}
+              disabled={pwLoading || (newPassword.length > 0 && !allRulesPass) || !passwordsMatch}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
-              {pwLoading ? 'Saving…' : 'Change Password'}
+              {pwLoading ? t('savingPassword') : t('changePassword')}
             </button>
           </form>
         </div>

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -26,6 +27,8 @@ export default function InviteAcceptPage() {
   const router = useRouter();
   const params = useParams();
   const token = params.token as string;
+  const t = useTranslations('auth.invite');
+  const tAuth = useTranslations('auth');
 
   const [pageState, setPageState] = useState<PageState>('loading');
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
@@ -47,7 +50,7 @@ export default function InviteAcceptPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+      setError(t('expired'));
       return;
     }
     setError('');
@@ -57,7 +60,7 @@ export default function InviteAcceptPage() {
       setPageState('done');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(typeof msg === 'string' ? msg : 'Failed to activate account. The link may have expired.');
+      setError(typeof msg === 'string' ? msg : t('expired'));
     } finally {
       setLoading(false);
     }
@@ -86,7 +89,7 @@ export default function InviteAcceptPage() {
         </div>
 
         {pageState === 'loading' && (
-          <p className="text-center text-sm" style={{ color: 'var(--ls-text-3)' }}>Validating invite…</p>
+          <p className="text-center text-sm" style={{ color: 'var(--ls-text-3)' }}>{t('validating')}</p>
         )}
 
         {pageState === 'invalid' && (
@@ -95,10 +98,10 @@ export default function InviteAcceptPage() {
               className="rounded-lg px-4 py-3 text-sm"
               style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--ls-error)', border: '1px solid rgba(239,68,68,0.2)' }}
             >
-              This invite link is invalid or has expired.
+              {t('expired')}
             </div>
             <p className="text-xs" style={{ color: 'var(--ls-text-3)' }}>
-              Ask an admin to send a new invite.
+              {t('invalidHelp')}
             </p>
           </div>
         )}
@@ -106,16 +109,16 @@ export default function InviteAcceptPage() {
         {pageState === 'form' && inviteInfo && (
           <>
             <h1 className="text-lg font-bold mb-1" style={{ color: 'var(--ls-text-1)' }}>
-              Create your account
+              {t('createAccount')}
             </h1>
             <p className="text-xs mb-6" style={{ color: 'var(--ls-text-3)' }}>
-              You were invited as <span className="font-semibold">{inviteInfo.role}</span>
+              {t('invitedAs', { role: inviteInfo.role })}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ls-text-2)' }}>
-                  Email
+                  {tAuth('email')}
                 </label>
                 <input
                   type="email"
@@ -132,7 +135,7 @@ export default function InviteAcceptPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ls-text-2)' }}>
-                  Your name
+                  {t('yourName')}
                 </label>
                 <input
                   type="text"
@@ -140,7 +143,7 @@ export default function InviteAcceptPage() {
                   minLength={2}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Full name"
+                  placeholder={t('name')}
                   autoFocus
                   className="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                   style={{
@@ -153,7 +156,7 @@ export default function InviteAcceptPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ls-text-2)' }}>
-                  Password
+                  {tAuth('password')}
                 </label>
                 <div className="relative">
                   <input
@@ -162,7 +165,7 @@ export default function InviteAcceptPage() {
                     minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min. 8 characters"
+                    placeholder={t('passwordPlaceholder')}
                     className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2"
                     style={{
                       background: 'var(--ls-surface-2)',
@@ -194,7 +197,7 @@ export default function InviteAcceptPage() {
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent-h)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent)'; }}
               >
-                {loading ? 'Creating account…' : 'Create account'}
+                {loading ? t('creating') : t('createAccount')}
               </button>
             </form>
           </>
@@ -206,7 +209,7 @@ export default function InviteAcceptPage() {
               className="rounded-lg px-4 py-3 text-sm"
               style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ls-success)', border: '1px solid rgba(34,197,94,0.2)' }}
             >
-              Account created! You can now sign in.
+              {t('success')}
             </div>
             <button
               onClick={() => router.push('/login')}
@@ -215,7 +218,7 @@ export default function InviteAcceptPage() {
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent-h)'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent)'; }}
             >
-              Go to login
+              {t('goToLogin')}
             </button>
           </div>
         )}
