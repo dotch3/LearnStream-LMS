@@ -34,7 +34,9 @@ export default function InviteAcceptPage() {
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +53,10 @@ export default function InviteAcceptPage() {
     e.preventDefault();
     if (password.length < 8) {
       setError(t('expired'));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError(t('passwordMismatch'));
       return;
     }
     setError('');
@@ -183,6 +189,40 @@ export default function InviteAcceptPage() {
                     <EyeIcon open={showPassword} />
                   </button>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--ls-text-2)' }}>
+                  {t('confirmPassword')}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={t('passwordPlaceholder')}
+                    className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2"
+                    style={{
+                      background: 'var(--ls-surface-2)',
+                      border: `1px solid ${confirmPassword && password !== confirmPassword ? 'var(--ls-error)' : 'var(--ls-border)'}`,
+                      color: 'var(--ls-text-1)',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    tabIndex={-1}
+                    className="absolute inset-y-0 right-0 flex items-center px-3"
+                    style={{ color: 'var(--ls-text-3)' }}
+                  >
+                    <EyeIcon open={showConfirmPassword} />
+                  </button>
+                </div>
+                {confirmPassword && password !== confirmPassword && (
+                  <p className="text-xs mt-1" style={{ color: 'var(--ls-error)' }}>{t('passwordMismatch')}</p>
+                )}
               </div>
 
               {error && (

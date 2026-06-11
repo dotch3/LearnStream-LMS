@@ -4,7 +4,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+    const apiUrl = process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
     const res = await fetch(`${apiUrl}/setup/status`, { cache: 'no-store' });
     const data = (await res.json()) as { isSetupComplete: boolean };
 

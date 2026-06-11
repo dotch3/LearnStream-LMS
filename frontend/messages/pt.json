@@ -74,7 +74,9 @@
       "createAccount": "Crie sua conta",
       "creating": "Criando conta…",
       "success": "Conta criada! Você já pode entrar.",
-      "goToLogin": "Ir para o login"
+      "goToLogin": "Ir para o login",
+      "confirmPassword": "Confirmar senha",
+      "passwordMismatch": "As senhas não coincidem"
     },
     "passwordRules": {
       "minChars": "Mínimo 8 caracteres",

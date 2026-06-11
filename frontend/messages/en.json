@@ -74,7 +74,9 @@
       "createAccount": "Create your account",
       "creating": "Creating account…",
       "success": "Account created! You can now sign in.",
-      "goToLogin": "Go to login"
+      "goToLogin": "Go to login",
+      "confirmPassword": "Confirm password",
+      "passwordMismatch": "Passwords do not match"
     },
     "passwordRules": {
       "minChars": "At least 8 characters",

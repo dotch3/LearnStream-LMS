@@ -90,6 +90,45 @@ See [backend/README.md](./backend/README.md) and [frontend/README.md](./frontend
 
 ---
 
+## Local Development with Docker / Podman
+
+Run the full stack (PostgreSQL + backend + frontend) in containers:
+
+```bash
+# Start all services
+podman compose up --build   # or: docker compose up --build
+
+# Destroy everything (including DB data)
+podman compose down -v
+```
+
+| Service  | URL                    |
+|----------|------------------------|
+| Frontend | http://localhost:3011  |
+| Backend  | http://localhost:3010  |
+| Postgres | localhost:5433         |
+
+### Email (SMTP) configuration
+
+The backend skips email sending if SMTP credentials are not set. To enable emails in the Docker environment, add these variables to the `backend` service in `docker-compose.yml`:
+
+```yaml
+services:
+  backend:
+    environment:
+      SMTP_HOST: smtp.gmail.com      # your SMTP server
+      SMTP_PORT: 587
+      SMTP_USER: your@email.com      # your email address
+      SMTP_PASS: your_app_password   # Gmail: use an App Password, not your account password
+      SMTP_FROM: LearnStream <your@email.com>
+```
+
+> **Gmail users:** Go to Google Account → Security → 2-Step Verification → App passwords. Generate a password for "Mail" and use it as `SMTP_PASS`.
+
+> **Do not commit `docker-compose.yml` with real credentials.** Add it to `.gitignore` or use a separate `docker-compose.override.yml` for secrets.
+
+---
+
 ## Deployment
 
 - **Frontend** → Deploy to [Vercel](https://vercel.com) (connect the `/frontend` directory)
