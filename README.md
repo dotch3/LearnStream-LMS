@@ -39,7 +39,7 @@ This project is developed as a **hands-on practice environment for AI-assisted s
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 15 + TypeScript + Tailwind CSS |
+| Frontend | Next.js + TypeScript + Tailwind CSS |
 | Backend | NestJS + TypeScript |
 | Database | PostgreSQL via Prisma ORM |
 | Auth | JWT (access + refresh with rotation) |
@@ -53,88 +53,117 @@ This project is developed as a **hands-on practice environment for AI-assisted s
 
 ```
 LearnStream-LMS/
-├── backend/     # NestJS REST API — modules, DB, PDF generation
-├── frontend/    # Next.js app — viewer dashboard and admin panel
-└── specs/       # SpecKit feature specifications and implementation plans
+├── backend/          # NestJS REST API — auth, courses, progress, certificates
+├── frontend/         # Next.js app — viewer dashboard and admin panel
+├── docker-compose.yml
+└── README.md
 ```
 
-Detailed setup instructions live in each sub-project:
-
-- [Backend — API setup and environment](./backend/README.md)
-- [Frontend — UI setup and environment](./frontend/README.md)
+Sub-project details:
+- [Backend — environment variables, API reference, Prisma](./backend/README.md)
+- [Frontend — environment variables, pages, conventions](./frontend/README.md)
 
 ---
 
-## Quick Start
+## Setup: Option A — Docker / Podman (recommended)
+
+The easiest way to run the full stack locally. Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/).
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/dotch3/LearnStream-LMS.git
 cd LearnStream-LMS
 
-# 2. Set up the backend (API + database)
+# Start all services (PostgreSQL + backend + frontend)
+docker compose up --build
+# or with Podman:
+podman compose up --build
+```
+
+| Service  | URL                   |
+|----------|-----------------------|
+| Frontend | http://localhost:3011 |
+| Backend  | http://localhost:3010 |
+| Postgres | localhost:5433        |
+
+On first run, migrations are applied automatically and the setup wizard will appear at http://localhost:3011.
+
+**To reset everything (wipes DB data):**
+
+```bash
+docker compose down -v
+```
+
+### Email in Docker
+
+The backend silently skips emails if SMTP is not configured. To enable it, fill in the SMTP variables in `docker-compose.yml` under the `backend` service:
+
+```yaml
+SMTP_HOST: smtp.gmail.com
+SMTP_PORT: 587
+SMTP_USER: your@email.com
+SMTP_PASS: your_app_password    # Gmail: use an App Password
+SMTP_FROM: LearnStream <your@email.com>
+```
+
+> Do not commit real credentials. Use `docker-compose.override.yml` or add `docker-compose.yml` to `.gitignore` if it contains secrets.
+
+---
+
+## Setup: Option B — Manual Local Development
+
+Requires Node.js 20+ and a local PostgreSQL instance.
+
+### 1. Database
+
+```sql
+CREATE USER learnstream WITH PASSWORD 'learnstream_dev';
+CREATE DATABASE learnstream_db OWNER learnstream;
+```
+
+### 2. Backend
+
+```bash
 cd backend
-cp .env.example .env   # fill in DATABASE_URL, JWT secrets
+cp .env.example .env
+# Edit .env — fill in DATABASE_URL, JWT secrets, SMTP credentials
 npm install
 npx prisma migrate dev
 npm run start:dev
-
-# 3. Set up the frontend (separate terminal)
-cd ../frontend
-cp .env.example .env.local  # fill in NEXT_PUBLIC_API_URL
-npm install
-npm run dev
 ```
 
-See [backend/README.md](./backend/README.md) and [frontend/README.md](./frontend/README.md) for all environment variables and configuration options.
+Backend runs at http://localhost:3000. See [backend/README.md](./backend/README.md) for all environment variables.
 
----
-
-## Local Development with Docker / Podman
-
-Run the full stack (PostgreSQL + backend + frontend) in containers:
+### 3. Frontend
 
 ```bash
-# Start all services
-podman compose up --build   # or: docker compose up --build
-
-# Destroy everything (including DB data)
-podman compose down -v
+cd frontend
+cp .env.example .env.local
+# Edit .env.local — set NEXT_PUBLIC_API_URL=http://localhost:3000
+npm install
+npm run dev -- --port 3001
 ```
 
-| Service  | URL                    |
-|----------|------------------------|
-| Frontend | http://localhost:3011  |
-| Backend  | http://localhost:3010  |
-| Postgres | localhost:5433         |
-
-### Email (SMTP) configuration
-
-The backend skips email sending if SMTP credentials are not set. To enable emails in the Docker environment, add these variables to the `backend` service in `docker-compose.yml`:
-
-```yaml
-services:
-  backend:
-    environment:
-      SMTP_HOST: smtp.gmail.com      # your SMTP server
-      SMTP_PORT: 587
-      SMTP_USER: your@email.com      # your email address
-      SMTP_PASS: your_app_password   # Gmail: use an App Password, not your account password
-      SMTP_FROM: LearnStream <your@email.com>
-```
-
-> **Gmail users:** Go to Google Account → Security → 2-Step Verification → App passwords. Generate a password for "Mail" and use it as `SMTP_PASS`.
-
-> **Do not commit `docker-compose.yml` with real credentials.** Add it to `.gitignore` or use a separate `docker-compose.override.yml` for secrets.
+Frontend runs at http://localhost:3001. See [frontend/README.md](./frontend/README.md) for all environment variables.
 
 ---
 
-## Deployment
+## Deployment: Cloud (Vercel + Railway)
 
-- **Frontend** → Deploy to [Vercel](https://vercel.com) (connect the `/frontend` directory)
-- **Backend + DB** → Deploy to [Railway](https://railway.app) (NestJS service + PostgreSQL plugin)
+### Backend → Railway
 
-Set the required environment variables in each platform's dashboard. The backend runs `npx prisma migrate deploy` on startup in production.
+1. Create a new Railway project
+2. Add a **PostgreSQL** plugin — Railway sets `DATABASE_URL` automatically
+3. Add a **NestJS service** pointing to the `/backend` directory
+4. Set environment variables in the Railway dashboard (see [backend/README.md](./backend/README.md))
+5. The backend runs `npx prisma migrate deploy` on startup — no manual migration needed
+
+### Frontend → Vercel
+
+1. Import the repository into Vercel
+2. Set **Root Directory** to `frontend`
+3. Set environment variables in the Vercel dashboard:
+   - `NEXT_PUBLIC_API_URL` → your Railway backend URL (e.g. `https://your-app.railway.app`)
+4. Deploy
 
 ---
 
