@@ -53,10 +53,10 @@ export default function AdminTracksPage() {
     open: false, track: null, loading: false,
   });
 
-  const VISIBILITY_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-    PUBLIC:    { label: t('visibility.PUBLIC'),    bg: 'rgba(34,197,94,0.12)',  color: 'var(--ls-success)' },
-    LINK_ONLY: { label: t('visibility.LINK_ONLY'), bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
-    DRAFT:     { label: t('visibility.DRAFT'),     bg: 'var(--ls-surface-2)',   color: 'var(--ls-text-2)' },
+  const VISIBILITY_LABEL: Record<string, string> = {
+    PUBLIC:    t('visibility.PUBLIC'),
+    LINK_ONLY: t('visibility.LINK_ONLY'),
+    DRAFT:     t('visibility.DRAFT'),
   };
 
   useEffect(() => {
@@ -96,8 +96,8 @@ export default function AdminTracksPage() {
         onCancel={() => setDialog({ open: false, track: null, loading: false })}
       />
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
           <div>
             <h1 className="text-3xl font-bold" style={{ color: 'var(--ls-text-1)' }}>{t('title')}</h1>
             <p className="mt-1" style={{ color: 'var(--ls-text-2)' }}>{t('subtitle')}</p>
@@ -151,85 +151,74 @@ export default function AdminTracksPage() {
         )}
 
         {!loading && !error && tracks.length > 0 && (
-          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}>
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-bg)' }}>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('courseCol')}</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('visibilityCol')}</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('videosCol')}</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {tracks.map((track, i) => {
-                  const badge = VISIBILITY_BADGE[track.visibility] ?? VISIBILITY_BADGE.DRAFT;
-                  return (
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
+                    <th className="text-left px-5 py-3 font-semibold text-xs" style={{ color: 'var(--ls-muted)' }}>{t('courseCol')}</th>
+                    <th className="text-left px-5 py-3 font-semibold text-xs" style={{ color: 'var(--ls-muted)' }}>{t('visibilityCol')}</th>
+                    <th className="text-left px-5 py-3 font-semibold text-xs" style={{ color: 'var(--ls-muted)' }}>{t('videosCol')}</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {tracks.map((track, i) => (
                     <tr
                       key={track.id}
-                      style={{ borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                      style={{ background: 'var(--ls-card)', borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-card)'; }}
                     >
                       <td className="px-5 py-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
-                            style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text-2)' }}
-                          >
-                            {track.order || '#'}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold truncate" style={{ color: 'var(--ls-text-1)' }}>{track.name}</p>
-                            {track.description && (
-                              <p className="text-xs truncate" style={{ color: 'var(--ls-text-2)' }}>{track.description}</p>
-                            )}
-                          </div>
-                        </div>
+                        <p className="font-medium truncate" style={{ color: 'var(--ls-text)' }}>{track.name}</p>
+                        {track.description && (
+                          <p className="text-xs truncate mt-0.5" style={{ color: 'var(--ls-muted)' }}>{track.description}</p>
+                        )}
                       </td>
-                      <td className="px-5 py-3">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: badge.bg, color: badge.color }}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: badge.color }} />
-                          {badge.label}
-                        </span>
+                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                        {VISIBILITY_LABEL[track.visibility] ?? track.visibility}
                       </td>
-                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-text-2)' }}>
-                        {track.videoCount} {track.videoCount !== 1 ? t('videosCol').toLowerCase() : t('videosCol').replace(/s$/i, '')}
+                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                        {track.videoCount}
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-0.5">
-                          <ActionBtn
-                            onClick={() => router.push(`/admin/tracks/${track.id}/videos`)}
-                            label={t('videosBtn')}
-                            variant="primary"
-                            icon={<VideosIcon />}
-                          />
-                          <ActionBtn
-                            onClick={() => router.push(`/admin/tracks/${track.id}/enrollments`)}
-                            label={t('studentsBtn')}
-                            variant="success"
-                            icon={<StudentsIcon />}
-                          />
-                          <ActionBtn
-                            onClick={() => router.push(`/admin/tracks/${track.id}`)}
-                            label={tCommon('edit')}
-                            variant="warning"
-                            icon={<EditIcon />}
-                          />
-                          <ActionBtn
-                            onClick={() => openDelete(track)}
-                            label={tCommon('delete')}
-                            variant="danger"
-                            icon={<TrashIcon />}
-                          />
+                          <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}/videos`)} label={t('videosBtn')} variant="primary" icon={<VideosIcon />} />
+                          <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}/enrollments`)} label={t('studentsBtn')} variant="success" icon={<StudentsIcon />} />
+                          <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}`)} label={tCommon('edit')} variant="warning" icon={<EditIcon />} />
+                          <ActionBtn onClick={() => openDelete(track)} label={tCommon('delete')} variant="danger" icon={<TrashIcon />} />
                         </div>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-2">
+              {tracks.map((track) => (
+                <div key={track.id} className="rounded-xl p-4" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate" style={{ color: 'var(--ls-text)' }}>{track.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>
+                        {VISIBILITY_LABEL[track.visibility]} · {track.videoCount} {t('videosCol').toLowerCase()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-0.5">
+                    <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}/videos`)} label={t('videosBtn')} variant="primary" icon={<VideosIcon />} />
+                    <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}/enrollments`)} label={t('studentsBtn')} variant="success" icon={<StudentsIcon />} />
+                    <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}`)} label={tCommon('edit')} variant="warning" icon={<EditIcon />} />
+                    <ActionBtn onClick={() => openDelete(track)} label={tCommon('delete')} variant="danger" icon={<TrashIcon />} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </>

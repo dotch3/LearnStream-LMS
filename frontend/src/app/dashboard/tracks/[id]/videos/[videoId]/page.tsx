@@ -234,12 +234,12 @@ export default function VideoPlayerPage() {
     };
   }, [apiReady, video, reportProgress, updateVisual]);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-600">{error}</div>;
+  if (loading) return <div className="p-4 sm:p-8">Loading...</div>;
+  if (error) return <div className="p-4 sm:p-8" style={{ color: '#ef4444' }}>{error}</div>;
   if (!video) return null;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-4xl mx-auto">
       <Script
         src="https://www.youtube.com/iframe_api"
         strategy="afterInteractive"
@@ -254,7 +254,8 @@ export default function VideoPlayerPage() {
 
       <button
         onClick={() => router.push(`/dashboard/tracks/${params.id}`)}
-        className="text-sm text-blue-600 hover:underline mb-4 block"
+        className="text-sm mb-4 block transition-opacity hover:opacity-70"
+        style={{ color: 'var(--ls-accent)' }}
       >
         ← Back to Track
       </button>
@@ -266,10 +267,13 @@ export default function VideoPlayerPage() {
       </div>
 
       {/* Progress bar */}
-      <div className="mt-3 h-1.5 w-full rounded-full bg-gray-200">
+      <div className="mt-3 h-1.5 w-full rounded-full" style={{ background: 'var(--ls-border)' }}>
         <div
-          className={`h-1.5 rounded-full transition-all duration-500 ${isCompleted ? 'bg-green-500' : 'bg-blue-500'}`}
-          style={{ width: `${Math.max(watchPercentage, isCompleted ? 100 : 0)}%` }}
+          className="h-1.5 rounded-full transition-all duration-500"
+          style={{
+            width: `${Math.max(watchPercentage, isCompleted ? 100 : 0)}%`,
+            background: isCompleted ? '#22c55e' : 'var(--ls-accent)',
+          }}
         />
       </div>
 
@@ -286,11 +290,12 @@ export default function VideoPlayerPage() {
         ) : (
           /* ── Not completed state ── */
           <>
-            <span className="text-sm text-gray-500">{watchPercentage}% watched</span>
+            <span className="text-sm" style={{ color: 'var(--ls-muted)' }}>{watchPercentage}% watched</span>
             <button
               onClick={handleMarkComplete}
               disabled={markingComplete}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-600 hover:border-green-400 hover:bg-green-50 hover:text-green-700 disabled:opacity-50 transition-all"
+              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium disabled:opacity-50 transition-all"
+              style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-card)', color: 'var(--ls-text)' }}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -303,19 +308,20 @@ export default function VideoPlayerPage() {
 
       {/* Error feedback for mark-complete */}
       {markError && (
-        <p className="mt-2 text-xs text-red-600">{markError}</p>
+        <p className="mt-2 text-xs" style={{ color: '#ef4444' }}>{markError}</p>
       )}
 
       {video.description && (
-        <p className="text-gray-600 text-sm mt-4">{video.description}</p>
+        <p className="text-sm mt-4" style={{ color: 'var(--ls-muted)' }}>{video.description}</p>
       )}
 
       {/* Prev / Next navigation */}
-      <div className="mt-6 flex justify-between border-t pt-4">
+      <div className="mt-6 flex justify-between pt-4" style={{ borderTop: '1px solid var(--ls-border)' }}>
         {prevVideoId ? (
           <button
             onClick={() => router.push(`/dashboard/tracks/${params.id}/videos/${prevVideoId}`)}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm transition-opacity hover:opacity-70"
+            style={{ color: 'var(--ls-accent)' }}
           >
             ← Previous lesson
           </button>
@@ -325,12 +331,13 @@ export default function VideoPlayerPage() {
         {nextVideoId ? (
           <button
             onClick={() => router.push(`/dashboard/tracks/${params.id}/videos/${nextVideoId}`)}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm transition-opacity hover:opacity-70"
+            style={{ color: 'var(--ls-accent)' }}
           >
             Next lesson →
           </button>
         ) : (
-          <span className="text-sm text-gray-400">Last lesson in course</span>
+          <span className="text-sm" style={{ color: 'var(--ls-muted)' }}>Last lesson in course</span>
         )}
       </div>
 

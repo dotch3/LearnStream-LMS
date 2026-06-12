@@ -161,7 +161,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-6 py-10">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>

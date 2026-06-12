@@ -263,8 +263,8 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <div className="p-8 max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="px-4 sm:p-8 py-6 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{t('title')}</h1>
             {meta && (
@@ -307,7 +307,8 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}>
+        {/* Desktop table */}
+        <div className="hidden md:block rounded-2xl overflow-hidden" style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}>
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-bg)' }}>
@@ -328,76 +329,41 @@ export default function AdminUsersPage() {
                 </tr>
               )}
               {users.map((u, i) => (
-                <tr
-                  key={u.id}
-                  style={{
-                    borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined,
-                    opacity: u.isActive ? 1 : 0.6,
-                  }}
-                >
+                <tr key={u.id} style={{ borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined, opacity: u.isActive ? 1 : 0.6 }}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <Avatar name={u.name} />
                       <span className="font-medium" style={{ color: 'var(--ls-text)' }}>{u.name}</span>
                     </div>
                   </td>
-
                   <td className="px-5 py-3" style={{ color: 'var(--ls-text-muted)' }}>{u.email}</td>
-
                   <td className="px-5 py-3">
-                    <span
-                      className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={
-                        u.role === 'ADMIN'
-                          ? { background: '#fef3c7', color: '#92400e' }
-                          : { background: '#eff6ff', color: '#1e40af' }
-                      }
-                    >
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                      style={u.role === 'ADMIN' ? { background: '#fef3c7', color: '#92400e' } : { background: '#eff6ff', color: '#1e40af' }}>
                       {u.role === 'ADMIN' ? t('adminRole') : t('viewerRole')}
                     </span>
                   </td>
-
                   <td className="px-5 py-3">
-                    <span
-                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={
-                        u.isActive
-                          ? { background: '#dcfce7', color: '#15803d' }
-                          : { background: '#f3f4f6', color: '#6b7280' }
-                      }
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: u.isActive ? '#16a34a' : '#9ca3af' }}
-                      />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                      style={u.isActive ? { background: '#dcfce7', color: '#15803d' } : { background: '#f3f4f6', color: '#6b7280' }}>
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: u.isActive ? '#16a34a' : '#9ca3af' }} />
                       {u.isActive ? t('activeStatus') : t('inactiveStatus')}
                     </span>
                   </td>
-
                   <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-text-muted)' }}>
                     {new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
-
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <ActionBtn
-                        onClick={() => router.push(`/admin/users/${u.id}`)}
-                        label={tCommon('edit')}
-                        variant="primary"
+                      <ActionBtn onClick={() => router.push(`/admin/users/${u.id}`)} label={tCommon('edit')} variant="primary"
                         icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>}
                       />
                       {u.isActive ? (
-                        <ActionBtn
-                          onClick={() => openDialog(u, 'deactivate')}
-                          label={t('deactivate')}
-                          variant="danger"
+                        <ActionBtn onClick={() => openDialog(u, 'deactivate')} label={t('deactivate')} variant="danger"
                           icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>}
                         />
                       ) : (
-                        <ActionBtn
-                          onClick={() => openDialog(u, 'reactivate')}
-                          label={t('reactivate')}
-                          variant="success"
+                        <ActionBtn onClick={() => openDialog(u, 'reactivate')} label={t('reactivate')} variant="success"
                           icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                         />
                       )}
@@ -407,6 +373,54 @@ export default function AdminUsersPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {users.length === 0 && (
+            <p className="text-center py-12 text-sm" style={{ color: 'var(--ls-text-muted)' }}>{t('noUsers')}</p>
+          )}
+          {users.map((u) => (
+            <div key={u.id} className="rounded-xl p-4" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', opacity: u.isActive ? 1 : 0.6 }}>
+              <div className="flex items-start gap-3 mb-3">
+                <Avatar name={u.name} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium" style={{ color: 'var(--ls-text)' }}>{u.name}</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                      style={u.role === 'ADMIN' ? { background: '#fef3c7', color: '#92400e' } : { background: '#eff6ff', color: '#1e40af' }}>
+                      {u.role === 'ADMIN' ? t('adminRole') : t('viewerRole')}
+                    </span>
+                  </div>
+                  <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ls-text-muted)' }}>{u.email}</p>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold shrink-0"
+                  style={u.isActive ? { background: '#dcfce7', color: '#15803d' } : { background: '#f3f4f6', color: '#6b7280' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: u.isActive ? '#16a34a' : '#9ca3af' }} />
+                  {u.isActive ? t('activeStatus') : t('inactiveStatus')}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--ls-text-muted)' }}>
+                  {new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+                <div className="flex items-center gap-1">
+                  <ActionBtn onClick={() => router.push(`/admin/users/${u.id}`)} label={tCommon('edit')} variant="primary"
+                    icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>}
+                  />
+                  {u.isActive ? (
+                    <ActionBtn onClick={() => openDialog(u, 'deactivate')} label={t('deactivate')} variant="danger"
+                      icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>}
+                    />
+                  ) : (
+                    <ActionBtn onClick={() => openDialog(u, 'reactivate')} label={t('reactivate')} variant="success"
+                      icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {meta && meta.totalPages > 1 && (

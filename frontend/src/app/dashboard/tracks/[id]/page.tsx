@@ -322,7 +322,7 @@ export default function TrackDetailPage() {
   };
 
   if (loading) return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="h-6 w-32 rounded animate-pulse mb-6" style={{ background: 'var(--ls-card)' }} />
       <div className="h-8 w-64 rounded animate-pulse mb-4" style={{ background: 'var(--ls-card)' }} />
       <div className="space-y-3">
@@ -331,13 +331,13 @@ export default function TrackDetailPage() {
     </div>
   );
 
-  if (error) return <div className="p-8" style={{ color: '#ef4444' }}>{error}</div>;
+  if (error) return <div className="p-4 sm:p-8" style={{ color: '#ef4444' }}>{error}</div>;
   if (!track) return null;
 
   const needsEnrollment = !isAdmin && track.enrollmentStatus !== 'APPROVED';
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <button
         onClick={() => router.push('/dashboard/tracks')}
         className="text-sm mb-4 flex items-center gap-1 transition-opacity hover:opacity-70"
@@ -346,9 +346,9 @@ export default function TrackDetailPage() {
         ← Back to Courses
       </button>
 
-      <div className="flex gap-6 mb-8">
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 sm:mb-8">
         {track.thumbnailUrl && (
-          <img src={track.thumbnailUrl} alt={track.name} className="w-48 h-32 object-cover rounded-xl" />
+          <img src={track.thumbnailUrl} alt={track.name} className="w-full sm:w-48 h-40 sm:h-32 object-cover rounded-xl" />
         )}
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{track.name}</h1>

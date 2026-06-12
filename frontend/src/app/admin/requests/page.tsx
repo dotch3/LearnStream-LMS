@@ -112,68 +112,86 @@ export default function AdminRequestsPage() {
           <p className="text-base" style={{ color: 'var(--ls-muted)' }}>{t('noFound')}</p>
         </div>
       ) : (
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('studentCol')}</th>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('courseCol')}</th>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('requestedCol')}</th>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((req, idx) => {
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('studentCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('courseCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('requestedCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((req, idx) => {
+                    const s = STATUS_STYLES[req.status];
+                    return (
+                      <tr key={req.id} style={{ background: 'var(--ls-card)', borderBottom: idx < items.length - 1 ? '1px solid var(--ls-border)' : 'none' }}>
+                        <td className="px-5 py-3">
+                          <p className="font-medium" style={{ color: 'var(--ls-text)' }}>{req.userName}</p>
+                          <p className="text-xs" style={{ color: 'var(--ls-muted)' }}>{req.userEmail}</p>
+                        </td>
+                        <td className="px-5 py-3" style={{ color: 'var(--ls-text)' }}>{req.trackName}</td>
+                        <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                          {new Date(req.requestedAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: s.bg, color: s.color }}>
+                            {STATUS_LABELS[req.status]}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3">
+                          {req.status === 'PENDING' && (
+                            <div className="flex gap-1 justify-end">
+                              <ActionBtn onClick={() => act(req.id, 'approve')} label={t('approve')} variant="success" disabled={acting === req.id} />
+                              <ActionBtn onClick={() => act(req.id, 'deny')} label={t('deny')} variant="danger" disabled={acting === req.id} />
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {items.map((req) => {
                 const s = STATUS_STYLES[req.status];
                 return (
-                  <tr
-                    key={req.id}
-                    style={{
-                      background: 'var(--ls-card)',
-                      borderBottom: idx < items.length - 1 ? '1px solid var(--ls-border)' : 'none',
-                    }}
-                  >
-                    <td className="px-5 py-3">
-                      <p className="font-medium" style={{ color: 'var(--ls-text)' }}>{req.userName}</p>
-                      <p className="text-xs" style={{ color: 'var(--ls-muted)' }}>{req.userEmail}</p>
-                    </td>
-                    <td className="px-5 py-3" style={{ color: 'var(--ls-text)' }}>{req.trackName}</td>
-                    <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
-                      {new Date(req.requestedAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span
-                        className="rounded-full px-2.5 py-1 text-xs font-semibold"
-                        style={{ background: s.bg, color: s.color }}
-                      >
+                  <div key={req.id} className="rounded-xl p-4" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm" style={{ color: 'var(--ls-text)' }}>{req.userName}</p>
+                        <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ls-muted)' }}>{req.userEmail}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: s.bg, color: s.color }}>
                         {STATUS_LABELS[req.status]}
                       </span>
-                    </td>
-                    <td className="px-5 py-3">
+                    </div>
+                    <div className="flex items-end justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: 'var(--ls-text)' }}>{req.trackName}</p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>
+                          {new Date(req.requestedAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                        </p>
+                      </div>
                       {req.status === 'PENDING' && (
-                        <div className="flex gap-1 justify-end">
-                          <ActionBtn
-                            onClick={() => act(req.id, 'approve')}
-                            label={t('approve')}
-                            variant="success"
-                            disabled={acting === req.id}
-                          />
-                          <ActionBtn
-                            onClick={() => act(req.id, 'deny')}
-                            label={t('deny')}
-                            variant="danger"
-                            disabled={acting === req.id}
-                          />
+                        <div className="flex gap-1 shrink-0">
+                          <ActionBtn onClick={() => act(req.id, 'approve')} label={t('approve')} variant="success" disabled={acting === req.id} />
+                          <ActionBtn onClick={() => act(req.id, 'deny')} label={t('deny')} variant="danger" disabled={acting === req.id} />
                         </div>
                       )}
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </>
       )}
 
       {totalPages > 1 && (

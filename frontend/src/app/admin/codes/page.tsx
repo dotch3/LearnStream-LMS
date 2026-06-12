@@ -152,7 +152,7 @@ export default function AdminCodesPage() {
           <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--ls-text)' }}>
             {editId ? t('editCode') : t('createNewCode')}
           </h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-muted)' }}>{t('labelField')}</label>
               <input
@@ -286,91 +286,102 @@ export default function AdminCodesPage() {
           <p className="text-base" style={{ color: 'var(--ls-muted)' }}>{t('noCodesYet')}</p>
         </div>
       ) : (
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('codeCol')}</th>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('labelField')}</th>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('coursesCol')}</th>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('usesCol')}</th>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('expiresAtField')}</th>
-                <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {codes.map((c, idx) => (
-                <tr
-                  key={c.id}
-                  style={{
-                    background: 'var(--ls-card)',
-                    borderBottom: idx < codes.length - 1 ? '1px solid var(--ls-border)' : 'none',
-                  }}
-                >
-                  <td className="px-5 py-3">
-                    <code
-                      className="px-2 py-0.5 rounded text-xs font-mono"
-                      style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}
-                    >
-                      {c.code}
-                    </code>
-                  </td>
-                  <td className="px-5 py-3" style={{ color: 'var(--ls-text)' }}>{c.label}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {c.tracks.length === 0 ? (
-                        <span style={{ color: 'var(--ls-muted)' }}>—</span>
-                      ) : c.tracks.map((tr) => (
-                        <span
-                          key={tr.id}
-                          className="px-1.5 py-0.5 rounded text-xs"
-                          style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}
-                        >
-                          {tr.name}
-                        </span>
-                      ))}
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('codeCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('labelField')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('coursesCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('usesCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('expiresAtField')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {codes.map((c, idx) => (
+                    <tr key={c.id} style={{ background: 'var(--ls-card)', borderBottom: idx < codes.length - 1 ? '1px solid var(--ls-border)' : 'none' }}>
+                      <td className="px-5 py-3">
+                        <code className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}>{c.code}</code>
+                      </td>
+                      <td className="px-5 py-3" style={{ color: 'var(--ls-text)' }}>{c.label}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {c.tracks.length === 0 ? (
+                            <span style={{ color: 'var(--ls-muted)' }}>—</span>
+                          ) : c.tracks.map((tr) => (
+                            <span key={tr.id} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}>{tr.name}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>{c.usedCount}{c.maxUses !== null ? ` / ${c.maxUses}` : ''}</td>
+                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                        {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '—'}
+                      </td>
+                      <td className="px-5 py-3">
+                        <button onClick={() => toggleActive(c)} className="px-2.5 py-1 rounded-full text-xs font-semibold"
+                          style={{ background: c.isActive ? 'rgba(34,197,94,0.15)' : 'rgba(156,163,175,0.15)', color: c.isActive ? '#22c55e' : '#6b7280' }}>
+                          {c.isActive ? tCommon('active') : tCommon('inactive')}
+                        </button>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex gap-1 justify-end">
+                          <ActionBtn onClick={() => openEdit(c)} label={tCommon('edit')} variant="primary"
+                            icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>}
+                          />
+                          <ActionBtn onClick={() => setDeleteDialog({ open: true, id: c.id, loading: false })} label={tCommon('delete')} variant="danger"
+                            icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {codes.map((c) => (
+                <div key={c.id} className="rounded-xl p-4" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0">
+                      <code className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}>{c.code}</code>
+                      <p className="text-sm font-medium mt-1 truncate" style={{ color: 'var(--ls-text)' }}>{c.label}</p>
                     </div>
-                  </td>
-                  <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
-                    {c.usedCount}{c.maxUses !== null ? ` / ${c.maxUses}` : ''}
-                  </td>
-                  <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
-                    {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '—'}
-                  </td>
-                  <td className="px-5 py-3">
-                    <button
-                      onClick={() => toggleActive(c)}
-                      className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        background: c.isActive ? 'rgba(34,197,94,0.15)' : 'rgba(156,163,175,0.15)',
-                        color: c.isActive ? '#22c55e' : '#6b7280',
-                      }}
-                    >
+                    <button onClick={() => toggleActive(c)} className="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold"
+                      style={{ background: c.isActive ? 'rgba(34,197,94,0.15)' : 'rgba(156,163,175,0.15)', color: c.isActive ? '#22c55e' : '#6b7280' }}>
                       {c.isActive ? tCommon('active') : tCommon('inactive')}
                     </button>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex gap-1 justify-end">
-                      <ActionBtn
-                        onClick={() => openEdit(c)}
-                        label={tCommon('edit')}
-                        variant="primary"
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {c.tracks.length === 0 ? (
+                      <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>—</span>
+                    ) : c.tracks.map((tr) => (
+                      <span key={tr.id} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}>{tr.name}</span>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex gap-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                      <span>{t('usesCol')}: {c.usedCount}{c.maxUses !== null ? `/${c.maxUses}` : ''}</span>
+                      {c.expiresAt && <span>{new Date(c.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}</span>}
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <ActionBtn onClick={() => openEdit(c)} label={tCommon('edit')} variant="primary"
                         icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>}
                       />
-                      <ActionBtn
-                        onClick={() => setDeleteDialog({ open: true, id: c.id, loading: false })}
-                        label={tCommon('delete')}
-                        variant="danger"
+                      <ActionBtn onClick={() => setDeleteDialog({ open: true, id: c.id, loading: false })} label={tCommon('delete')} variant="danger"
                         icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>}
                       />
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </>
       )}
     </div>
     </>

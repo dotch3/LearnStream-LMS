@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/auth.context';
@@ -56,10 +57,21 @@ const NAV_ITEMS = [
   },
 ];
 
-function SbLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+function SbLink({
+  href,
+  active,
+  children,
+  onClick,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all"
       style={{
         background: active ? 'var(--ls-sb-active)' : 'transparent',
@@ -78,16 +90,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { user, logout } = useAuth();
   const t = useTranslations('adminNav');
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => { setOpen(false); }, [pathname]);
+
+  const close = () => setOpen(false);
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ls-bg)' }}>
+      {/* Mobile overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 z-30 md:hidden"
+          style={{ background: 'rgba(0,0,0,0.5)' }}
+          onClick={close}
+        />
+      )}
+
+      {/* Sidebar */}
       <aside
-        className="w-64 shrink-0 flex flex-col"
+        className={`fixed inset-y-0 left-0 z-40 w-64 flex flex-col transition-transform duration-200 ease-in-out md:relative md:translate-x-0 md:z-auto ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ background: 'var(--ls-sb-bg)', borderRight: '1px solid var(--ls-sb-border)' }}
       >
         {/* Logo + Admin badge */}
         <div
-          className="flex items-center justify-between px-4 py-4"
+          className="flex items-center justify-between px-4 py-4 shrink-0"
           style={{ borderBottom: '1px solid var(--ls-sb-border)' }}
         >
           <Link href="/admin/tracks" className="flex items-center gap-2.5 min-w-0">
@@ -105,15 +132,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </Link>
           <div className="flex items-center gap-1">
-            <NotificationsBell />
-            <ThemeToggle />
+            <span className="hidden md:flex items-center gap-1">
+              <NotificationsBell />
+              <ThemeToggle />
+            </span>
+            <button
+              onClick={close}
+              className="md:hidden flex h-8 w-8 items-center justify-center rounded-lg"
+              style={{ color: 'var(--ls-sb-muted)' }}
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
         {/* Back to student view */}
-        <div className="px-3 pt-3">
+        <div className="px-3 pt-3 shrink-0">
           <Link
             href="/dashboard/tracks"
+            onClick={close}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all"
             style={{ color: 'var(--ls-sb-muted)' }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--ls-sb-text)'; }}
@@ -127,9 +166,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-2 space-y-0.5">
+        <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
           {NAV_ITEMS.map((item) => (
-            <SbLink key={item.href} href={item.href} active={pathname.startsWith(item.href)}>
+            <SbLink key={item.href} href={item.href} active={pathname.startsWith(item.href)} onClick={close}>
               <span style={{ opacity: pathname.startsWith(item.href) ? 1 : 0.65 }}>{item.icon}</span>
               {t(item.key)}
             </SbLink>
@@ -137,7 +176,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* User footer */}
-        <div className="px-4 py-4" style={{ borderTop: '1px solid var(--ls-sb-border)' }}>
+        <div className="px-4 py-4 shrink-0" style={{ borderTop: '1px solid var(--ls-sb-border)' }}>
           {user ? (
             <div className="flex items-center gap-3">
               <div
@@ -168,9 +207,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto" style={{ background: 'var(--ls-bg)' }}>
-        {children}
-      </main>
+      {/* Content: mobile header + main */}
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Mobile top bar */}
+        <div
+          className="flex items-center gap-3 px-4 py-3 shrink-0 md:hidden"
+          style={{ background: 'var(--ls-sb-bg)', borderBottom: '1px solid var(--ls-sb-border)' }}
+        >
+          <button
+            onClick={() => setOpen(true)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+            style={{ color: 'var(--ls-sb-text)' }}
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
+          <Link href="/admin/tracks" className="flex items-center gap-2 flex-1 min-w-0">
+            <Image src="/logo2.png" alt="LearnStream" width={28} height={28} className="shrink-0 rounded-lg" />
+            <span className="text-sm font-bold truncate" style={{ color: 'var(--ls-sb-active-t)' }}>LearnStream</span>
+            <span
+              className="ml-1 rounded-full px-1.5 py-0.5 text-xs font-semibold shrink-0"
+              style={{ background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }}
+            >
+              Admin
+            </span>
+          </Link>
+          <div className="flex items-center gap-1 shrink-0">
+            <NotificationsBell />
+            <ThemeToggle />
+          </div>
+        </div>
+
+        <main className="flex-1 overflow-y-auto" style={{ background: 'var(--ls-bg)' }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

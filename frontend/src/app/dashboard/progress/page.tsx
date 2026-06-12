@@ -118,7 +118,7 @@ export default function ProgressPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
@@ -170,7 +170,7 @@ export default function ProgressPage() {
         {!loading && !error && tracks.length > 0 && (
           <div className="space-y-8">
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {[
                 { key: 'totalCourses', value: tracks.length },
                 { key: 'inProgress', value: started.length - completed.length },

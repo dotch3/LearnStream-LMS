@@ -176,13 +176,13 @@ export default function AdminInvitesPage() {
         />
       )}
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{t('title')}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ls-muted)' }}>{t('subtitle')}</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
           {(['pending', 'accepted', 'expired'] as const).map((key) => {
             const s = STATUS_STYLES[key];
             return (
@@ -227,81 +227,91 @@ export default function AdminInvitesPage() {
             <p className="text-xs mt-1" style={{ color: 'var(--ls-muted)' }}>{t('sendFromUsers')}</p>
           </div>
         ) : (
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('emailCol')}</th>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('roleCol')}</th>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('sentCol')}</th>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('expiresUsedCol')}</th>
-                  <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((inv, idx) => {
-                  const s = STATUS_STYLES[inv.status];
-                  const r = ROLE_STYLES[inv.role];
-                  return (
-                    <tr
-                      key={inv.id}
-                      style={{
-                        background: 'var(--ls-card)',
-                        borderBottom: idx < filtered.length - 1 ? '1px solid var(--ls-border)' : 'none',
-                      }}
-                    >
-                      <td className="px-5 py-3 font-medium" style={{ color: 'var(--ls-text)' }}>
-                        {inv.email}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span
-                          className="rounded-full px-2.5 py-1 text-xs font-semibold"
-                          style={{ background: r.bg, color: r.color }}
-                        >
-                          {inv.role}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
-                        {new Date(inv.createdAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
-                      </td>
-                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
-                        {inv.usedAt
-                          ? new Date(inv.usedAt).toLocaleDateString(undefined, { timeZone: 'UTC' })
-                          : new Date(inv.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span
-                          className="rounded-full px-2.5 py-1 text-xs font-semibold"
-                          style={{ background: s.bg, color: s.color }}
-                        >
-                          {STATUS_LABELS[inv.status]}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        {inv.status !== 'accepted' && (
-                          <div className="flex gap-1 justify-end">
-                            <ActionBtn
-                              onClick={() => handleGetLink(inv)}
-                              label={t('getLink')}
-                              variant="primary"
-                              disabled={acting === inv.id}
-                            />
-                            <ActionBtn
-                              onClick={() => handleDelete(inv.id, inv.email)}
-                              label={t('remove')}
-                              variant="danger"
-                              disabled={acting === inv.id}
-                            />
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('emailCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('roleCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('sentCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('expiresUsedCol')}</th>
+                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((inv, idx) => {
+                    const s = STATUS_STYLES[inv.status];
+                    const r = ROLE_STYLES[inv.role];
+                    return (
+                      <tr key={inv.id} style={{ background: 'var(--ls-card)', borderBottom: idx < filtered.length - 1 ? '1px solid var(--ls-border)' : 'none' }}>
+                        <td className="px-5 py-3 font-medium" style={{ color: 'var(--ls-text)' }}>{inv.email}</td>
+                        <td className="px-5 py-3">
+                          <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: r.bg, color: r.color }}>{inv.role}</span>
+                        </td>
+                        <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                          {new Date(inv.createdAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                        </td>
+                        <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                          {inv.usedAt ? new Date(inv.usedAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : new Date(inv.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: s.bg, color: s.color }}>{STATUS_LABELS[inv.status]}</span>
+                        </td>
+                        <td className="px-5 py-3">
+                          {inv.status !== 'accepted' && (
+                            <div className="flex gap-1 justify-end">
+                              <ActionBtn onClick={() => handleGetLink(inv)} label={t('getLink')} variant="primary" disabled={acting === inv.id} />
+                              <ActionBtn onClick={() => handleDelete(inv.id, inv.email)} label={t('remove')} variant="danger" disabled={acting === inv.id} />
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {filtered.map((inv) => {
+                const s = STATUS_STYLES[inv.status];
+                const r = ROLE_STYLES[inv.role];
+                return (
+                  <div key={inv.id} className="rounded-xl p-4" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--ls-text)' }}>{inv.email}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: r.bg, color: r.color }}>{inv.role}</span>
+                          <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>
+                            {new Date(inv.createdAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: s.bg, color: s.color }}>
+                        {STATUS_LABELS[inv.status]}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>
+                        {inv.usedAt ? new Date(inv.usedAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : new Date(inv.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                      </span>
+                      {inv.status !== 'accepted' && (
+                        <div className="flex gap-1 shrink-0">
+                          <ActionBtn onClick={() => handleGetLink(inv)} label={t('getLink')} variant="primary" disabled={acting === inv.id} />
+                          <ActionBtn onClick={() => handleDelete(inv.id, inv.email)} label={t('remove')} variant="danger" disabled={acting === inv.id} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </>
