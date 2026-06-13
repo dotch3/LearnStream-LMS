@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/contexts/theme.context";
 import { LocaleProvider } from "@/contexts/locale.context";
 import { ToastProvider } from "@/components/toast";
 import { ThemeScript } from "@/components/theme-script";
+import { SwipeBackHandler } from "@/components/swipe-back-handler";
 import en from "../../messages/en.json";
 import pt from "../../messages/pt.json";
 
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="min-h-full flex flex-col">
         <ThemeScript />
+        <SwipeBackHandler />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <LocaleProvider locale={locale}>
             <ThemeProvider>

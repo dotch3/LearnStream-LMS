@@ -246,18 +246,6 @@ export default function VideoPlayerPage() {
         }}
       />
 
-      {/* Back */}
-      <button
-        onClick={() => router.push(`/dashboard/tracks/${params.id}`)}
-        className="flex items-center gap-1.5 text-xs font-medium mb-5 transition-opacity hover:opacity-70 cursor-pointer"
-        style={{ color: 'var(--ls-text-2)' }}
-      >
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-        Voltar para a trilha
-      </button>
-
       <h1
         className="text-lg sm:text-xl font-bold tracking-tight mb-4"
         style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}

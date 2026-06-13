@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { api } from '@/lib/axios';
 
 interface UserForm {
@@ -111,7 +111,6 @@ const inputStyle = {
 /* ── Page ──────────────────────────────────────────────────── */
 export default function EditUserPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
 
   const [form, setForm] = useState<UserForm>({ name: '', email: '', role: 'VIEWER', isActive: true });
   const [error, setError] = useState('');
@@ -199,14 +198,6 @@ export default function EditUserPage() {
       />
 
       <div className="p-8 max-w-lg mx-auto">
-        <button
-          onClick={() => router.push('/admin/users')}
-          className="text-sm mb-5 block hover:underline"
-          style={{ color: 'var(--ls-accent)' }}
-        >
-          ← Back to Users
-        </button>
-
         <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--ls-text)' }}>Edit User</h1>
 
         {/* ── User details card ── */}
@@ -273,14 +264,6 @@ export default function EditUserPage() {
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent)'; }}
               >
                 {loading ? 'Saving…' : 'Save Changes'}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/admin/users')}
-                className="px-5 py-2 rounded-lg border text-sm"
-                style={{ borderColor: 'var(--ls-border)', color: 'var(--ls-text)', background: 'transparent' }}
-              >
-                Cancel
               </button>
             </div>
           </form>

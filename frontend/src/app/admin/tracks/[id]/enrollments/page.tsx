@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { ActionBtn } from '@/components/admin/action-btn';
@@ -62,7 +62,6 @@ function Avatar({ name }: { name: string }) {
 }
 
 export default function AdminTrackEnrollmentsPage() {
-  const router = useRouter();
   const params = useParams<{ id: string }>();
   const t = useTranslations('admin.enrollments');
   const tCommon = useTranslations('common');
@@ -279,18 +278,6 @@ export default function AdminTrackEnrollmentsPage() {
       )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Breadcrumb */}
-        <button
-          onClick={() => router.push('/admin/tracks')}
-          className="text-sm mb-4 flex items-center gap-1.5 transition-opacity hover:opacity-70 cursor-pointer"
-          style={{ color: 'var(--ls-accent-text)' }}
-        >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-          </svg>
-          {t('backToCourses')}
-        </button>
-
         {/* Page header */}
         <div className="flex items-start justify-between gap-3 flex-wrap mb-6">
           <div className="min-w-0">

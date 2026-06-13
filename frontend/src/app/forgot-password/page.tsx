@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const t = useTranslations('auth.forgotPassword');
   const tAuth = useTranslations('auth');
   const [email, setEmail] = useState('');
@@ -94,13 +92,6 @@ export default function ForgotPasswordPage() {
           </form>
         )}
 
-        <button
-          onClick={() => router.push('/login')}
-          className="mt-5 w-full text-center text-sm font-medium hover:underline cursor-pointer transition-opacity hover:opacity-80"
-          style={{ color: 'var(--ls-accent)' }}
-        >
-          ← {t('backToLogin')}
-        </button>
       </div>
     </div>
   );

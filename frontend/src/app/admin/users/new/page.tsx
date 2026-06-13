@@ -187,14 +187,6 @@ export default function CreateUserPage() {
 
   return (
     <div className="p-8 max-w-lg mx-auto">
-      <button
-        onClick={() => router.push('/admin/users')}
-        className="text-sm mb-5 block hover:underline"
-        style={{ color: 'var(--ls-accent)' }}
-      >
-        ← Back to Users
-      </button>
-
       <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--ls-text)' }}>Create User</h1>
 
       {created ? (
@@ -331,14 +323,6 @@ export default function CreateUserPage() {
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent)'; }}
               >
                 {loading ? 'Creating…' : 'Create User'}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/admin/users')}
-                className="px-5 py-2 rounded-lg border text-sm"
-                style={{ borderColor: 'var(--ls-border)', color: 'var(--ls-text)', background: 'transparent' }}
-              >
-                Cancel
               </button>
             </div>
           </form>
