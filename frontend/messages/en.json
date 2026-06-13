@@ -34,7 +34,8 @@
       "submitting": "Signing in…",
       "error": "Invalid credentials. Please try again.",
       "forgotPassword": "Forgot password?",
-      "setupDone": "Setup complete — log in with your admin account."
+      "setupDone": "Setup complete — log in with your admin account.",
+      "title": "Sign in"
     },
     "forgotPassword": {
       "title": "Forgot your password?",

@@ -119,211 +119,219 @@ export default function AdminCodesPage() {
 
   return (
     <>
-    <ConfirmDialog
-      open={deleteDialog.open}
-      title={t('deleteTitle')}
-      description={t('deleteDesc')}
-      confirmLabel={tCommon('delete')}
-      variant="danger"
-      loading={deleteDialog.loading}
-      onConfirm={remove}
-      onCancel={() => setDeleteDialog({ open: false, id: null, loading: false })}
-    />
-    <div className="max-w-5xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{t('title')}</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--ls-muted)' }}>{t('subtitle')}</p>
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title={t('deleteTitle')}
+        description={t('deleteDesc')}
+        confirmLabel={tCommon('delete')}
+        variant="danger"
+        loading={deleteDialog.loading}
+        onConfirm={remove}
+        onCancel={() => setDeleteDialog({ open: false, id: null, loading: false })}
+      />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
+          <div>
+            <h1 className="page-title">{t('title')}</h1>
+            <p className="text-sm mt-1" style={{ color: 'var(--ls-text-2)' }}>{t('subtitle')}</p>
+          </div>
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 cursor-pointer"
+            style={{ background: 'var(--ls-accent)' }}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            {t('newCode')}
+          </button>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          style={{ background: 'var(--ls-accent)' }}
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          {t('newCode')}
-        </button>
-      </div>
 
-      {showForm && (
-        <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
-          <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--ls-text)' }}>
-            {editId ? t('editCode') : t('createNewCode')}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-muted)' }}>{t('labelField')}</label>
-              <input
-                className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text)' }}
-                placeholder="e.g. Batch March 2026"
-                value={form.label}
-                onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-              />
+        {showForm && (
+          <div className="rounded-lg p-5 mb-6" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+            <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--ls-text)' }}>
+              {editId ? t('editCode') : t('createNewCode')}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-muted)' }}>{t('labelField')}</label>
+                <input
+                  className="w-full rounded-md px-3 py-2 text-sm outline-none"
+                  style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text)' }}
+                  placeholder="e.g. Batch March 2026"
+                  value={form.label}
+                  onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-muted)' }}>{t('maxUsesField')}</label>
+                <input
+                  type="number"
+                  className="w-full rounded-md px-3 py-2 text-sm outline-none"
+                  style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text)' }}
+                  placeholder="Unlimited"
+                  value={form.maxUses}
+                  onChange={(e) => setForm((f) => ({ ...f, maxUses: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-muted)' }}>{t('expiresAtField')}</label>
+                <input
+                  type="date"
+                  className="w-full rounded-md px-3 py-2 text-sm outline-none"
+                  style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text)' }}
+                  value={form.expiresAt}
+                  onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))}
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-muted)' }}>{t('maxUsesField')}</label>
-              <input
-                type="number"
-                className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text)' }}
-                placeholder="Unlimited"
-                value={form.maxUses}
-                onChange={(e) => setForm((f) => ({ ...f, maxUses: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-muted)' }}>{t('expiresAtField')}</label>
-              <input
-                type="date"
-                className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text)' }}
-                value={form.expiresAt}
-                onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))}
-              />
-            </div>
-          </div>
 
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium" style={{ color: 'var(--ls-muted)' }}>
-                {t('coursesUnlock')}
-              </label>
-              {tracks.length > 0 && (
-                <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>
-                  {t('ofSelected', { count: form.trackIds.length, total: tracks.length })}
-                </span>
-              )}
-            </div>
-            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
-              {tracks.length === 0 ? (
-                <p className="px-4 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>{t('noCoursesAvailable')}</p>
-              ) : (
-                tracks.map((tr, i) => {
-                  const sel = form.trackIds.includes(tr.id);
-                  return (
-                    <label
-                      key={tr.id}
-                      className="flex items-center gap-3 px-4 py-2.5 cursor-pointer"
-                      style={{
-                        borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined,
-                        background: sel ? 'var(--ls-accent-muted)' : 'transparent',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!sel) (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = sel ? 'var(--ls-accent-muted)' : 'transparent';
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={sel}
-                        onChange={() => toggleTrack(tr.id)}
-                        className="h-4 w-4 rounded cursor-pointer"
-                        style={{ accentColor: 'var(--ls-accent)' }}
-                      />
-                      <span className="text-sm font-medium" style={{ color: sel ? 'var(--ls-accent-text)' : 'var(--ls-text-1)' }}>
-                        {tr.name}
-                      </span>
-                    </label>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {editId && (
             <div className="mb-4">
-              <label className="flex items-center gap-3 cursor-pointer w-fit">
-                <div
-                  className="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors"
-                  style={{ background: form.isActive ? 'var(--ls-accent)' : 'var(--ls-border)' }}
-                  onClick={() => setForm((f) => ({ ...f, isActive: !f.isActive }))}
-                >
-                  <span
-                    className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform mt-0.5"
-                    style={{ transform: form.isActive ? 'translateX(18px)' : 'translateX(2px)' }}
-                  />
-                </div>
-                <span className="text-sm font-medium" style={{ color: 'var(--ls-text-1)' }}>
-                  {form.isActive ? t('activeCode') : t('inactiveCode')}
-                </span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium" style={{ color: 'var(--ls-muted)' }}>
+                  {t('coursesUnlock')}
+                </label>
+                {tracks.length > 0 && (
+                  <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>
+                    {t('ofSelected', { count: form.trackIds.length, total: tracks.length })}
+                  </span>
+                )}
+              </div>
+              <div className="rounded-md overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+                {tracks.length === 0 ? (
+                  <p className="px-4 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>{t('noCoursesAvailable')}</p>
+                ) : (
+                  tracks.map((tr, i) => {
+                    const sel = form.trackIds.includes(tr.id);
+                    return (
+                      <label
+                        key={tr.id}
+                        className="flex items-center gap-3 px-4 py-2.5 cursor-pointer"
+                        style={{
+                          borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined,
+                          background: sel ? 'var(--ls-accent-muted)' : 'transparent',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!sel) (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.background = sel ? 'var(--ls-accent-muted)' : 'transparent';
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={sel}
+                          onChange={() => toggleTrack(tr.id)}
+                          className="h-4 w-4 rounded cursor-pointer"
+                          style={{ accentColor: 'var(--ls-accent)' }}
+                        />
+                        <span className="text-sm" style={{ color: sel ? 'var(--ls-accent)' : 'var(--ls-text)' }}>
+                          {tr.name}
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
             </div>
-          )}
 
-          <div className="flex gap-3">
-            <button
-              disabled={saving || !form.label}
-              onClick={submit}
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
-              style={{ background: 'var(--ls-accent)' }}
-            >
-              {saving ? tCommon('saving') : editId ? t('saveChanges') : t('createCode')}
-            </button>
-            <button
-              onClick={resetForm}
-              className="px-4 py-2 rounded-lg text-sm font-medium"
-              style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}
-            >
-              {tCommon('cancel')}
-            </button>
+            {editId && (
+              <div className="mb-4">
+                <label className="flex items-center gap-3 cursor-pointer w-fit">
+                  <div
+                    className="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors"
+                    style={{ background: form.isActive ? 'var(--ls-accent)' : 'var(--ls-border)' }}
+                    onClick={() => setForm((f) => ({ ...f, isActive: !f.isActive }))}
+                  >
+                    <span
+                      className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform mt-0.5"
+                      style={{ transform: form.isActive ? 'translateX(18px)' : 'translateX(2px)' }}
+                    />
+                  </div>
+                  <span className="text-sm" style={{ color: 'var(--ls-text)' }}>
+                    {form.isActive ? t('activeCode') : t('inactiveCode')}
+                  </span>
+                </label>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                disabled={saving || !form.label}
+                onClick={submit}
+                className="px-4 py-2 rounded-md text-sm font-medium text-white disabled:opacity-50 cursor-pointer transition-opacity hover:opacity-90"
+                style={{ background: 'var(--ls-accent)' }}
+              >
+                {saving ? tCommon('saving') : editId ? t('saveChanges') : t('createCode')}
+              </button>
+              <button
+                onClick={resetForm}
+                className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+                style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-muted)' }}
+              >
+                {tCommon('cancel')}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: 'var(--ls-card)' }} />
-          ))}
-        </div>
-      ) : codes.length === 0 ? (
-        <div className="rounded-xl py-16 text-center" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
-          <p className="text-base" style={{ color: 'var(--ls-muted)' }}>{t('noCodesYet')}</p>
-        </div>
-      ) : (
+        {loading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-16 rounded-lg animate-pulse" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }} />
+            ))}
+          </div>
+        ) : codes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center rounded-lg" style={{ border: '1px dashed var(--ls-border)' }}>
+            <p className="text-sm" style={{ color: 'var(--ls-muted)' }}>{t('noCodesYet')}</p>
+          </div>
+        ) : (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+            <div className="hidden md:block rounded-lg overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('codeCol')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('labelField')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('coursesCol')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('usesCol')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('expiresAtField')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('codeCol')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('labelField')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('coursesCol')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('usesCol')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('expiresAtField')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
                     <th className="px-5 py-3" />
                   </tr>
                 </thead>
                 <tbody>
                   {codes.map((c, idx) => (
-                    <tr key={c.id} style={{ background: 'var(--ls-card)', borderBottom: idx < codes.length - 1 ? '1px solid var(--ls-border)' : 'none' }}>
+                    <tr
+                      key={c.id}
+                      style={{ background: 'var(--ls-card)', borderTop: idx > 0 ? '1px solid var(--ls-border)' : undefined }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-card)'; }}
+                    >
                       <td className="px-5 py-3">
-                        <code className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}>{c.code}</code>
+                        <code className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text)' }}>{c.code}</code>
                       </td>
-                      <td className="px-5 py-3" style={{ color: 'var(--ls-text)' }}>{c.label}</td>
+                      <td className="px-5 py-3 text-sm" style={{ color: 'var(--ls-text)' }}>{c.label}</td>
                       <td className="px-5 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {c.tracks.length === 0 ? (
-                            <span style={{ color: 'var(--ls-muted)' }}>—</span>
-                          ) : c.tracks.map((tr) => (
-                            <span key={tr.id} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}>{tr.name}</span>
-                          ))}
-                        </div>
+                        {c.tracks.length === 0 ? (
+                          <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>—</span>
+                        ) : (
+                          <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>
+                            {c.tracks.map((tr) => tr.name).join(', ')}
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>{c.usedCount}{c.maxUses !== null ? ` / ${c.maxUses}` : ''}</td>
                       <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
                         {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '—'}
                       </td>
                       <td className="px-5 py-3">
-                        <button onClick={() => toggleActive(c)} className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                          style={{ background: c.isActive ? 'rgba(34,197,94,0.15)' : 'rgba(156,163,175,0.15)', color: c.isActive ? '#22c55e' : '#6b7280' }}>
+                        <button
+                          onClick={() => toggleActive(c)}
+                          className="text-xs font-medium cursor-pointer transition-opacity hover:opacity-70"
+                          style={{ color: c.isActive ? 'var(--ls-success)' : 'var(--ls-muted)' }}
+                        >
                           {c.isActive ? tCommon('active') : tCommon('inactive')}
                         </button>
                       </td>
@@ -344,46 +352,63 @@ export default function AdminCodesPage() {
             </div>
 
             {/* Mobile cards */}
-            <div className="md:hidden space-y-3">
+            <div className="md:hidden space-y-2">
               {codes.map((c) => (
-                <div key={c.id} className="rounded-xl p-4" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="min-w-0">
-                      <code className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}>{c.code}</code>
-                      <p className="text-sm font-medium mt-1 truncate" style={{ color: 'var(--ls-text)' }}>{c.label}</p>
+                <div key={c.id} className="rounded-lg overflow-hidden" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+                  <div className="px-4 py-3">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <code className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text)' }}>{c.code}</code>
+                      <span className="text-xs font-medium" style={{ color: c.isActive ? 'var(--ls-success)' : 'var(--ls-muted)' }}>
+                        {c.isActive ? tCommon('active') : tCommon('inactive')}
+                      </span>
                     </div>
-                    <button onClick={() => toggleActive(c)} className="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold"
-                      style={{ background: c.isActive ? 'rgba(34,197,94,0.15)' : 'rgba(156,163,175,0.15)', color: c.isActive ? '#22c55e' : '#6b7280' }}>
-                      {c.isActive ? tCommon('active') : tCommon('inactive')}
+                    <p className="text-sm font-medium truncate mt-1" style={{ color: 'var(--ls-text)' }}>{c.label}</p>
+                    {c.tracks.length > 0 && (
+                      <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ls-muted)' }}>
+                        {c.tracks.map((tr) => tr.name).join(', ')}
+                      </p>
+                    )}
+                    <p className="text-xs mt-1" style={{ color: 'var(--ls-muted)' }}>
+                      {t('usesCol')}: {c.usedCount}{c.maxUses !== null ? `/${c.maxUses}` : ''}
+                      {c.expiresAt && ` · ${new Date(c.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}`}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3" style={{ borderTop: '1px solid var(--ls-border)', background: 'var(--ls-surface-2)' }}>
+                    <button
+                      onClick={() => toggleActive(c)}
+                      className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                      style={{ color: c.isActive ? 'var(--ls-muted)' : 'var(--ls-success)' }}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        {c.isActive
+                          ? <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                          : <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />}
+                      </svg>
+                      {c.isActive ? tCommon('inactive') : tCommon('active')}
                     </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {c.tracks.length === 0 ? (
-                      <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>—</span>
-                    ) : c.tracks.map((tr) => (
-                      <span key={tr.id} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--ls-sb-hover)', color: 'var(--ls-text)' }}>{tr.name}</span>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex gap-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
-                      <span>{t('usesCol')}: {c.usedCount}{c.maxUses !== null ? `/${c.maxUses}` : ''}</span>
-                      {c.expiresAt && <span>{new Date(c.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}</span>}
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <ActionBtn onClick={() => openEdit(c)} label={tCommon('edit')} variant="primary"
-                        icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>}
-                      />
-                      <ActionBtn onClick={() => setDeleteDialog({ open: true, id: c.id, loading: false })} label={tCommon('delete')} variant="danger"
-                        icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>}
-                      />
-                    </div>
+                    <button
+                      onClick={() => openEdit(c)}
+                      className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                      style={{ color: 'var(--ls-accent)', borderLeft: '1px solid var(--ls-border)' }}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                      {tCommon('edit')}
+                    </button>
+                    <button
+                      onClick={() => setDeleteDialog({ open: true, id: c.id, loading: false })}
+                      className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                      style={{ color: 'var(--ls-error)', borderLeft: '1px solid var(--ls-border)' }}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                      {tCommon('delete')}
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </>
-      )}
-    </div>
+        )}
+      </div>
     </>
   );
 }

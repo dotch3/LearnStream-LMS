@@ -34,7 +34,8 @@
       "submitting": "Entrando…",
       "error": "Credenciais inválidas. Tente novamente.",
       "forgotPassword": "Esqueceu a senha?",
-      "setupDone": "Configuração concluída — entre com sua conta de administrador."
+      "setupDone": "Configuração concluída — entre com sua conta de administrador.",
+      "title": "Entrar na plataforma"
     },
     "forgotPassword": {
       "title": "Esqueceu sua senha?",

@@ -67,17 +67,13 @@ export default function VideoPlayerPage() {
   const [markingComplete, setMarkingComplete] = useState(false);
   const [markError, setMarkError] = useState('');
 
-  // Saved position for resume-from-where-left-off
   const savedSecondsRef = useRef(0);
-
-  // Refs to avoid stale closures in callbacks
   const playerRef = useRef<YTPlayer | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);       // 30s API sync
-  const visualIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // 5s visual update
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const visualIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const videoRef = useRef<VideoDetail | null>(null);
-  const wasSeekingRef = useRef(false); // true while buffering after a seek
+  const wasSeekingRef = useRef(false);
 
-  // Load video details
   useEffect(() => {
     api
       .get<VideoDetail>(`/api/videos/${params.videoId}`)
@@ -93,7 +89,6 @@ export default function VideoPlayerPage() {
       .finally(() => setLoading(false));
   }, [params.videoId, router]);
 
-  // Load track progress: completion + saved position + prev/next
   useEffect(() => {
     api
       .get<{ videos: TrackVideoProgress[] }>(`/api/progress/tracks/${params.id}`)
@@ -104,7 +99,6 @@ export default function VideoPlayerPage() {
         const cur = sorted[idx];
         setIsCompleted(cur.completed);
         setWatchPercentage(Math.round(cur.percentage));
-        // Save position for resume (don't resume if already completed)
         if (!cur.completed && cur.watchedSeconds > 5) {
           savedSecondsRef.current = cur.watchedSeconds;
         }
@@ -125,12 +119,10 @@ export default function VideoPlayerPage() {
       setWatchPercentage(Math.round(res.data.percentage));
       if (res.data.completed) setIsCompleted(true);
     } catch (err: unknown) {
-      // Log but don't interrupt playback
       console.error('[progress] POST failed:', err);
     }
   }, [params.videoId]);
 
-  // Update the visual % immediately from player state — no API call
   const updateVisual = useCallback(() => {
     const player = playerRef.current;
     const vid = videoRef.current;
@@ -141,7 +133,6 @@ export default function VideoPlayerPage() {
     setWatchPercentage(Math.round(Math.min(100, (watched / total) * 100)));
   }, []);
 
-  // Send progress to API + update visual
   const reportProgress = useCallback(() => {
     const player = playerRef.current;
     const vid = videoRef.current;
@@ -151,7 +142,6 @@ export default function VideoPlayerPage() {
     postProgress(watched, total);
   }, [postProgress]);
 
-  // Mark complete: use stored DB duration as fallback so it works even without the YT player
   const handleMarkComplete = useCallback(async () => {
     const vid = videoRef.current;
     if (!vid || !params.videoId) return;
@@ -180,7 +170,6 @@ export default function VideoPlayerPage() {
     }
   }, [params.videoId]);
 
-  // Set up YouTube player
   useEffect(() => {
     if (!apiReady || !video) return;
 
@@ -189,7 +178,6 @@ export default function VideoPlayerPage() {
       playerVars: { rel: 0, modestbranding: 1 },
       events: {
         onReady: (e) => {
-          // Resume from saved position (skip if already completed)
           if (savedSecondsRef.current > 0) {
             e.target.seekTo(savedSecondsRef.current, true);
           }
@@ -198,16 +186,12 @@ export default function VideoPlayerPage() {
           const { PLAYING, PAUSED, ENDED, BUFFERING } = window.YT.PlayerState;
 
           if (e.data === PLAYING) {
-            // If we just finished buffering after a seek, getCurrentTime() now
-            // reflects the new position — update visual immediately before intervals kick in
             if (wasSeekingRef.current) {
               wasSeekingRef.current = false;
               updateVisual();
             }
-            // API sync every 30s
             if (intervalRef.current) clearInterval(intervalRef.current);
             intervalRef.current = setInterval(reportProgress, 30_000);
-            // Visual update every 5s while playing
             if (visualIntervalRef.current) clearInterval(visualIntervalRef.current);
             visualIntervalRef.current = setInterval(updateVisual, 5_000);
           } else {
@@ -218,7 +202,6 @@ export default function VideoPlayerPage() {
               wasSeekingRef.current = false;
               reportProgress();
             } else if (e.data === BUFFERING) {
-              // getCurrentTime() still holds the old position here — don't update visual yet
               wasSeekingRef.current = true;
             }
           }
@@ -234,12 +217,23 @@ export default function VideoPlayerPage() {
     };
   }, [apiReady, video, reportProgress, updateVisual]);
 
-  if (loading) return <div className="p-4 sm:p-8">Loading...</div>;
-  if (error) return <div className="p-4 sm:p-8" style={{ color: '#ef4444' }}>{error}</div>;
+  if (loading) return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <div className="h-3 w-32 rounded animate-pulse mb-6 skeleton" />
+      <div className="h-6 w-72 rounded animate-pulse mb-4 skeleton" />
+      <div className="w-full aspect-video rounded-xl animate-pulse skeleton" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      <p className="text-sm" style={{ color: 'var(--ls-error)' }}>{error}</p>
+    </div>
+  );
   if (!video) return null;
 
   return (
-    <div className="p-3 sm:p-6 max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <Script
         src="https://www.youtube.com/iframe_api"
         strategy="afterInteractive"
@@ -252,78 +246,100 @@ export default function VideoPlayerPage() {
         }}
       />
 
+      {/* Back */}
       <button
         onClick={() => router.push(`/dashboard/tracks/${params.id}`)}
-        className="text-sm mb-4 block transition-opacity hover:opacity-70"
-        style={{ color: 'var(--ls-accent)' }}
+        className="flex items-center gap-1.5 text-xs font-medium mb-5 transition-opacity hover:opacity-70 cursor-pointer"
+        style={{ color: 'var(--ls-text-2)' }}
       >
-        ← Back to Track
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Voltar para a trilha
       </button>
 
-      <h1 className="text-xl font-bold mb-4">{video.title}</h1>
+      <h1
+        className="text-lg sm:text-xl font-bold tracking-tight mb-4"
+        style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}
+      >
+        {video.title}
+      </h1>
 
-      <div className="w-full aspect-video bg-black rounded overflow-hidden">
+      {/* Player */}
+      <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
         <div id="yt-player" className="w-full h-full" />
       </div>
 
       {/* Progress bar */}
-      <div className="mt-3 h-1.5 w-full rounded-full" style={{ background: 'var(--ls-border)' }}>
+      <div className="mt-3 h-1.5 w-full rounded-full" style={{ background: 'var(--ls-surface-2)' }}>
         <div
           className="h-1.5 rounded-full transition-all duration-500"
           style={{
             width: `${Math.max(watchPercentage, isCompleted ? 100 : 0)}%`,
-            background: isCompleted ? '#22c55e' : 'var(--ls-accent)',
+            background: isCompleted ? 'var(--ls-success)' : 'var(--ls-accent)',
           }}
         />
       </div>
 
       {/* Status row */}
-      <div className="mt-3 flex items-center gap-3 flex-wrap">
+      <div className="mt-3 flex items-center gap-4 flex-wrap">
         {isCompleted ? (
-          /* ── Completed state ── */
-          <span className="inline-flex items-center gap-2 rounded-full bg-green-500 px-4 py-1.5 text-sm font-semibold text-white shadow-sm">
+          <span
+            className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full"
+            style={{ color: 'var(--ls-success)', background: 'rgba(30,166,62,0.1)' }}
+          >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
-            Lesson complete
+            Aula concluída
           </span>
         ) : (
-          /* ── Not completed state ── */
           <>
-            <span className="text-sm" style={{ color: 'var(--ls-muted)' }}>{watchPercentage}% watched</span>
+            <span className="text-xs tabular-nums font-medium" style={{ color: 'var(--ls-text-2)' }}>
+              {watchPercentage}% assistido
+            </span>
             <button
               onClick={handleMarkComplete}
               disabled={markingComplete}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium disabled:opacity-50 transition-all"
-              style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-card)', color: 'var(--ls-text)' }}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80 disabled:opacity-40 cursor-pointer"
+              style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
-              {markingComplete ? 'Saving...' : 'Mark as complete'}
+              {markingComplete ? 'Salvando…' : 'Marcar como concluída'}
             </button>
           </>
         )}
       </div>
 
-      {/* Error feedback for mark-complete */}
       {markError && (
-        <p className="mt-2 text-xs" style={{ color: '#ef4444' }}>{markError}</p>
+        <p className="mt-2 text-xs" style={{ color: 'var(--ls-error)' }}>{markError}</p>
       )}
 
       {video.description && (
-        <p className="text-sm mt-4" style={{ color: 'var(--ls-muted)' }}>{video.description}</p>
+        <div
+          className="mt-5 p-4 rounded-xl text-sm leading-relaxed"
+          style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)' }}
+        >
+          {video.description}
+        </div>
       )}
 
-      {/* Prev / Next navigation */}
-      <div className="mt-6 flex justify-between pt-4" style={{ borderTop: '1px solid var(--ls-border)' }}>
+      {/* Prev / Next */}
+      <div className="mt-6 pt-4 flex justify-between items-center" style={{ borderTop: '1px solid var(--ls-border)' }}>
         {prevVideoId ? (
           <button
             onClick={() => router.push(`/dashboard/tracks/${params.id}/videos/${prevVideoId}`)}
-            className="text-sm transition-opacity hover:opacity-70"
-            style={{ color: 'var(--ls-accent)' }}
+            className="flex items-center gap-2 text-sm font-medium rounded-lg px-4 py-2 transition-colors cursor-pointer"
+            style={{ color: 'var(--ls-text-2)', border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ls-text-3)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ls-border)'; }}
           >
-            ← Previous lesson
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Anterior
           </button>
         ) : (
           <span />
@@ -331,13 +347,21 @@ export default function VideoPlayerPage() {
         {nextVideoId ? (
           <button
             onClick={() => router.push(`/dashboard/tracks/${params.id}/videos/${nextVideoId}`)}
-            className="text-sm transition-opacity hover:opacity-70"
-            style={{ color: 'var(--ls-accent)' }}
+            className="flex items-center gap-2 text-sm font-semibold rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 cursor-pointer"
+            style={{ background: 'var(--ls-accent)' }}
           >
-            Next lesson →
+            Próxima aula
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
           </button>
         ) : (
-          <span className="text-sm" style={{ color: 'var(--ls-muted)' }}>Last lesson in course</span>
+          <span
+            className="text-xs font-medium px-3 py-1.5 rounded-lg"
+            style={{ color: 'var(--ls-text-3)', border: '1px solid var(--ls-border)' }}
+          >
+            Última aula
+          </span>
         )}
       </div>
 

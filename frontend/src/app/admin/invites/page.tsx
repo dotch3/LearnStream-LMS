@@ -41,22 +41,22 @@ function CopyLinkModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.45)' }}>
-      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
-        <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--ls-text-1)' }}>{t('inviteLink')}</h2>
-        <p className="text-sm mb-4" style={{ color: 'var(--ls-text-2)' }}>
+      <div className="w-full max-w-md rounded-lg p-6" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
+        <h2 className="text-base font-semibold mb-1" style={{ color: 'var(--ls-text)' }}>{t('inviteLink')}</h2>
+        <p className="text-sm mb-4" style={{ color: 'var(--ls-muted)' }}>
           {t('inviteLinkDesc', { email })}
         </p>
         <div
-          className="rounded-lg px-3 py-2.5 text-xs font-mono break-all mb-4 select-all"
-          style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)' }}
+          className="rounded-md px-3 py-2.5 text-xs font-mono break-all mb-4 select-all"
+          style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-muted)' }}
         >
           {inviteUrl}
         </div>
         <div className="flex gap-2">
           <button
             onClick={copy}
-            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold text-white cursor-pointer transition-colors"
-            style={{ background: copied ? '#16a34a' : 'var(--ls-accent)' }}
+            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium text-white cursor-pointer transition-all"
+            style={{ background: copied ? 'var(--ls-success)' : 'var(--ls-accent)' }}
           >
             {copied ? (
               <>
@@ -76,8 +76,8 @@ function CopyLinkModal({
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
-            style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text-2)' }}
+            className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer"
+            style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-muted)' }}
           >
             {tCommon('done')}
           </button>
@@ -103,15 +103,15 @@ export default function AdminInvitesPage() {
     expired:  t('expired'),
   };
 
-  const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
-    pending:  { bg: 'rgba(245,158,11,0.15)',  color: '#f59e0b' },
-    accepted: { bg: 'rgba(34,197,94,0.15)',   color: '#22c55e' },
-    expired:  { bg: 'rgba(107,114,128,0.15)', color: '#6b7280' },
+  const STATUS_COLOR: Record<string, string> = {
+    pending:  'var(--ls-muted)',
+    accepted: 'var(--ls-success)',
+    expired:  'var(--ls-muted)',
   };
 
-  const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
-    ADMIN:  { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
-    VIEWER: { bg: 'rgba(99,102,241,0.15)',  color: '#818cf8' },
+  const ROLE_COLOR: Record<string, string> = {
+    ADMIN:  'var(--ls-accent)',
+    VIEWER: 'var(--ls-muted)',
   };
 
   const load = async () => {
@@ -176,35 +176,32 @@ export default function AdminInvitesPage() {
         />
       )}
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{t('title')}</h1>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <div className="mb-8">
+          <h1 className="page-title">{t('title')}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ls-muted)' }}>{t('subtitle')}</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
-          {(['pending', 'accepted', 'expired'] as const).map((key) => {
-            const s = STATUS_STYLES[key];
-            return (
-              <div
-                key={key}
-                className="rounded-xl px-5 py-4"
-                style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}
-              >
-                <p className="text-2xl font-bold" style={{ color: s.color }}>{counts[key]}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>{STATUS_LABELS[key]}</p>
-                <div className="mt-2 h-1 rounded-full w-full" style={{ background: s.bg }} />
-              </div>
-            );
-          })}
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+          {(['pending', 'accepted', 'expired'] as const).map((key) => (
+            <div
+              key={key}
+              className="rounded-xl p-3 sm:p-5"
+              style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+            >
+              <p className="text-2xl sm:text-3xl font-bold tabular-nums leading-none mb-1" style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}>{counts[key]}</p>
+              <p className="text-[10px] sm:text-xs font-medium truncate" style={{ color: 'var(--ls-text-2)' }}>{STATUS_LABELS[key]}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="flex gap-1 mb-5 p-1 rounded-lg w-fit" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+        <div className="flex gap-1 mb-5 p-1 rounded-lg overflow-x-auto tabs-scroll" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
           {(['ALL', 'pending', 'accepted', 'expired'] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className="px-3 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer"
+              className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer whitespace-nowrap"
               style={{
                 background: filter === f ? 'var(--ls-sb-active)' : 'transparent',
                 color: filter === f ? 'var(--ls-sb-active-t)' : 'var(--ls-muted)',
@@ -216,100 +213,112 @@ export default function AdminInvitesPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: 'var(--ls-card)' }} />
+              <div key={i} className="h-16 rounded-lg animate-pulse" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-xl py-16 text-center" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
-            <p className="text-base" style={{ color: 'var(--ls-muted)' }}>{t('noFound')}</p>
+          <div className="flex flex-col items-center justify-center py-16 text-center rounded-lg" style={{ border: '1px dashed var(--ls-border)' }}>
+            <p className="text-sm" style={{ color: 'var(--ls-muted)' }}>{t('noFound')}</p>
             <p className="text-xs mt-1" style={{ color: 'var(--ls-muted)' }}>{t('sendFromUsers')}</p>
           </div>
         ) : (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+            <div className="hidden md:block rounded-lg overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('emailCol')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('roleCol')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('sentCol')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{t('expiresUsedCol')}</th>
-                    <th className="px-5 py-3 text-left font-semibold" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('emailCol')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('roleCol')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('sentCol')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('expiresUsedCol')}</th>
+                    <th className="px-5 py-3 text-left font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{tCommon('status')}</th>
                     <th className="px-5 py-3" />
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((inv, idx) => {
-                    const s = STATUS_STYLES[inv.status];
-                    const r = ROLE_STYLES[inv.role];
-                    return (
-                      <tr key={inv.id} style={{ background: 'var(--ls-card)', borderBottom: idx < filtered.length - 1 ? '1px solid var(--ls-border)' : 'none' }}>
-                        <td className="px-5 py-3 font-medium" style={{ color: 'var(--ls-text)' }}>{inv.email}</td>
-                        <td className="px-5 py-3">
-                          <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: r.bg, color: r.color }}>{inv.role}</span>
-                        </td>
-                        <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
-                          {new Date(inv.createdAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
-                        </td>
-                        <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
-                          {inv.usedAt ? new Date(inv.usedAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : new Date(inv.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: s.bg, color: s.color }}>{STATUS_LABELS[inv.status]}</span>
-                        </td>
-                        <td className="px-5 py-3">
-                          {inv.status !== 'accepted' && (
-                            <div className="flex gap-1 justify-end">
-                              <ActionBtn onClick={() => handleGetLink(inv)} label={t('getLink')} variant="primary" disabled={acting === inv.id} />
-                              <ActionBtn onClick={() => handleDelete(inv.id, inv.email)} label={t('remove')} variant="danger" disabled={acting === inv.id} />
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {filtered.map((inv, idx) => (
+                    <tr
+                      key={inv.id}
+                      style={{ background: 'var(--ls-card)', borderTop: idx > 0 ? '1px solid var(--ls-border)' : undefined }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-card)'; }}
+                    >
+                      <td className="px-5 py-3 text-sm font-medium" style={{ color: 'var(--ls-text)' }}>{inv.email}</td>
+                      <td className="px-5 py-3 text-xs font-medium" style={{ color: ROLE_COLOR[inv.role] }}>
+                        {inv.role === 'ADMIN' ? 'Admin' : 'Viewer'}
+                      </td>
+                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                        {new Date(inv.createdAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                      </td>
+                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
+                        {inv.usedAt ? new Date(inv.usedAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : new Date(inv.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                      </td>
+                      <td className="px-5 py-3 text-xs font-medium" style={{ color: STATUS_COLOR[inv.status] }}>
+                        {STATUS_LABELS[inv.status]}
+                      </td>
+                      <td className="px-5 py-3">
+                        {inv.status !== 'accepted' && (
+                          <div className="flex gap-1 justify-end">
+                            <ActionBtn onClick={() => handleGetLink(inv)} label={t('getLink')} variant="primary" disabled={acting === inv.id} />
+                            <ActionBtn onClick={() => handleDelete(inv.id, inv.email)} label={t('remove')} variant="danger" disabled={acting === inv.id} />
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile cards */}
-            <div className="md:hidden space-y-3">
-              {filtered.map((inv) => {
-                const s = STATUS_STYLES[inv.status];
-                const r = ROLE_STYLES[inv.role];
-                return (
-                  <div key={inv.id} className="rounded-xl p-4" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: 'var(--ls-text)' }}>{inv.email}</p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: r.bg, color: r.color }}>{inv.role}</span>
-                          <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>
-                            {new Date(inv.createdAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: s.bg, color: s.color }}>
+            <div className="md:hidden space-y-2">
+              {filtered.map((inv) => (
+                <div key={inv.id} className="rounded-lg overflow-hidden" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+                  <div className="px-4 py-3">
+                    <div className="flex items-start justify-between gap-2 mb-0.5">
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--ls-text)' }}>{inv.email}</p>
+                      <span className="shrink-0 text-xs font-medium" style={{ color: STATUS_COLOR[inv.status] }}>
                         {STATUS_LABELS[inv.status]}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>
-                        {inv.usedAt ? new Date(inv.usedAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : new Date(inv.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-medium" style={{ color: ROLE_COLOR[inv.role] }}>
+                        {inv.role === 'ADMIN' ? 'Admin' : 'Viewer'}
                       </span>
-                      {inv.status !== 'accepted' && (
-                        <div className="flex gap-1 shrink-0">
-                          <ActionBtn onClick={() => handleGetLink(inv)} label={t('getLink')} variant="primary" disabled={acting === inv.id} />
-                          <ActionBtn onClick={() => handleDelete(inv.id, inv.email)} label={t('remove')} variant="danger" disabled={acting === inv.id} />
-                        </div>
-                      )}
+                      <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>
+                        {inv.usedAt
+                          ? new Date(inv.usedAt).toLocaleDateString(undefined, { timeZone: 'UTC' })
+                          : new Date(inv.expiresAt).toLocaleDateString(undefined, { timeZone: 'UTC' })}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
+                  {inv.status !== 'accepted' && (
+                    <div className="grid grid-cols-2" style={{ borderTop: '1px solid var(--ls-border)', background: 'var(--ls-surface-2)' }}>
+                      <button
+                        onClick={() => handleGetLink(inv)}
+                        disabled={acting === inv.id}
+                        className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70 disabled:opacity-40"
+                        style={{ color: 'var(--ls-accent)' }}
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
+                        {t('getLink')}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(inv.id, inv.email)}
+                        disabled={acting === inv.id}
+                        className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70 disabled:opacity-40"
+                        style={{ color: 'var(--ls-error)', borderLeft: '1px solid var(--ls-border)' }}
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                        {t('remove')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </>
         )}

@@ -145,8 +145,10 @@ export default function AdminTrackFormPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">Loading...</p>
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-12 rounded-xl animate-pulse" style={{ background: 'var(--ls-surface)' }} />
+        ))}
       </div>
     );
   }
@@ -154,173 +156,213 @@ export default function AdminTrackFormPage() {
   const hasImage = !!form.thumbnailUrl;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-6 py-10">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      {/* Back + header */}
+      <div className="mb-6 sm:mb-8">
+        <button
+          onClick={() => router.push('/admin/tracks')}
+          className="mb-4 flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70 cursor-pointer"
+          style={{ color: 'var(--ls-accent-text)' }}
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          {t('backToCourses')}
+        </button>
+        <h1 className="page-title">{isNew ? t('newCourse') : t('editCourse')}</h1>
+        <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-2)' }}>
+          {isNew ? t('createNew') : t('updateDetails')}
+        </p>
+      </div>
 
-        <div className="mb-8">
-          <button
-            onClick={() => router.push('/admin/tracks')}
-            className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+      {/* Form card */}
+      <div
+        className="rounded-xl p-5 sm:p-6"
+        style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+      >
+        {apiError && (
+          <div
+            className="mb-5 rounded-lg px-4 py-3 text-sm"
+            style={{ background: 'var(--ls-error-muted)', border: '1px solid var(--ls-error)', color: 'var(--ls-error)' }}
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-            {t('backToCourses')}
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isNew ? t('newCourse') : t('editCourse')}
-          </h1>
-          <p className="mt-1 text-gray-500">
-            {isNew ? t('createNew') : t('updateDetails')}
-          </p>
-        </div>
+            {apiError}
+          </div>
+        )}
 
-        <div className="rounded-xl bg-white border border-gray-200 shadow-sm p-6">
-          {apiError && (
-            <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {apiError}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-1)' }}>
+              {t('nameField')} <span style={{ color: 'var(--ls-error)' }}>*</span>
+            </label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="e.g. Leadership Foundations"
+              className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors"
+              style={{
+                border: errors.name ? '1px solid var(--ls-error)' : '1px solid var(--ls-border)',
+                background: 'var(--ls-bg)',
+                color: 'var(--ls-text-1)',
+              }}
+            />
+            {errors.name && <p className="mt-1 text-xs" style={{ color: 'var(--ls-error)' }}>{errors.name}</p>}
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('nameField')} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Leadership Foundations"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
-            </div>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-1)' }}>
+              {t('descriptionField')}
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={3}
+              placeholder="Brief description of this course..."
+              className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none transition-colors"
+              style={{
+                border: '1px solid var(--ls-border)',
+                background: 'var(--ls-bg)',
+                color: 'var(--ls-text-1)',
+              }}
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('descriptionField')}</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                rows={3}
-                placeholder="Brief description of this course..."
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-              />
-            </div>
+          {/* Thumbnail */}
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-1)' }}>
+              {t('courseLogo')}
+            </label>
+            <p className="text-xs mb-3" style={{ color: 'var(--ls-text-3)' }}>
+              Square image recommended — 400×400 px minimum. Used as the course thumbnail and printed on the completion certificate.
+              Upload will be auto-cropped to a square.
+            </p>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('courseLogo')}</label>
-              <p className="text-xs text-gray-400 mb-3">
-                Square image recommended — 400×400 px minimum. Used as the course thumbnail and printed on the completion certificate.
-                Upload will be auto-cropped to a square.
-              </p>
-
-              {hasImage ? (
-                <div className="flex items-start gap-4">
-                  <img
-                    src={form.thumbnailUrl}
-                    alt="Track logo preview"
-                    className="h-32 w-32 rounded-xl object-cover border border-gray-200 shadow-sm"
-                  />
-                  <div className="flex flex-col gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
-                    >
-                      Replace image
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, thumbnailUrl: '' }))}
-                      className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
-                    >
-                      Remove
-                    </button>
-                    <p className="text-xs text-gray-400">
-                      {form.thumbnailUrl.startsWith('data:') ? 'Uploaded file' : 'External URL'}
-                    </p>
-                  </div>
+            {hasImage ? (
+              <div className="flex items-start gap-4">
+                <img
+                  src={form.thumbnailUrl}
+                  alt="Track logo preview"
+                  className="h-24 w-24 sm:h-32 sm:w-32 rounded-xl object-cover shrink-0"
+                  style={{ border: '1px solid var(--ls-border)' }}
+                />
+                <div className="flex flex-col gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+                    style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text-1)' }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface)'; }}
+                  >
+                    Replace image
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, thumbnailUrl: '' }))}
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+                    style={{ border: '1px solid var(--ls-error)', background: 'var(--ls-surface)', color: 'var(--ls-error)' }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-error-muted)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface)'; }}
+                  >
+                    Remove
+                  </button>
+                  <p className="text-xs" style={{ color: 'var(--ls-text-3)' }}>
+                    {form.thumbnailUrl.startsWith('data:') ? 'Uploaded file' : 'External URL'}
+                  </p>
                 </div>
-              ) : (
-                <div
-                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors ${
-                    dragOver
-                      ? 'border-indigo-400 bg-indigo-50'
-                      : 'border-gray-300 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50'
-                  }`}
-                >
-                  <svg className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                  </svg>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-gray-600">
-                      <span className="text-indigo-600">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">JPEG, PNG, WebP — max 3 MB</p>
-                  </div>
+              </div>
+            ) : (
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors"
+                style={{
+                  borderColor: dragOver ? 'var(--ls-accent)' : 'var(--ls-border)',
+                  background: dragOver ? 'var(--ls-accent-muted)' : 'var(--ls-bg)',
+                }}
+              >
+                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2} style={{ color: 'var(--ls-text-3)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <div className="text-center">
+                  <p className="text-sm font-medium" style={{ color: 'var(--ls-text-2)' }}>
+                    <span style={{ color: 'var(--ls-accent-text)' }}>Click to upload</span> or drag and drop
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--ls-text-3)' }}>JPEG, PNG, WebP — max 3 MB</p>
                 </div>
-              )}
+              </div>
+            )}
 
-              {logoError && <p className="mt-2 text-xs text-red-600">{logoError}</p>}
+            {logoError && <p className="mt-2 text-xs" style={{ color: 'var(--ls-error)' }}>{logoError}</p>}
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={handleFileInput}
-              />
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleFileInput}
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('displayOrder')}</label>
-              <input
-                type="number"
-                value={form.order}
-                onChange={(e) => setForm({ ...form, order: e.target.value })}
-                min={0}
-                className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <p className="mt-1 text-xs text-gray-400">{t('displayOrderHint')}</p>
-            </div>
+          {/* Display order */}
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-1)' }}>
+              {t('displayOrder')}
+            </label>
+            <input
+              type="number"
+              value={form.order}
+              onChange={(e) => setForm({ ...form, order: e.target.value })}
+              min={0}
+              className="w-24 rounded-lg px-3 py-2 text-sm outline-none"
+              style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
+            />
+            <p className="mt-1 text-xs" style={{ color: 'var(--ls-text-3)' }}>{t('displayOrderHint')}</p>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('visibilityCol')}</label>
-              <select
-                value={form.visibility}
-                onChange={(e) => setForm({ ...form, visibility: e.target.value as TrackFormData['visibility'] })}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="PUBLIC">{t('visibilityPublic')}</option>
-                <option value="LINK_ONLY">{t('visibilityLinkOnly')}</option>
-                <option value="DRAFT">{t('visibilityDraft')}</option>
-              </select>
-            </div>
+          {/* Visibility */}
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text-1)' }}>
+              {t('visibilityCol')}
+            </label>
+            <select
+              value={form.visibility}
+              onChange={(e) => setForm({ ...form, visibility: e.target.value as TrackFormData['visibility'] })}
+              className="w-full sm:w-auto rounded-lg px-3 py-2 text-sm outline-none"
+              style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
+            >
+              <option value="PUBLIC">{t('visibilityPublic')}</option>
+              <option value="LINK_ONLY">{t('visibilityLinkOnly')}</option>
+              <option value="DRAFT">{t('visibilityDraft')}</option>
+            </select>
+          </div>
 
-            <div className="flex gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition"
-              >
-                {saving ? t('savingCourse') : isNew ? t('createCourse') : t('saveChanges')}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/admin/tracks')}
-                className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
-              >
-                {tCommon('cancel')}
-              </button>
-            </div>
-          </form>
-        </div>
-
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full sm:w-auto rounded-lg px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-opacity hover:opacity-90 cursor-pointer"
+              style={{ background: 'var(--ls-accent)' }}
+            >
+              {saving ? t('savingCourse') : isNew ? t('createCourse') : t('saveChanges')}
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/admin/tracks')}
+              className="w-full sm:w-auto rounded-lg px-6 py-2.5 text-sm font-medium cursor-pointer transition-colors"
+              style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface)'; }}
+            >
+              {tCommon('cancel')}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

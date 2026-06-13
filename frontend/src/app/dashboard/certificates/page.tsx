@@ -139,8 +139,9 @@ export default function CertificatesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hidden certificate cards for image export */}
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+      {/* Hidden cards for image export */}
       <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1, pointerEvents: 'none' }}>
         {certificates.map((cert) => (
           <div key={cert.id} ref={(el) => { if (el) cardRefs.current.set(cert.id, el); }}>
@@ -149,110 +150,121 @@ export default function CertificatesPage() {
         ))}
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
-          <p className="mt-1 text-gray-500">{t('subtitle')}</p>
-        </div>
-
-        {loading && (
-          <div className="space-y-3">
-            {[1, 2].map((i) => (
-              <div key={i} className="rounded-xl bg-white border border-gray-200 p-5 animate-pulse">
-                <div className="flex justify-between">
-                  <div className="space-y-2 flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-1/3" />
-                    <div className="h-3 bg-gray-100 rounded w-1/4" />
-                  </div>
-                  <div className="h-6 w-28 bg-gray-100 rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-6 text-center">
-            <p className="text-red-700 font-medium">{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && certificates.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-white py-20 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-              <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold text-gray-700">{t('empty')}</h2>
-            <p className="mt-1 text-sm text-gray-400">{t('emptySubtitle')}</p>
-            <button
-              onClick={() => router.push('/dashboard/tracks')}
-              className="mt-5 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              {tCommon('browseCourses')}
-            </button>
-          </div>
-        )}
-
-        {!loading && !error && certificates.length > 0 && (
-          <div className="space-y-4">
-            {certificates.map((cert) => (
-              <div key={cert.id} className="rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden">
-                <div className="flex items-center gap-4 p-5">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-50">
-                    <svg className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                    </svg>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{cert.trackName}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {cert.recipientName && <span className="mr-1">{cert.recipientName} ·</span>}
-                      {cert.completedVideoCount} video{cert.completedVideoCount !== 1 ? 's' : ''} completed
-                      &nbsp;·&nbsp;
-                      {new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                    </p>
-                  </div>
-
-                  <span className="shrink-0 font-mono text-sm text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">
-                    {cert.code}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 border-t border-gray-100 px-5 py-3 bg-gray-50">
-                  <span className="text-xs text-gray-400 mr-1">{t('downloadLabel')}</span>
-
-                  <button
-                    onClick={() => handleDownloadPdf(cert)}
-                    disabled={downloadingPdf === cert.id}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                  >
-                    <svg className="h-3.5 w-3.5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M14.5 2.5c0-1.1-.9-2-2-2s-2 .9-2 2v7.5H4l8 8 8-8h-5.5V2.5z"/>
-                    </svg>
-                    {downloadingPdf === cert.id ? t('downloading') : 'PDF'}
-                  </button>
-
-                  <button
-                    onClick={() => handleDownloadImage(cert)}
-                    disabled={downloadingImg === cert.id}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                  >
-                    <svg className="h-3.5 w-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
-                    {downloadingImg === cert.id ? t('exporting') : t('imagePng')}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
+      <div className="mb-8">
+        <h1 className="page-title">{t('title')}</h1>
+        <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('subtitle')}</p>
       </div>
+
+      {loading && (
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-lg p-5 animate-pulse" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+              <div className="flex justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 rounded w-1/3" style={{ background: 'var(--ls-surface-2)' }} />
+                  <div className="h-3 rounded w-1/2" style={{ background: 'var(--ls-surface-2)' }} />
+                </div>
+                <div className="h-6 w-24 rounded" style={{ background: 'var(--ls-surface-2)' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="rounded-lg p-5" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+          <p className="text-sm" style={{ color: 'var(--ls-error)' }}>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && certificates.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <svg className="h-7 w-7 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--ls-muted)' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+          </svg>
+          <p className="text-sm font-medium" style={{ color: 'var(--ls-text)' }}>{t('empty')}</p>
+          <p className="mt-1 text-sm" style={{ color: 'var(--ls-muted)' }}>{t('emptySubtitle')}</p>
+          <button
+            onClick={() => router.push('/dashboard/tracks')}
+            className="mt-5 rounded-md px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 cursor-pointer"
+            style={{ background: 'var(--ls-accent)' }}
+          >
+            {tCommon('browseCourses')}
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && certificates.length > 0 && (
+        <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+          {certificates.map((cert, idx) => (
+            <div
+              key={cert.id}
+              style={{
+                background: 'var(--ls-card)',
+                borderBottom: idx < certificates.length - 1 ? '1px solid var(--ls-border)' : 'none',
+              }}
+            >
+              {/* Main row */}
+              <div className="flex items-start gap-4 px-5 py-4">
+                <svg
+                  className="h-5 w-5 mt-0.5 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  style={{ color: 'var(--ls-accent)' }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                </svg>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--ls-text)' }}>
+                    {cert.trackName}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>
+                    {cert.recipientName && <span>{cert.recipientName} · </span>}
+                    {cert.completedVideoCount} video{cert.completedVideoCount !== 1 ? 's' : ''}
+                    {' · '}
+                    {new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </p>
+                  <p className="text-xs mt-1 font-mono" style={{ color: 'var(--ls-muted)' }}>
+                    {cert.code}
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div
+                className="flex items-center gap-2 px-5 py-2.5"
+                style={{ borderTop: '1px solid var(--ls-border)', background: 'var(--ls-surface-2)' }}
+              >
+                <span className="text-xs mr-1" style={{ color: 'var(--ls-muted)' }}>{t('downloadLabel')}</span>
+                <button
+                  onClick={() => handleDownloadPdf(cert)}
+                  disabled={downloadingPdf === cert.id}
+                  className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-40 transition-opacity hover:opacity-80 cursor-pointer"
+                  style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-card)', color: 'var(--ls-text)' }}
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  {downloadingPdf === cert.id ? t('downloading') : 'PDF'}
+                </button>
+                <button
+                  onClick={() => handleDownloadImage(cert)}
+                  disabled={downloadingImg === cert.id}
+                  className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-40 transition-opacity hover:opacity-80 cursor-pointer"
+                  style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-card)', color: 'var(--ls-text)' }}
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                  {downloadingImg === cert.id ? t('exporting') : t('imagePng')}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

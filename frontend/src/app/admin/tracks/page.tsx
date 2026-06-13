@@ -99,12 +99,12 @@ export default function AdminTracksPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
           <div>
-            <h1 className="text-3xl font-bold" style={{ color: 'var(--ls-text-1)' }}>{t('title')}</h1>
-            <p className="mt-1" style={{ color: 'var(--ls-text-2)' }}>{t('subtitle')}</p>
+            <h1 className="page-title">{t('title')}</h1>
+            <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('subtitle')}</p>
           </div>
           <button
             onClick={() => router.push('/admin/tracks/new')}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 cursor-pointer"
             style={{ background: 'var(--ls-accent)' }}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -115,9 +115,9 @@ export default function AdminTracksPage() {
         </div>
 
         {loading && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl p-4 animate-pulse" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
+              <div key={i} className="rounded-lg p-4 animate-pulse" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
                 <div className="h-4 rounded w-1/3 mb-2" style={{ background: 'var(--ls-surface-2)' }} />
                 <div className="h-3 rounded w-1/2" style={{ background: 'var(--ls-surface-2)' }} />
               </div>
@@ -126,23 +126,21 @@ export default function AdminTracksPage() {
         )}
 
         {!loading && error && (
-          <div className="rounded-xl p-6 text-center" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-            <p style={{ color: 'var(--ls-error)' }}>{error}</p>
+          <div className="rounded-lg p-5" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+            <p className="text-sm" style={{ color: 'var(--ls-error)' }}>{error}</p>
           </div>
         )}
 
         {!loading && !error && tracks.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-xl py-20 text-center" style={{ border: '2px dashed var(--ls-border)' }}>
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'var(--ls-surface)' }}>
-              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--ls-text-2)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold" style={{ color: 'var(--ls-text-1)' }}>{t('empty')}</h2>
-            <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('emptySubtitle')}</p>
+          <div className="flex flex-col items-center justify-center py-24 text-center" style={{ border: '1px dashed var(--ls-border)', borderRadius: '8px' }}>
+            <svg className="h-7 w-7 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--ls-muted)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            <p className="text-sm font-medium" style={{ color: 'var(--ls-text)' }}>{t('empty')}</p>
+            <p className="mt-1 text-sm" style={{ color: 'var(--ls-muted)' }}>{t('emptySubtitle')}</p>
             <button
               onClick={() => router.push('/admin/tracks/new')}
-              className="mt-5 rounded-xl px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="mt-5 rounded-md px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 cursor-pointer"
               style={{ background: 'var(--ls-accent)' }}
             >
               {t('createFirst')}
@@ -153,13 +151,13 @@ export default function AdminTracksPage() {
         {!loading && !error && tracks.length > 0 && (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
+            <div className="hidden md:block rounded-lg overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ background: 'var(--ls-card)', borderBottom: '1px solid var(--ls-border)' }}>
-                    <th className="text-left px-5 py-3 font-semibold text-xs" style={{ color: 'var(--ls-muted)' }}>{t('courseCol')}</th>
-                    <th className="text-left px-5 py-3 font-semibold text-xs" style={{ color: 'var(--ls-muted)' }}>{t('visibilityCol')}</th>
-                    <th className="text-left px-5 py-3 font-semibold text-xs" style={{ color: 'var(--ls-muted)' }}>{t('videosCol')}</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('courseCol')}</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('visibilityCol')}</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('videosCol')}</th>
                     <th className="px-5 py-3" />
                   </tr>
                 </thead>
@@ -168,11 +166,11 @@ export default function AdminTracksPage() {
                     <tr
                       key={track.id}
                       style={{ background: 'var(--ls-card)', borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-card)'; }}
                     >
                       <td className="px-5 py-3">
-                        <p className="font-medium truncate" style={{ color: 'var(--ls-text)' }}>{track.name}</p>
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--ls-text)' }}>{track.name}</p>
                         {track.description && (
                           <p className="text-xs truncate mt-0.5" style={{ color: 'var(--ls-muted)' }}>{track.description}</p>
                         )}
@@ -200,20 +198,30 @@ export default function AdminTracksPage() {
             {/* Mobile cards */}
             <div className="md:hidden space-y-2">
               {tracks.map((track) => (
-                <div key={track.id} className="rounded-xl p-4" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="min-w-0">
-                      <p className="font-medium truncate" style={{ color: 'var(--ls-text)' }}>{track.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>
-                        {VISIBILITY_LABEL[track.visibility]} · {track.videoCount} {t('videosCol').toLowerCase()}
-                      </p>
-                    </div>
+                <div key={track.id} className="rounded-lg overflow-hidden" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}>
+                  <div className="px-4 py-3">
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--ls-text)' }}>{track.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>
+                      {VISIBILITY_LABEL[track.visibility]} · {track.videoCount} {t('videosCol').toLowerCase()}
+                    </p>
                   </div>
-                  <div className="flex items-center justify-end gap-0.5">
-                    <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}/videos`)} label={t('videosBtn')} variant="primary" icon={<VideosIcon />} />
-                    <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}/enrollments`)} label={t('studentsBtn')} variant="success" icon={<StudentsIcon />} />
-                    <ActionBtn onClick={() => router.push(`/admin/tracks/${track.id}`)} label={tCommon('edit')} variant="warning" icon={<EditIcon />} />
-                    <ActionBtn onClick={() => openDelete(track)} label={tCommon('delete')} variant="danger" icon={<TrashIcon />} />
+                  <div className="grid grid-cols-2" style={{ borderTop: '1px solid var(--ls-border)', background: 'var(--ls-surface-2)' }}>
+                    <button onClick={() => router.push(`/admin/tracks/${track.id}/videos`)} className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70 active:opacity-50" style={{ color: 'var(--ls-accent)' }}>
+                      <VideosIcon />
+                      {t('videosBtn')}
+                    </button>
+                    <button onClick={() => router.push(`/admin/tracks/${track.id}/enrollments`)} className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70 active:opacity-50" style={{ color: 'var(--ls-success)', borderLeft: '1px solid var(--ls-border)' }}>
+                      <StudentsIcon />
+                      {t('studentsBtn')}
+                    </button>
+                    <button onClick={() => router.push(`/admin/tracks/${track.id}`)} className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70 active:opacity-50" style={{ color: 'var(--ls-warning)', borderTop: '1px solid var(--ls-border)' }}>
+                      <EditIcon />
+                      {tCommon('edit')}
+                    </button>
+                    <button onClick={() => openDelete(track)} className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70 active:opacity-50" style={{ color: 'var(--ls-error)', borderLeft: '1px solid var(--ls-border)', borderTop: '1px solid var(--ls-border)' }}>
+                      <TrashIcon />
+                      {tCommon('delete')}
+                    </button>
                   </div>
                 </div>
               ))}

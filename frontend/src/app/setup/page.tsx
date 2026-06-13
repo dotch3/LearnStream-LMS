@@ -95,91 +95,116 @@ export default function SetupPage() {
   if (checking) return null;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-          <p className="mt-1 text-sm text-gray-500">{t('subtitle')}</p>
+    <main className="flex min-h-screen items-center justify-center px-4" style={{ background: 'var(--ls-bg)' }}>
+      <div
+        className="w-full max-w-md rounded-2xl p-8"
+        style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}
+      >
+        <div className="mb-7 text-center">
+          <div
+            className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4"
+            style={{ background: 'var(--ls-accent-muted)' }}
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} style={{ color: 'var(--ls-accent)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+          </div>
+          <h1
+            className="text-2xl font-bold"
+            style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}
+          >
+            {t('title')}
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('subtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('name')}</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text)' }}>{t('name')}</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md px-3 py-2 text-sm focus:outline-none"
+              style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text)', border: '1px solid var(--ls-border)' }}
             />
-            {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
+            {fieldErrors.name && <p className="mt-1 text-xs" style={{ color: 'var(--ls-error)' }}>{fieldErrors.name}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('email')}</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text)' }}>{t('email')}</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md px-3 py-2 text-sm focus:outline-none"
+              style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text)', border: '1px solid var(--ls-border)' }}
             />
-            {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
+            {fieldErrors.email && <p className="mt-1 text-xs" style={{ color: 'var(--ls-error)' }}>{fieldErrors.email}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('password')}</label>
-            <div className="relative mt-1">
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text)' }}>{t('password')}</label>
+            <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-md px-3 py-2 pr-10 text-sm focus:outline-none"
+                style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text)', border: '1px solid var(--ls-border)' }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 flex items-center px-3 transition-opacity hover:opacity-70"
+                style={{ color: 'var(--ls-muted)' }}
                 tabIndex={-1}
               >
                 <EyeIcon open={showPassword} />
               </button>
             </div>
-            {fieldErrors.password && <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>}
+            {fieldErrors.password && <p className="mt-1 text-xs" style={{ color: 'var(--ls-error)' }}>{fieldErrors.password}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('confirmPassword')}</label>
-            <div className="relative mt-1">
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ls-text)' }}>{t('confirmPassword')}</label>
+            <div className="relative">
               <input
                 type={showConfirm ? 'text' : 'password'}
                 required
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full rounded border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-md px-3 py-2 pr-10 text-sm focus:outline-none"
+                style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text)', border: '1px solid var(--ls-border)' }}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm((v) => !v)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 flex items-center px-3 transition-opacity hover:opacity-70"
+                style={{ color: 'var(--ls-muted)' }}
                 tabIndex={-1}
               >
                 <EyeIcon open={showConfirm} />
               </button>
             </div>
-            {fieldErrors.confirm && <p className="mt-1 text-xs text-red-600">{fieldErrors.confirm}</p>}
+            {fieldErrors.confirm && <p className="mt-1 text-xs" style={{ color: 'var(--ls-error)' }}>{fieldErrors.confirm}</p>}
           </div>
 
           {error && (
-            <div className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            <div className="rounded-md px-3 py-2 text-sm" style={{ background: 'var(--ls-card)', color: 'var(--ls-error)', border: '1px solid var(--ls-border)' }}>
+              {error}
+            </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full rounded-md py-2 text-sm font-semibold text-white disabled:opacity-50 transition-opacity hover:opacity-90 cursor-pointer"
+            style={{ background: 'var(--ls-accent)' }}
           >
             {loading ? t('submitting') : t('submit')}
           </button>
