@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/axios';
 
 interface Certificate {
@@ -18,15 +18,19 @@ interface Certificate {
 function CertificateCard({
   cert,
   hidden = false,
+  locale = 'pt',
 }: {
   cert: Certificate;
   hidden?: boolean;
+  locale?: string;
 }) {
-  const issuedDate = new Date(cert.issuedAt).toLocaleDateString('en-US', {
+  const dateLocale = locale === 'pt' ? 'pt-BR' : 'en-US';
+  const issuedDate = new Date(cert.issuedAt).toLocaleDateString(dateLocale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+  const isPt = locale === 'pt';
 
   return (
     <div
@@ -50,26 +54,34 @@ function CertificateCard({
       }}
     >
       <p style={{ fontSize: '11px', color: '#888', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '16px' }}>
-        Certificate of Completion
+        {isPt ? 'Certificado de Conclusão' : 'Certificate of Completion'}
       </p>
       <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#2c3e50', margin: '0 0 24px', textAlign: 'center', lineHeight: 1.2 }}>
-        CERTIFICATE OF COMPLETION
+        {isPt ? 'CERTIFICADO DE CONCLUSÃO' : 'CERTIFICATE OF COMPLETION'}
       </h1>
-      <p style={{ fontSize: '14px', color: '#555', margin: '0 0 12px' }}>This certifies that</p>
+      <p style={{ fontSize: '14px', color: '#555', margin: '0 0 12px' }}>
+        {isPt ? 'Certificamos que' : 'This certifies that'}
+      </p>
       <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#1a252f', margin: '0 0 12px', textAlign: 'center' }}>
         {cert.recipientName || '—'}
       </p>
-      <p style={{ fontSize: '14px', color: '#555', margin: '0 0 12px' }}>has successfully completed</p>
+      <p style={{ fontSize: '14px', color: '#555', margin: '0 0 12px' }}>
+        {isPt ? 'concluiu com êxito' : 'has successfully completed'}
+      </p>
       <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a252f', margin: '0 0 12px', textAlign: 'center' }}>
         {cert.trackName}
       </p>
       <p style={{ fontSize: '13px', color: '#666', margin: '0 0 36px' }}>
-        comprising {cert.completedVideoCount} training video{cert.completedVideoCount !== 1 ? 's' : ''}
+        {isPt
+          ? `compreendendo ${cert.completedVideoCount} aula${cert.completedVideoCount !== 1 ? 's' : ''} de treinamento`
+          : `comprising ${cert.completedVideoCount} training video${cert.completedVideoCount !== 1 ? 's' : ''}`}
       </p>
       <div style={{ width: '200px', borderTop: '1px solid #aaa', marginBottom: '10px' }} />
-      <p style={{ fontSize: '12px', color: '#444', margin: '0 0 4px' }}>Issued: {issuedDate}</p>
+      <p style={{ fontSize: '12px', color: '#444', margin: '0 0 4px' }}>
+        {isPt ? 'Emitido em:' : 'Issued:'} {issuedDate}
+      </p>
       <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#444', margin: '0 0 4px' }}>
-        Verification Code: {cert.code}
+        {isPt ? 'Código de verificação:' : 'Verification Code:'} {cert.code}
       </p>
     </div>
   );
@@ -79,6 +91,7 @@ export default function CertificatesPage() {
   const router = useRouter();
   const t = useTranslations('dashboard.certificates');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -145,7 +158,7 @@ export default function CertificatesPage() {
       <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1, pointerEvents: 'none' }}>
         {certificates.map((cert) => (
           <div key={cert.id} ref={(el) => { if (el) cardRefs.current.set(cert.id, el); }}>
-            <CertificateCard cert={cert} />
+            <CertificateCard cert={cert} locale={locale} />
           </div>
         ))}
       </div>
@@ -222,9 +235,9 @@ export default function CertificatesPage() {
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: 'var(--ls-muted)' }}>
                     {cert.recipientName && <span>{cert.recipientName} · </span>}
-                    {cert.completedVideoCount} video{cert.completedVideoCount !== 1 ? 's' : ''}
+                    {t('videoCount', { count: cert.completedVideoCount })}
                     {' · '}
-                    {new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    {new Date(cert.issuedAt).toLocaleDateString(locale === 'pt' ? 'pt-BR' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                   </p>
                   <p className="text-xs mt-1 font-mono" style={{ color: 'var(--ls-muted)' }}>
                     {cert.code}
