@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Script from 'next/script';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { CommentsSection } from '@/components/comments-section';
 
@@ -65,6 +66,7 @@ function formatSeconds(s: number): string {
 export default function VideoPlayerPage() {
   const router = useRouter();
   const params = useParams<{ id: string; videoId: string }>();
+  const t = useTranslations('dashboard.video');
 
   const [video, setVideo] = useState<VideoDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,14 +77,14 @@ export default function VideoPlayerPage() {
   const [watchPercentage, setWatchPercentage] = useState(0);
   const [prevVideoId, setPrevVideoId] = useState<string | null>(null);
   const [nextVideoId, setNextVideoId] = useState<string | null>(null);
+  const [prevVideoTitle, setPrevVideoTitle] = useState('');
+  const [nextVideoTitle, setNextVideoTitle] = useState('');
 
-  // Custom player controls
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showEnded, setShowEnded] = useState(false);
-
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const savedSecondsRef = useRef(0);
@@ -105,10 +107,10 @@ export default function VideoPlayerPage() {
       .catch((err: unknown) => {
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 401) router.push('/login');
-        else setError('Video not found.');
+        else setError(t('notFound'));
       })
       .finally(() => setLoading(false));
-  }, [params.videoId, router]);
+  }, [params.videoId, router, t]);
 
   useEffect(() => {
     api
@@ -123,8 +125,14 @@ export default function VideoPlayerPage() {
         if (!cur.completed && cur.watchedSeconds > 5) {
           savedSecondsRef.current = cur.watchedSeconds;
         }
-        setPrevVideoId(idx > 0 ? sorted[idx - 1].videoId : null);
-        setNextVideoId(idx < sorted.length - 1 ? sorted[idx + 1].videoId : null);
+        if (idx > 0) {
+          setPrevVideoId(sorted[idx - 1].videoId);
+          setPrevVideoTitle(sorted[idx - 1].title);
+        }
+        if (idx < sorted.length - 1) {
+          setNextVideoId(sorted[idx + 1].videoId);
+          setNextVideoTitle(sorted[idx + 1].title);
+        }
       })
       .catch(() => {});
   }, [params.id, params.videoId]);
@@ -139,8 +147,8 @@ export default function VideoPlayerPage() {
       });
       setWatchPercentage(Math.round(res.data.percentage));
       if (res.data.completed) setIsCompleted(true);
-    } catch (err: unknown) {
-      console.error('[progress] POST failed:', err);
+    } catch {
+      // silent
     }
   }, [params.videoId]);
 
@@ -163,9 +171,7 @@ export default function VideoPlayerPage() {
     const player = playerRef.current;
     const vid = videoRef.current;
     if (!player || !vid) return;
-    const watched = player.getCurrentTime();
-    const total = player.getDuration() || vid.duration;
-    postProgress(watched, total);
+    postProgress(player.getCurrentTime(), player.getDuration() || vid.duration);
   }, [postProgress]);
 
   useEffect(() => {
@@ -176,38 +182,26 @@ export default function VideoPlayerPage() {
       playerVars: {
         rel: 0,
         modestbranding: 1,
-        controls: 0,       // hide native YouTube controls
-        disablekb: 1,      // disable keyboard shortcuts
-        playsinline: 1,    // prevent fullscreen on iOS auto-open
-        iv_load_policy: 3, // hide video annotations
+        controls: 0,
+        disablekb: 1,
+        playsinline: 1,
+        iv_load_policy: 3,
       },
       events: {
         onReady: (e) => {
-          if (savedSecondsRef.current > 0) {
-            e.target.seekTo(savedSecondsRef.current, true);
-          }
+          if (savedSecondsRef.current > 0) e.target.seekTo(savedSecondsRef.current, true);
           const dur = e.target.getDuration();
-          if (dur > 0) {
-            durationRef.current = dur;
-            setDuration(dur);
-          }
+          if (dur > 0) { durationRef.current = dur; setDuration(dur); }
         },
         onStateChange: (e) => {
           const { PLAYING, PAUSED, ENDED, BUFFERING } = window.YT.PlayerState;
-
           if (e.data === PLAYING) {
             isPlayingRef.current = true;
             setIsPlaying(true);
             setShowEnded(false);
             const dur = playerRef.current?.getDuration() ?? 0;
-            if (dur > 0 && durationRef.current !== dur) {
-              durationRef.current = dur;
-              setDuration(dur);
-            }
-            if (wasSeekingRef.current) {
-              wasSeekingRef.current = false;
-              updateVisual();
-            }
+            if (dur > 0 && durationRef.current !== dur) { durationRef.current = dur; setDuration(dur); }
+            if (wasSeekingRef.current) { wasSeekingRef.current = false; updateVisual(); }
             if (intervalRef.current) clearInterval(intervalRef.current);
             intervalRef.current = setInterval(reportProgress, 30_000);
             if (visualIntervalRef.current) clearInterval(visualIntervalRef.current);
@@ -215,20 +209,12 @@ export default function VideoPlayerPage() {
           } else {
             if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
             if (visualIntervalRef.current) { clearInterval(visualIntervalRef.current); visualIntervalRef.current = null; }
-
             if (e.data === PAUSED) {
-              isPlayingRef.current = false;
-              setIsPlaying(false);
-              wasSeekingRef.current = false;
-              reportProgress();
-              updateVisual();
+              isPlayingRef.current = false; setIsPlaying(false); wasSeekingRef.current = false;
+              reportProgress(); updateVisual();
             } else if (e.data === ENDED) {
-              isPlayingRef.current = false;
-              setIsPlaying(false);
-              wasSeekingRef.current = false;
-              setShowEnded(true);
-              reportProgress();
-              updateVisual();
+              isPlayingRef.current = false; setIsPlaying(false); wasSeekingRef.current = false;
+              setShowEnded(true); reportProgress(); updateVisual();
             } else if (e.data === BUFFERING) {
               wasSeekingRef.current = true;
             }
@@ -249,11 +235,7 @@ export default function VideoPlayerPage() {
     if (showEnded) return;
     const player = playerRef.current;
     if (!player) return;
-    if (isPlayingRef.current) {
-      player.pauseVideo();
-    } else {
-      player.playVideo();
-    }
+    if (isPlayingRef.current) player.pauseVideo(); else player.playVideo();
   }
 
   function handleReplay() {
@@ -265,15 +247,11 @@ export default function VideoPlayerPage() {
     setCurrentTime(0);
   }
 
-  function handleSpeedChange(rate: number) {
-    playerRef.current?.setPlaybackRate(rate);
-    setPlaybackRate(rate);
-  }
-
   function cycleSpeed() {
     const idx = SPEEDS.indexOf(playbackRate);
     const next = SPEEDS[(idx + 1) % SPEEDS.length];
-    handleSpeedChange(next);
+    playerRef.current?.setPlaybackRate(next);
+    setPlaybackRate(next);
   }
 
   async function handleFullscreen() {
@@ -296,9 +274,14 @@ export default function VideoPlayerPage() {
     ? Math.min(100, (currentTime / duration) * 100)
     : Math.max(watchPercentage, isCompleted ? 100 : 0);
 
+  const trackName = video?.tracks.find((t) => t.id === params.id)?.name ?? '';
+
+  const goTo = (vid: string) => router.push(`/dashboard/tracks/${params.id}/videos/${vid}`);
+  const goToTrack = () => router.push(`/dashboard/tracks/${params.id}`);
+
   if (loading) return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-      <div className="h-3 w-32 rounded animate-pulse mb-6 skeleton" />
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <div className="h-3 w-40 rounded animate-pulse mb-5 skeleton" />
       <div className="h-6 w-72 rounded animate-pulse mb-4 skeleton" />
       <div className="w-full aspect-video rounded-xl animate-pulse skeleton" />
     </div>
@@ -312,20 +295,33 @@ export default function VideoPlayerPage() {
   if (!video) return null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
       <Script
         src="https://www.youtube.com/iframe_api"
         strategy="afterInteractive"
         onReady={() => {
-          if (window.YT?.Player) {
-            setApiReady(true);
-          } else {
-            window.onYouTubeIframeAPIReady = () => setApiReady(true);
-          }
+          if (window.YT?.Player) setApiReady(true);
+          else window.onYouTubeIframeAPIReady = () => setApiReady(true);
         }}
       />
 
-      {/* Title + completion badge */}
+      {/* ── Breadcrumb ─────────────────────────────────────────── */}
+      <button
+        onClick={goToTrack}
+        className="inline-flex items-center gap-1.5 text-sm font-medium mb-3 cursor-pointer transition-colors group"
+        style={{ color: 'var(--ls-text-3)' }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-accent)'; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-text-3)'; }}
+      >
+        <svg className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        <span className="truncate max-w-[200px] sm:max-w-none">
+          {trackName || t('backToCourse')}
+        </span>
+      </button>
+
+      {/* ── Title + completion badge ───────────────────────────── */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <h1
           className="text-base sm:text-lg font-semibold leading-snug"
@@ -341,12 +337,12 @@ export default function VideoPlayerPage() {
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
-            Concluída
+            {t('completed')}
           </span>
         )}
       </div>
 
-      {/* ── Video player ──────────────────────────────────── */}
+      {/* ── Video player ──────────────────────────────────────── */}
       <div
         ref={containerRef}
         className="relative w-full bg-black rounded-xl overflow-hidden shadow-lg"
@@ -355,7 +351,7 @@ export default function VideoPlayerPage() {
         {/* YouTube iframe */}
         <div id="yt-player" className="absolute inset-0 w-full h-full" />
 
-        {/* Click overlay (z-10) — blocks native YouTube UI, toggles play on tap */}
+        {/* Click overlay (z-10) */}
         <div
           className="absolute inset-0 select-none cursor-pointer"
           style={{ zIndex: 10 }}
@@ -363,17 +359,14 @@ export default function VideoPlayerPage() {
           onKeyDown={(e) => { if (e.key === ' ' || e.key === 'k') { e.preventDefault(); togglePlay(); } }}
           tabIndex={0}
           role="button"
-          aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
+          aria-label={isPlaying ? t('pause') : t('play')}
         />
 
-        {/* Center play icon — visible when paused */}
+        {/* Center play icon when paused (z-15, pointer-events: none) */}
         {!isPlaying && !showEnded && (
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            style={{ zIndex: 15 }}
-          >
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 15 }}>
             <div
-              className="flex items-center justify-center rounded-full transition-opacity"
+              className="flex items-center justify-center rounded-full"
               style={{ width: 56, height: 56, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
             >
               <svg className="h-6 w-6 text-white" style={{ marginLeft: 3 }} fill="currentColor" viewBox="0 0 24 24">
@@ -397,21 +390,35 @@ export default function VideoPlayerPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <p className="text-white/80 text-sm font-medium tracking-wide">Aula finalizada</p>
-            <button
-              onClick={handleReplay}
-              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
-              style={{ background: 'var(--ls-accent)' }}
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
-              Repetir aula
-            </button>
+            <p className="text-white/80 text-sm font-medium tracking-wide">{t('lessonEnded')}</p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleReplay}
+                className="flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
+                style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                {t('repeatLesson')}
+              </button>
+              {nextVideoId && (
+                <button
+                  onClick={() => goTo(nextVideoId)}
+                  className="flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
+                  style={{ background: 'var(--ls-accent)' }}
+                >
+                  {t('nextLesson')}
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        {/* ── Controls bar — overlaid at bottom (z-20) ────── */}
+        {/* ── Controls bar — overlaid at bottom (z-20) ── */}
         {!showEnded && (
           <div
             className="absolute bottom-0 left-0 right-0"
@@ -422,10 +429,7 @@ export default function VideoPlayerPage() {
               <div className="relative h-[3px] w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.2)' }}>
                 <div
                   className="absolute left-0 top-0 h-full rounded-full transition-all duration-1000"
-                  style={{
-                    width: `${progressPercent}%`,
-                    background: isCompleted ? '#4ade80' : 'white',
-                  }}
+                  style={{ width: `${progressPercent}%`, background: isCompleted ? '#4ade80' : 'white' }}
                 />
               </div>
             </div>
@@ -437,7 +441,7 @@ export default function VideoPlayerPage() {
                 onClick={togglePlay}
                 className="flex items-center justify-center rounded-lg cursor-pointer transition-opacity hover:opacity-80 active:scale-95"
                 style={{ width: 44, height: 44 }}
-                aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
+                aria-label={isPlaying ? t('pause') : t('play')}
               >
                 {isPlaying ? (
                   <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -457,15 +461,14 @@ export default function VideoPlayerPage() {
                 {duration > 0 ? formatSeconds(duration) : '--:--'}
               </span>
 
-              {/* Spacer */}
               <div className="flex-1" />
 
-              {/* Speed — single cycle button */}
+              {/* Speed */}
               <button
                 onClick={cycleSpeed}
                 className="flex items-center justify-center rounded-md text-xs font-semibold cursor-pointer transition-opacity hover:opacity-80 active:scale-95"
                 style={{ minWidth: 44, height: 44, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em' }}
-                aria-label={`Velocidade: ${playbackRate}×. Toque para alterar`}
+                aria-label={t('speedLabel', { rate: playbackRate })}
               >
                 {playbackRate === 1 ? '1×' : `${playbackRate}×`}
               </button>
@@ -475,7 +478,7 @@ export default function VideoPlayerPage() {
                 onClick={handleFullscreen}
                 className="flex items-center justify-center rounded-lg cursor-pointer transition-opacity hover:opacity-80 active:scale-95"
                 style={{ width: 44, height: 44 }}
-                aria-label={isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                aria-label={isFullscreen ? t('exitFullscreen') : t('enterFullscreen')}
               >
                 {isFullscreen ? (
                   <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -492,54 +495,65 @@ export default function VideoPlayerPage() {
         )}
       </div>
 
+      {/* ── Prev / Next — logo abaixo do vídeo ─────────────────── */}
+      <div className="mt-3 flex items-stretch gap-2">
+        {prevVideoId ? (
+          <button
+            onClick={() => goTo(prevVideoId)}
+            className="flex-1 sm:flex-none flex items-center gap-2 rounded-xl px-3 sm:px-4 py-3 text-sm font-medium transition-colors cursor-pointer min-h-[52px] active:scale-[0.98]"
+            style={{ color: 'var(--ls-text-2)', border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ls-text-3)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ls-border)'; }}
+          >
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            <div className="text-left min-w-0">
+              <div className="text-xs mb-0.5" style={{ color: 'var(--ls-text-3)' }}>{t('prevLesson')}</div>
+              <div className="text-xs font-semibold truncate max-w-[140px] sm:max-w-[200px]" style={{ color: 'var(--ls-text-1)' }}>
+                {prevVideoTitle}
+              </div>
+            </div>
+          </button>
+        ) : <div className="flex-1 sm:flex-none" />}
+
+        {nextVideoId ? (
+          <button
+            onClick={() => goTo(nextVideoId)}
+            className="flex-1 sm:flex-none flex items-center gap-2 rounded-xl px-3 sm:px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer min-h-[52px] active:scale-[0.98]"
+            style={{ background: 'var(--ls-accent)' }}
+          >
+            <div className="text-left min-w-0 flex-1">
+              <div className="text-xs mb-0.5 opacity-75">{t('nextLesson')}</div>
+              <div className="text-xs font-bold truncate max-w-[140px] sm:max-w-[200px]">
+                {nextVideoTitle}
+              </div>
+            </div>
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+        ) : (
+          <span
+            className="flex items-center text-xs font-medium px-3 py-2 rounded-xl"
+            style={{ color: 'var(--ls-text-3)', border: '1px solid var(--ls-border)' }}
+          >
+            {t('lastLesson')}
+          </span>
+        )}
+      </div>
+
+      {/* ── Description ───────────────────────────────────────── */}
       {video.description && (
         <div
-          className="mt-5 p-4 rounded-xl text-sm leading-relaxed"
+          className="mt-4 p-4 rounded-xl text-sm leading-relaxed"
           style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)' }}
         >
           {video.description}
         </div>
       )}
 
-      {/* Prev / Next */}
-      <div className="mt-6 pt-4 flex justify-between items-center" style={{ borderTop: '1px solid var(--ls-border)' }}>
-        {prevVideoId ? (
-          <button
-            onClick={() => router.push(`/dashboard/tracks/${params.id}/videos/${prevVideoId}`)}
-            className="flex items-center gap-2 text-sm font-medium rounded-lg px-4 py-2 transition-colors cursor-pointer"
-            style={{ color: 'var(--ls-text-2)', border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ls-text-3)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ls-border)'; }}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-            Anterior
-          </button>
-        ) : (
-          <span />
-        )}
-        {nextVideoId ? (
-          <button
-            onClick={() => router.push(`/dashboard/tracks/${params.id}/videos/${nextVideoId}`)}
-            className="flex items-center gap-2 text-sm font-semibold rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 cursor-pointer"
-            style={{ background: 'var(--ls-accent)' }}
-          >
-            Próxima aula
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </button>
-        ) : (
-          <span
-            className="text-xs font-medium px-3 py-1.5 rounded-lg"
-            style={{ color: 'var(--ls-text-3)', border: '1px solid var(--ls-border)' }}
-          >
-            Última aula
-          </span>
-        )}
-      </div>
-
+      {/* ── Comments ──────────────────────────────────────────── */}
       <CommentsSection videoId={params.videoId} />
     </div>
   );

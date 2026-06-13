@@ -254,6 +254,21 @@
       "approvedBody": "Sua solicitação para \"{trackName}\" foi aprovada",
       "deniedTitle": "Acesso ao curso não aprovado",
       "deniedBody": "Sua solicitação para \"{trackName}\" não foi aprovada"
+    },
+    "video": {
+      "notFound": "Vídeo não encontrado.",
+      "backToCourse": "Voltar ao curso",
+      "prevLesson": "Aula anterior",
+      "nextLesson": "Próxima aula",
+      "lastLesson": "Última aula",
+      "completed": "Concluída",
+      "repeatLesson": "Repetir aula",
+      "lessonEnded": "Aula finalizada",
+      "pause": "Pausar",
+      "play": "Reproduzir",
+      "speedLabel": "Velocidade: {rate}×. Toque para alterar",
+      "exitFullscreen": "Sair da tela cheia",
+      "enterFullscreen": "Tela cheia"
     }
   },
   "admin": {
@@ -494,5 +509,28 @@
       "deleteTitle": "Excluir código?",
       "deleteDesc": "Este código de acesso será excluído permanentemente e não poderá mais ser resgatado."
     }
+  },
+  "comments": {
+    "discussion": "Discussão",
+    "commentCount": "{count, plural, one {# comentário} other {# comentários}}",
+    "placeholder": "Faça uma pergunta ou compartilhe sua opinião…",
+    "post": "Publicar",
+    "posting": "…",
+    "reply": "Responder",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "confirmDelete": "Confirmar exclusão",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "replyPlaceholder": "Escreva uma resposta…",
+    "empty": "Nenhum comentário ainda. Seja o primeiro a participar!",
+    "tip": "Dica: pressione {key}+Enter para publicar.",
+    "deletedUser": "Usuário excluído",
+    "deletedBody": "[excluído]",
+    "timeJustNow": "agora mesmo",
+    "timeMinutes": "há {m}min",
+    "timeHours": "há {h}h",
+    "timeDays": "há {d}d"
   }
 }

@@ -254,6 +254,21 @@
       "approvedBody": "Your request for \"{trackName}\" was approved",
       "deniedTitle": "Course access denied",
       "deniedBody": "Your request for \"{trackName}\" was not approved"
+    },
+    "video": {
+      "notFound": "Video not found.",
+      "backToCourse": "Back to course",
+      "prevLesson": "Previous lesson",
+      "nextLesson": "Next lesson",
+      "lastLesson": "Last lesson",
+      "completed": "Completed",
+      "repeatLesson": "Replay lesson",
+      "lessonEnded": "Lesson finished",
+      "pause": "Pause",
+      "play": "Play",
+      "speedLabel": "Speed: {rate}×. Tap to change",
+      "exitFullscreen": "Exit fullscreen",
+      "enterFullscreen": "Fullscreen"
     }
   },
   "admin": {
@@ -494,5 +509,28 @@
       "deleteTitle": "Delete code?",
       "deleteDesc": "This enrollment code will be permanently deleted and can no longer be redeemed."
     }
+  },
+  "comments": {
+    "discussion": "Discussion",
+    "commentCount": "{count, plural, one {# comment} other {# comments}}",
+    "placeholder": "Ask a question or share your thoughts…",
+    "post": "Post",
+    "posting": "…",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Confirm delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "replyPlaceholder": "Write a reply…",
+    "empty": "No comments yet. Be the first to start the discussion!",
+    "tip": "Tip: press {key}+Enter to post quickly.",
+    "deletedUser": "Deleted user",
+    "deletedBody": "[deleted]",
+    "timeJustNow": "just now",
+    "timeMinutes": "{m}m ago",
+    "timeHours": "{h}h ago",
+    "timeDays": "{d}d ago"
   }
 }
