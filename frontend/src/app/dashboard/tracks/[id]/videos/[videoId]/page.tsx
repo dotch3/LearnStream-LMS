@@ -48,7 +48,18 @@ interface YTPlayer {
   getCurrentTime(): number;
   getDuration(): number;
   seekTo(seconds: number, allowSeekAhead: boolean): void;
+  playVideo(): void;
+  pauseVideo(): void;
+  setPlaybackRate(rate: number): void;
   destroy(): void;
+}
+
+const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
+
+function formatSeconds(s: number): string {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
 export default function VideoPlayerPage() {
@@ -64,15 +75,25 @@ export default function VideoPlayerPage() {
   const [watchPercentage, setWatchPercentage] = useState(0);
   const [prevVideoId, setPrevVideoId] = useState<string | null>(null);
   const [nextVideoId, setNextVideoId] = useState<string | null>(null);
-  const [markingComplete, setMarkingComplete] = useState(false);
-  const [markError, setMarkError] = useState('');
+
+  // Custom player controls
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [showEnded, setShowEnded] = useState(false);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const savedSecondsRef = useRef(0);
   const playerRef = useRef<YTPlayer | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const visualIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const videoRef = useRef<VideoDetail | null>(null);
   const wasSeekingRef = useRef(false);
+  const isPlayingRef = useRef(false);
+  const durationRef = useRef(0);
 
   useEffect(() => {
     api
@@ -130,6 +151,11 @@ export default function VideoPlayerPage() {
     const watched = player.getCurrentTime();
     const total = player.getDuration() || vid.duration;
     if (total <= 0) return;
+    setCurrentTime(watched);
+    if (durationRef.current !== total) {
+      durationRef.current = total;
+      setDuration(total);
+    }
     setWatchPercentage(Math.round(Math.min(100, (watched / total) * 100)));
   }, []);
 
@@ -142,50 +168,42 @@ export default function VideoPlayerPage() {
     postProgress(watched, total);
   }, [postProgress]);
 
-  const handleMarkComplete = useCallback(async () => {
-    const vid = videoRef.current;
-    if (!vid || !params.videoId) return;
-    setMarkingComplete(true);
-    setMarkError('');
-    const total = Math.max(vid.duration, 1);
-    try {
-      const res = await api.post<{ percentage: number; completed: boolean }>('/api/progress', {
-        videoId: params.videoId,
-        watchedSeconds: total,
-        totalSeconds: total,
-      });
-      setWatchPercentage(Math.round(res.data.percentage));
-      if (res.data.completed) {
-        setIsCompleted(true);
-      } else {
-        setMarkError('Server did not mark as complete — try again.');
-      }
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Could not save progress. Check your connection.';
-      setMarkError(Array.isArray(msg) ? msg.join(', ') : String(msg));
-    } finally {
-      setMarkingComplete(false);
-    }
-  }, [params.videoId]);
-
   useEffect(() => {
     if (!apiReady || !video) return;
 
     playerRef.current = new window.YT.Player('yt-player', {
       videoId: video.youtubeId,
-      playerVars: { rel: 0, modestbranding: 1 },
+      playerVars: {
+        rel: 0,
+        modestbranding: 1,
+        controls: 0,       // hide native YouTube controls
+        disablekb: 1,      // disable keyboard shortcuts
+        playsinline: 1,    // prevent fullscreen on iOS auto-open
+        iv_load_policy: 3, // hide video annotations
+      },
       events: {
         onReady: (e) => {
           if (savedSecondsRef.current > 0) {
             e.target.seekTo(savedSecondsRef.current, true);
+          }
+          const dur = e.target.getDuration();
+          if (dur > 0) {
+            durationRef.current = dur;
+            setDuration(dur);
           }
         },
         onStateChange: (e) => {
           const { PLAYING, PAUSED, ENDED, BUFFERING } = window.YT.PlayerState;
 
           if (e.data === PLAYING) {
+            isPlayingRef.current = true;
+            setIsPlaying(true);
+            setShowEnded(false);
+            const dur = playerRef.current?.getDuration() ?? 0;
+            if (dur > 0 && durationRef.current !== dur) {
+              durationRef.current = dur;
+              setDuration(dur);
+            }
             if (wasSeekingRef.current) {
               wasSeekingRef.current = false;
               updateVisual();
@@ -193,14 +211,24 @@ export default function VideoPlayerPage() {
             if (intervalRef.current) clearInterval(intervalRef.current);
             intervalRef.current = setInterval(reportProgress, 30_000);
             if (visualIntervalRef.current) clearInterval(visualIntervalRef.current);
-            visualIntervalRef.current = setInterval(updateVisual, 5_000);
+            visualIntervalRef.current = setInterval(updateVisual, 1_000);
           } else {
             if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
             if (visualIntervalRef.current) { clearInterval(visualIntervalRef.current); visualIntervalRef.current = null; }
 
-            if (e.data === PAUSED || e.data === ENDED) {
+            if (e.data === PAUSED) {
+              isPlayingRef.current = false;
+              setIsPlaying(false);
               wasSeekingRef.current = false;
               reportProgress();
+              updateVisual();
+            } else if (e.data === ENDED) {
+              isPlayingRef.current = false;
+              setIsPlaying(false);
+              wasSeekingRef.current = false;
+              setShowEnded(true);
+              reportProgress();
+              updateVisual();
             } else if (e.data === BUFFERING) {
               wasSeekingRef.current = true;
             }
@@ -216,6 +244,57 @@ export default function VideoPlayerPage() {
       playerRef.current = null;
     };
   }, [apiReady, video, reportProgress, updateVisual]);
+
+  function togglePlay() {
+    if (showEnded) return;
+    const player = playerRef.current;
+    if (!player) return;
+    if (isPlayingRef.current) {
+      player.pauseVideo();
+    } else {
+      player.playVideo();
+    }
+  }
+
+  function handleReplay() {
+    const player = playerRef.current;
+    if (!player) return;
+    player.seekTo(0, true);
+    player.playVideo();
+    setShowEnded(false);
+    setCurrentTime(0);
+  }
+
+  function handleSpeedChange(rate: number) {
+    playerRef.current?.setPlaybackRate(rate);
+    setPlaybackRate(rate);
+  }
+
+  function cycleSpeed() {
+    const idx = SPEEDS.indexOf(playbackRate);
+    const next = SPEEDS[(idx + 1) % SPEEDS.length];
+    handleSpeedChange(next);
+  }
+
+  async function handleFullscreen() {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => {});
+    } else {
+      await el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+    }
+  }
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  const progressPercent = duration > 0
+    ? Math.min(100, (currentTime / duration) * 100)
+    : Math.max(watchPercentage, isCompleted ? 100 : 0);
 
   if (loading) return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
@@ -246,64 +325,172 @@ export default function VideoPlayerPage() {
         }}
       />
 
-      <h1
-        className="text-lg sm:text-xl font-bold tracking-tight mb-4"
-        style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}
-      >
-        {video.title}
-      </h1>
-
-      {/* Player */}
-      <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
-        <div id="yt-player" className="w-full h-full" />
-      </div>
-
-      {/* Progress bar */}
-      <div className="mt-3 h-1.5 w-full rounded-full" style={{ background: 'var(--ls-surface-2)' }}>
-        <div
-          className="h-1.5 rounded-full transition-all duration-500"
-          style={{
-            width: `${Math.max(watchPercentage, isCompleted ? 100 : 0)}%`,
-            background: isCompleted ? 'var(--ls-success)' : 'var(--ls-accent)',
-          }}
-        />
-      </div>
-
-      {/* Status row */}
-      <div className="mt-3 flex items-center gap-4 flex-wrap">
-        {isCompleted ? (
+      {/* Title + completion badge */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <h1
+          className="text-base sm:text-lg font-semibold leading-snug"
+          style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}
+        >
+          {video.title}
+        </h1>
+        {isCompleted && (
           <span
-            className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full"
-            style={{ color: 'var(--ls-success)', background: 'rgba(30,166,62,0.1)' }}
+            className="flex items-center gap-1 shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full"
+            style={{ color: 'var(--ls-success)', background: 'rgba(30,166,62,0.1)', border: '1px solid rgba(30,166,62,0.18)' }}
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
-            Aula concluída
+            Concluída
           </span>
-        ) : (
-          <>
-            <span className="text-xs tabular-nums font-medium" style={{ color: 'var(--ls-text-2)' }}>
-              {watchPercentage}% assistido
-            </span>
-            <button
-              onClick={handleMarkComplete}
-              disabled={markingComplete}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-80 disabled:opacity-40 cursor-pointer"
-              style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-              {markingComplete ? 'Salvando…' : 'Marcar como concluída'}
-            </button>
-          </>
         )}
       </div>
 
-      {markError && (
-        <p className="mt-2 text-xs" style={{ color: 'var(--ls-error)' }}>{markError}</p>
-      )}
+      {/* ── Video player ──────────────────────────────────── */}
+      <div
+        ref={containerRef}
+        className="relative w-full bg-black rounded-xl overflow-hidden shadow-lg"
+        style={{ aspectRatio: '16/9' }}
+      >
+        {/* YouTube iframe */}
+        <div id="yt-player" className="absolute inset-0 w-full h-full" />
+
+        {/* Click overlay (z-10) — blocks native YouTube UI, toggles play on tap */}
+        <div
+          className="absolute inset-0 select-none cursor-pointer"
+          style={{ zIndex: 10 }}
+          onClick={togglePlay}
+          onKeyDown={(e) => { if (e.key === ' ' || e.key === 'k') { e.preventDefault(); togglePlay(); } }}
+          tabIndex={0}
+          role="button"
+          aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
+        />
+
+        {/* Center play icon — visible when paused */}
+        {!isPlaying && !showEnded && (
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            style={{ zIndex: 15 }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full transition-opacity"
+              style={{ width: 56, height: 56, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            >
+              <svg className="h-6 w-6 text-white" style={{ marginLeft: 3 }} fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {/* Ended overlay (z-30) */}
+        {showEnded && (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-5"
+            style={{ zIndex: 30, background: 'rgba(0,0,0,0.78)' }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full"
+              style={{ width: 56, height: 56, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.7)' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <p className="text-white/80 text-sm font-medium tracking-wide">Aula finalizada</p>
+            <button
+              onClick={handleReplay}
+              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
+              style={{ background: 'var(--ls-accent)' }}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              Repetir aula
+            </button>
+          </div>
+        )}
+
+        {/* ── Controls bar — overlaid at bottom (z-20) ────── */}
+        {!showEnded && (
+          <div
+            className="absolute bottom-0 left-0 right-0"
+            style={{ zIndex: 20, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.82))' }}
+          >
+            {/* Progress bar */}
+            <div className="px-3 pt-4 pb-1">
+              <div className="relative h-[3px] w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                <div
+                  className="absolute left-0 top-0 h-full rounded-full transition-all duration-1000"
+                  style={{
+                    width: `${progressPercent}%`,
+                    background: isCompleted ? '#4ade80' : 'white',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Controls row */}
+            <div className="flex items-center gap-0.5 px-1.5 pb-2">
+              {/* Play / Pause */}
+              <button
+                onClick={togglePlay}
+                className="flex items-center justify-center rounded-lg cursor-pointer transition-opacity hover:opacity-80 active:scale-95"
+                style={{ width: 44, height: 44 }}
+                aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
+              >
+                {isPlaying ? (
+                  <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-white" style={{ marginLeft: 2 }} fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Time */}
+              <span className="text-[11px] font-mono tabular-nums ml-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                {formatSeconds(currentTime)}
+                <span style={{ color: 'rgba(255,255,255,0.35)' }}> / </span>
+                {duration > 0 ? formatSeconds(duration) : '--:--'}
+              </span>
+
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Speed — single cycle button */}
+              <button
+                onClick={cycleSpeed}
+                className="flex items-center justify-center rounded-md text-xs font-semibold cursor-pointer transition-opacity hover:opacity-80 active:scale-95"
+                style={{ minWidth: 44, height: 44, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em' }}
+                aria-label={`Velocidade: ${playbackRate}×. Toque para alterar`}
+              >
+                {playbackRate === 1 ? '1×' : `${playbackRate}×`}
+              </button>
+
+              {/* Fullscreen */}
+              <button
+                onClick={handleFullscreen}
+                className="flex items-center justify-center rounded-lg cursor-pointer transition-opacity hover:opacity-80 active:scale-95"
+                style={{ width: 44, height: 44 }}
+                aria-label={isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+              >
+                {isFullscreen ? (
+                  <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {video.description && (
         <div
