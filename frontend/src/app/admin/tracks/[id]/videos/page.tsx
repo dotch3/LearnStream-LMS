@@ -175,7 +175,7 @@ export default function AdminTrackVideosPage() {
   }
 
   if (loading) return (
-    <div className="p-8 max-w-4xl mx-auto space-y-3">
+    <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-4xl mx-auto space-y-3">
       {[1,2,3].map((i) => <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: 'var(--ls-surface)' }} />)}
     </div>
   );
@@ -212,51 +212,81 @@ export default function AdminTrackVideosPage() {
         onCancel={closeDialog}
       />
 
-      <div className="p-8 max-w-5xl mx-auto">
-        <button
-          onClick={() => router.push('/admin/tracks')}
-          className="text-sm mb-1 flex items-center gap-1 transition-opacity hover:opacity-70"
-          style={{ color: 'var(--ls-accent-text)' }}
-        >
-          ← {t('backToCourses')}
-        </button>
-
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text-1)' }}>{t('videosHeading')}</h1>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--ls-text-2)' }}>{track.name}</p>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Page header */}
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="min-w-0">
+              <h1 className="page-title">{t('videosHeading')}</h1>
+              <p className="text-sm mt-0.5 truncate" style={{ color: 'var(--ls-text-2)' }}>{track.name}</p>
+            </div>
+            {/* Desktop action buttons */}
+            <div className="hidden sm:flex gap-2 shrink-0">
+              <button
+                onClick={() => router.push(`/admin/tracks/${params.id}/enrollments`)}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium cursor-pointer transition-colors"
+                style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)', background: 'transparent' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                </svg>
+                {tCommon('students')}
+              </button>
+              <button
+                onClick={openAddModal}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium cursor-pointer transition-colors"
+                style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)', background: 'transparent' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                </svg>
+                {t('addExisting')}
+              </button>
+              <button
+                onClick={() => router.push(`/admin/tracks/${params.id}/videos/new`)}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-white cursor-pointer transition-opacity hover:opacity-90"
+                style={{ background: 'var(--ls-accent)' }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                {t('newVideo')}
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2">
+
+          {/* Mobile action buttons */}
+          <div className="flex gap-2 mt-4 sm:hidden">
             <button
               onClick={() => router.push(`/admin/tracks/${params.id}/enrollments`)}
-              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium border transition-colors"
-              style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)', background: 'transparent' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-medium cursor-pointer"
+              style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)', background: 'var(--ls-surface)' }}
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
               </svg>
               {tCommon('students')}
             </button>
             <button
               onClick={openAddModal}
-              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium border transition-colors"
-              style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)', background: 'transparent' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-medium cursor-pointer"
+              style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)', background: 'var(--ls-surface)' }}
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
               </svg>
               {t('addExisting')}
             </button>
             <button
               onClick={() => router.push(`/admin/tracks/${params.id}/videos/new`)}
-              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold text-white cursor-pointer"
               style={{ background: 'var(--ls-accent)' }}
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
               {t('newVideo')}
@@ -272,189 +302,241 @@ export default function AdminTrackVideosPage() {
             <p className="text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('noVideos')}</p>
           </div>
         ) : (
-          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}>
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-bg)' }}>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('orderCol')}</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('titleCol')}</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('durationCol')}</th>
-                  <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{tCommon('status')}</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {track.videos.map((video, i) => (
-                  <tr
-                    key={video.id}
-                    style={{
-                      borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined,
-                      opacity: video.isActive ? 1 : 0.65,
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                  >
-                    <td className="px-5 py-3">
-                      {editingOrderId === video.id ? (
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            value={editOrderValue}
-                            onChange={(e) => setEditOrderValue(e.target.value)}
-                            className="w-14 rounded px-1.5 py-0.5 text-xs"
-                            style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
-                            min={0}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') saveOrder(video.id);
-                              if (e.key === 'Escape') setEditingOrderId(null);
-                            }}
-                            autoFocus
-                          />
-                          <button onClick={() => saveOrder(video.id)} className="text-xs" style={{ color: 'var(--ls-success)' }}>✓</button>
-                          <button onClick={() => setEditingOrderId(null)} className="text-xs" style={{ color: 'var(--ls-text-3)' }}>✕</button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => { setEditingOrderId(video.id); setEditOrderValue(String(video.order)); }}
-                          className="rounded px-2 py-0.5 text-xs font-mono font-medium transition-colors"
-                          style={{ color: 'var(--ls-text-2)', background: 'var(--ls-surface-2)' }}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-text-1)'; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ls-text-2)'; }}
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-bg)' }}>
+                    <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('orderCol')}</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('titleCol')}</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{t('durationCol')}</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-2)' }}>{tCommon('status')}</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {track.videos.map((video, i) => (
+                    <tr
+                      key={video.id}
+                      style={{
+                        borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined,
+                        opacity: video.isActive ? 1 : 0.65,
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                    >
+                      <td className="px-5 py-3">
+                        {editingOrderId === video.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              value={editOrderValue}
+                              onChange={(e) => setEditOrderValue(e.target.value)}
+                              className="w-14 rounded px-1.5 py-0.5 text-xs"
+                              style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
+                              min={0}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveOrder(video.id);
+                                if (e.key === 'Escape') setEditingOrderId(null);
+                              }}
+                              autoFocus
+                            />
+                            <button onClick={() => saveOrder(video.id)} className="text-xs cursor-pointer" style={{ color: 'var(--ls-success)' }}>✓</button>
+                            <button onClick={() => setEditingOrderId(null)} className="text-xs cursor-pointer" style={{ color: 'var(--ls-text-3)' }}>✕</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setEditingOrderId(video.id); setEditOrderValue(String(video.order)); }}
+                            className="rounded px-2 py-0.5 text-xs font-mono font-medium transition-colors cursor-pointer"
+                            style={{ color: 'var(--ls-text-2)', background: 'var(--ls-surface-2)' }}
+                          >
+                            {video.order}
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="font-medium" style={{ color: 'var(--ls-text-1)' }}>{video.title}</span>
+                      </td>
+                      <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-text-2)' }}>
+                        {formatDuration(video.duration)}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                          style={
+                            video.isActive
+                              ? { background: 'rgba(34,197,94,0.12)', color: 'var(--ls-success)' }
+                              : { background: 'var(--ls-surface-2)', color: 'var(--ls-text-2)' }
+                          }
                         >
-                          {video.order}
-                        </button>
-                      )}
-                    </td>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: video.isActive ? 'var(--ls-success)' : 'var(--ls-text-3)' }} />
+                          {video.isActive ? tCommon('active') : tCommon('inactive')}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center justify-end gap-0.5">
+                          <ActionBtn onClick={() => router.push(`/admin/tracks/${params.id}/videos/${video.id}`)} label={tCommon('edit')} variant="primary" icon={<EditIcon />} />
+                          <ActionBtn onClick={() => toggleActive(video)} label={video.isActive ? t('deactivate') : t('activate')} variant={video.isActive ? 'warning' : 'success'} icon={video.isActive ? <EyeOffIcon /> : <EyeOnIcon />} />
+                          <ActionBtn onClick={() => openDialog('remove', video.id, video.title)} label={t('removeLbl')} variant="neutral" icon={<RemoveIcon />} />
+                          <ActionBtn onClick={() => openDialog('delete', video.id, video.title)} label={tCommon('delete')} variant="danger" icon={<DeleteIcon />} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                    <td className="px-5 py-3">
-                      <span className="font-medium" style={{ color: 'var(--ls-text-1)' }}>{video.title}</span>
-                    </td>
-
-                    <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-text-2)' }}>
-                      {formatDuration(video.duration)}
-                    </td>
-
-                    <td className="px-5 py-3">
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-2">
+              {track.videos.map((video) => (
+                <div
+                  key={video.id}
+                  className="rounded-xl overflow-hidden"
+                  style={{
+                    background: 'var(--ls-surface)',
+                    border: '1px solid var(--ls-border)',
+                    opacity: video.isActive ? 1 : 0.65,
+                  }}
+                >
+                  <div className="px-4 py-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium leading-snug flex-1 min-w-0" style={{ color: 'var(--ls-text-1)' }}>
+                        {video.title}
+                      </p>
                       <span
-                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                        className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
                         style={
                           video.isActive
                             ? { background: 'rgba(34,197,94,0.12)', color: 'var(--ls-success)' }
                             : { background: 'var(--ls-surface-2)', color: 'var(--ls-text-2)' }
                         }
                       >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ background: video.isActive ? 'var(--ls-success)' : 'var(--ls-text-3)' }}
-                        />
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: video.isActive ? 'var(--ls-success)' : 'var(--ls-text-3)' }} />
                         {video.isActive ? tCommon('active') : tCommon('inactive')}
                       </span>
-                    </td>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <span className="text-xs font-mono" style={{ color: 'var(--ls-text-3)' }}>
+                        #{video.order}
+                      </span>
+                      <span className="text-xs" style={{ color: 'var(--ls-text-3)' }}>
+                        {formatDuration(video.duration)}
+                      </span>
+                    </div>
+                  </div>
 
-                    <td className="px-5 py-3">
-                      <div className="flex items-center justify-end gap-0.5">
-                        <ActionBtn
-                          onClick={() => router.push(`/admin/tracks/${params.id}/videos/${video.id}`)}
-                          label={tCommon('edit')}
-                          variant="primary"
-                          icon={<EditIcon />}
-                        />
-                        <ActionBtn
-                          onClick={() => toggleActive(video)}
-                          label={video.isActive ? t('deactivate') : t('activate')}
-                          variant={video.isActive ? 'warning' : 'success'}
-                          icon={video.isActive ? <EyeOffIcon /> : <EyeOnIcon />}
-                        />
-                        <ActionBtn
-                          onClick={() => openDialog('remove', video.id, video.title)}
-                          label={t('removeLbl')}
-                          variant="neutral"
-                          icon={<RemoveIcon />}
-                        />
-                        <ActionBtn
-                          onClick={() => openDialog('delete', video.id, video.title)}
-                          label={tCommon('delete')}
-                          variant="danger"
-                          icon={<DeleteIcon />}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {showAddModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div
-              className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
-              style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
-            >
-              <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--ls-text-1)' }}>
-                {t('addExistingTitle')}
-              </h2>
-
-              {allVideos.length === 0 ? (
-                <p className="text-sm mb-4" style={{ color: 'var(--ls-text-2)' }}>{t('allInCourse')}</p>
-              ) : (
-                <>
-                  <div className="mb-3">
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('videoLabel')}</label>
-                    <select
-                      value={addingVideoId}
-                      onChange={(e) => setAddingVideoId(e.target.value)}
-                      className="w-full rounded-lg px-3 py-2 text-sm"
-                      style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
+                  <div className="grid grid-cols-2" style={{ borderTop: '1px solid var(--ls-border)', background: 'var(--ls-surface-2)' }}>
+                    <button
+                      onClick={() => router.push(`/admin/tracks/${params.id}/videos/${video.id}`)}
+                      className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                      style={{ color: 'var(--ls-accent)' }}
                     >
-                      <option value="">{t('selectVideo')}</option>
-                      {allVideos.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.title} {v.tracks.length > 0 ? `(in: ${v.tracks.map((tr) => tr.name).join(', ')})` : ''}
-                        </option>
-                      ))}
-                    </select>
+                      <EditIcon />
+                      {tCommon('edit')}
+                    </button>
+                    <button
+                      onClick={() => toggleActive(video)}
+                      className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                      style={{ color: video.isActive ? 'var(--ls-warning)' : 'var(--ls-success)', borderLeft: '1px solid var(--ls-border)' }}
+                    >
+                      {video.isActive ? <EyeOffIcon /> : <EyeOnIcon />}
+                      {video.isActive ? t('deactivate') : t('activate')}
+                    </button>
+                    <button
+                      onClick={() => openDialog('remove', video.id, video.title)}
+                      className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                      style={{ color: 'var(--ls-text-2)', borderTop: '1px solid var(--ls-border)' }}
+                    >
+                      <RemoveIcon />
+                      {t('removeLbl')}
+                    </button>
+                    <button
+                      onClick={() => openDialog('delete', video.id, video.title)}
+                      className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                      style={{ color: 'var(--ls-error)', borderLeft: '1px solid var(--ls-border)', borderTop: '1px solid var(--ls-border)' }}
+                    >
+                      <DeleteIcon />
+                      {tCommon('delete')}
+                    </button>
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('orderInCourse')}</label>
-                    <input
-                      type="number"
-                      value={addOrder}
-                      onChange={(e) => setAddOrder(e.target.value)}
-                      className="w-full rounded-lg px-3 py-2 text-sm"
-                      style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
-                      min={0}
-                    />
-                  </div>
-                </>
-              )}
-
-              {addError && <p className="text-sm mb-3" style={{ color: 'var(--ls-error)' }}>{addError}</p>}
-
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded-lg text-sm"
-                  style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}
-                >
-                  {tCommon('cancel')}
-                </button>
-                {allVideos.length > 0 && (
-                  <button
-                    onClick={handleAddVideo}
-                    disabled={addLoading}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
-                    style={{ background: 'var(--ls-accent)' }}
-                  >
-                    {addLoading ? t('addingVideo') : t('addToCourse')}
-                  </button>
-                )}
-              </div>
+                </div>
+              ))}
             </div>
-          </div>
+          </>
         )}
       </div>
+
+      {/* Add existing video modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div
+            className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6"
+            style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+          >
+            <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--ls-text-1)' }}>
+              {t('addExistingTitle')}
+            </h2>
+
+            {allVideos.length === 0 ? (
+              <p className="text-sm mb-4" style={{ color: 'var(--ls-text-2)' }}>{t('allInCourse')}</p>
+            ) : (
+              <>
+                <div className="mb-3">
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('videoLabel')}</label>
+                  <select
+                    value={addingVideoId}
+                    onChange={(e) => setAddingVideoId(e.target.value)}
+                    className="w-full rounded-lg px-3 py-2 text-sm"
+                    style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
+                  >
+                    <option value="">{t('selectVideo')}</option>
+                    {allVideos.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.title} {v.tracks.length > 0 ? `(in: ${v.tracks.map((tr) => tr.name).join(', ')})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('orderInCourse')}</label>
+                  <input
+                    type="number"
+                    value={addOrder}
+                    onChange={(e) => setAddOrder(e.target.value)}
+                    className="w-full rounded-lg px-3 py-2 text-sm"
+                    style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-bg)', color: 'var(--ls-text-1)' }}
+                    min={0}
+                  />
+                </div>
+              </>
+            )}
+
+            {addError && <p className="text-sm mb-3" style={{ color: 'var(--ls-error)' }}>{addError}</p>}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium cursor-pointer"
+                style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}
+              >
+                {tCommon('cancel')}
+              </button>
+              {allVideos.length > 0 && (
+                <button
+                  onClick={handleAddVideo}
+                  disabled={addLoading}
+                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 cursor-pointer"
+                  style={{ background: 'var(--ls-accent)' }}
+                >
+                  {addLoading ? t('addingVideo') : t('addToCourse')}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

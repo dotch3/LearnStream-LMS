@@ -34,7 +34,8 @@
       "submitting": "Signing in…",
       "error": "Invalid credentials. Please try again.",
       "forgotPassword": "Forgot password?",
-      "setupDone": "Setup complete — log in with your admin account."
+      "setupDone": "Setup complete — log in with your admin account.",
+      "title": "Sign in"
     },
     "forgotPassword": {
       "title": "Forgot your password?",
@@ -141,6 +142,46 @@
         "DENIED": "Denied"
       }
     },
+    "trackDetail": {
+      "failedLoad": "Failed to load course.",
+      "enrollRequired": "Enrollment Required",
+      "enrollRequiredDesc": "Request access from an admin or use an enrollment code.",
+      "denied": "Your previous request was denied. You can submit a new one.",
+      "requestAccess": "Request Access",
+      "requesting": "Sending request…",
+      "requestSent": "Request sent! You will be notified when approved.",
+      "failedRequest": "Failed to send request",
+      "orUseCode": "or use a code",
+      "enterCode": "Enter code",
+      "redeem": "Redeem",
+      "accessPending": "Access Pending",
+      "accessPendingDesc": "Your enrollment request is awaiting admin approval.",
+      "enrolledSuccess": "Enrolled successfully",
+      "codeApplied": "Code applied",
+      "nowHasAccess": "You now have access to this course. Page will refresh automatically.",
+      "codeNotIncluded": "Code redeemed, but this course was not included.",
+      "viewCourse": "View Course",
+      "invalidCode": "Invalid or expired code",
+      "noVideos": "No videos yet",
+      "noVideosDesc": "Videos will appear here once added by an admin.",
+      "courseContent": "Course content",
+      "certTitle": "Certificate of Completion",
+      "certEligible": "All lessons completed — you're eligible to earn your certificate.",
+      "certProgress": "{done} of {total} lessons done — complete all to unlock.",
+      "generateCert": "Generate your certificate",
+      "nameOnCert": "Name on certificate",
+      "nameOnCertDesc": "Enter the name to print on the certificate.",
+      "generating": "Generating…",
+      "downloadAgain": "Download again",
+      "certDownloaded": "Certificate downloaded!",
+      "viewCertificates": "View in Certificates →",
+      "earnCert": "Earn Certificate",
+      "earnCertTooltip": "Complete all {total} lessons to earn your certificate.",
+      "certError": "Could not generate certificate. Please try again.",
+      "videos": "{count, plural, one {# video} other {# videos}}",
+      "downloadPdf": "Download PDF",
+      "cancel": "Cancel"
+    },
     "certificates": {
       "title": "Certificates",
       "subtitle": "Download certificates for completed courses.",
@@ -151,7 +192,14 @@
       "downloadLabel": "Download:",
       "downloading": "Downloading...",
       "exporting": "Exporting...",
-      "imagePng": "Image (PNG)"
+      "imagePng": "Image (PNG)",
+      "videoCount": "{count, plural, one {# video} other {# videos}}",
+      "certCompletedOf": "certificate of completion",
+      "thisCertifies": "This certifies that",
+      "hasCompleted": "has successfully completed",
+      "comprising": "comprising {count, plural, one {# training video} other {# training videos}}",
+      "issued": "Issued:",
+      "verCode": "Verification Code:"
     },
     "progress": {
       "title": "My Progress",
@@ -206,6 +254,21 @@
       "approvedBody": "Your request for \"{trackName}\" was approved",
       "deniedTitle": "Course access denied",
       "deniedBody": "Your request for \"{trackName}\" was not approved"
+    },
+    "video": {
+      "notFound": "Video not found.",
+      "backToCourse": "Back to course",
+      "prevLesson": "Previous lesson",
+      "nextLesson": "Next lesson",
+      "lastLesson": "Last lesson",
+      "completed": "Completed",
+      "repeatLesson": "Replay lesson",
+      "lessonEnded": "Lesson finished",
+      "pause": "Pause",
+      "play": "Play",
+      "speedLabel": "Speed: {rate}×. Tap to change",
+      "exitFullscreen": "Exit fullscreen",
+      "enterFullscreen": "Fullscreen"
     }
   },
   "admin": {
@@ -446,5 +509,28 @@
       "deleteTitle": "Delete code?",
       "deleteDesc": "This enrollment code will be permanently deleted and can no longer be redeemed."
     }
+  },
+  "comments": {
+    "discussion": "Discussion",
+    "commentCount": "{count, plural, one {# comment} other {# comments}}",
+    "placeholder": "Ask a question or share your thoughts…",
+    "post": "Post",
+    "posting": "…",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Confirm delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "replyPlaceholder": "Write a reply…",
+    "empty": "No comments yet. Be the first to start the discussion!",
+    "tip": "Tip: press {key}+Enter to post quickly.",
+    "deletedUser": "Deleted user",
+    "deletedBody": "[deleted]",
+    "timeJustNow": "just now",
+    "timeMinutes": "{m}m ago",
+    "timeHours": "{h}h ago",
+    "timeDays": "{d}d ago"
   }
 }

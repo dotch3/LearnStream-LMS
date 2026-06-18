@@ -4,101 +4,128 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**VideosYT** is a web-based training platform for hosting unlisted YouTube videos with user authentication, progress tracking, course management, and certificate generation.
+**LearnStream LMS** is a web-based training platform for hosting unlisted YouTube videos with user authentication, progress tracking, course management, enrollment flows, comments, and certificate generation.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js + TypeScript + Tailwind CSS |
-| Backend | NestJS + TypeScript |
-| Database | PostgreSQL via Prisma ORM |
-| Auth | JWT (access token 15min + refresh token 7 days with rotation) |
-| Video | YouTube IFrame API |
-| Certificates | PDF generation (backend) |
-| Deployment | Vercel (frontend) + Railway (backend + DB) |
+| Frontend | Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 |
+| Backend | NestJS 11 + TypeScript |
+| Database | PostgreSQL via Prisma 7 (`@prisma/adapter-pg` native driver) |
+| Auth | JWT (access 15min, in-memory) + refresh token 7d (localStorage, rotation) |
+| i18n | `next-intl` — `en` and `pt` locales (`frontend/messages/`) |
+| PDF | pdfkit (certificate generation) |
+| Deployment | Render (backend + DB via `render.yaml`) + Vercel (frontend) |
+
+## Development Commands
+
+### Docker (recommended — runs all three services)
+```bash
+docker compose up         # postgres:5433, backend:3010, frontend:3011
+docker compose up --build # rebuild after Dockerfile changes
+```
+
+### Backend (runs on port 3001 locally, 3010 in Docker)
+```bash
+cd backend
+npm run start:dev         # watch mode
+npm run build             # prisma generate + nest build
+npm run lint              # eslint --fix
+npm run test              # jest
+npm run test:watch        # jest --watch
+npm run test:e2e          # jest --config ./test/jest-e2e.json
+```
+Run a single test file: `npx jest src/auth/auth.service.spec.ts`
+
+### Frontend (runs on port 3000 locally, 3011 in Docker)
+```bash
+cd frontend
+npm run dev               # Next.js dev server
+npm run build
+npm run lint
+```
+
+### Database / Prisma
+```bash
+cd backend
+npx prisma migrate dev --name <migration-name>   # create + apply migration
+npx prisma migrate deploy                        # apply in production
+npx prisma studio                                # GUI browser
+npx prisma generate                              # regenerate client after schema changes
+```
+
+## Environment Variables
+
+**Backend** (see `backend/.env.example`):
+- `DATABASE_URL` — PostgreSQL connection string
+- `JWT_SECRET`, `JWT_REFRESH_SECRET`
+- `JWT_EXPIRES_IN` (15m), `JWT_REFRESH_EXPIRES_IN` (7d)
+- `FRONTEND_URL` — CORS origin
+- `PORT`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — Nodemailer/Gmail
+
+**Frontend** (see `frontend/.env.example`):
+- `NEXT_PUBLIC_API_URL` — backend URL (used client-side)
+- `INTERNAL_API_URL` — backend URL from Next.js middleware/server-side (Docker internal network)
 
 ## Architecture
 
-**Client-Server REST architecture:**
+### Backend (NestJS)
 
-- `frontend/` — Next.js app (not yet scaffolded)
-- `backend/` — NestJS modular app (not yet scaffolded)
+All routes are **JWT-protected by default** via a global `JwtAuthGuard`. Use `@Public()` decorator to opt out. Use `@Roles(Role.ADMIN)` + `RolesGuard` to restrict to admins.
 
-**Planned NestJS modules:** `auth`, `users`, `tracks`, `videos`, `progress`, `certificates`, `import`, `reports`
+**Modules:**
+- `auth` — login, refresh token rotation, forgot/reset password, `/auth/me`
+- `users` — CRUD, profile, password change, admin password reset
+- `setup` — one-time wizard (`GET /setup/status` checks if any ADMIN exists); gated by middleware
+- `tracks` / `videos` — course content; `TrackVideo` join table handles many-to-many with ordering
+- `progress` — `POST /progress/report` upserts `VideoProgress`; completion at **80%** (`WATCH_COMPLETE_THRESHOLD`)
+- `certificates` — generated on track completion; PDF via pdfkit; public verification endpoint
+- `enrollments` — request/approve/deny flow; `EnrollmentGuard` enforces access on track routes
+- `enrollment-codes` — admin-created codes that auto-approve enrollment on redeem
+- `invites` — token-based invite links; create user on acceptance
+- `comments` — threaded comments with emoji reactions on videos
+- `notifications` — in-app notifications (enrollment approved/denied, new requests)
+- `mail` — Nodemailer wrapper used by auth and invites
+- `prisma` — global `PrismaService` using `@prisma/adapter-pg`
 
-**Auth flow:** JWT access token (15 min) + refresh token (7 days, rotation on use). Roles: `ADMIN` and `VIEWER`.
+**Global guards (app.module.ts):** `ThrottlerGuard` (100 req/min) and `JwtAuthGuard` applied to every route.
 
-**Progress tracking:** A video is marked watched when the user reaches 80%+ playback. Track completion triggers certificate generation.
+**Swagger:** available at `GET /api` in development.
 
-**Import modes:** Manual form, YouTube API metadata fetch, bulk JSON/CSV, YouTube playlist import.
+### Frontend (Next.js App Router)
 
-## Development Workflow (SpecKit)
+**Route layout:**
+- `/` — public landing / redirect
+- `/login`, `/forgot-password`, `/reset-password` — unauthenticated
+- `/setup` — first-run wizard (middleware redirects here if no admin exists)
+- `/invite/[token]` — accept invite link
+- `/dashboard/*` — viewer area (tracks, video player, certificates, progress, profile, notifications)
+- `/admin/*` — admin area (tracks, videos, users, enrollment requests, codes, invites)
 
-This project uses [Specify/SpecKit](https://speckit.dev) for structured feature development. Features follow a spec → plan → tasks → implement cycle.
+**Auth state:** `AuthContext` (`src/contexts/auth.context.tsx`) holds user + access token in React state. The `axios` instance (`src/lib/axios.ts`) silently refreshes the token 1 min before expiry and redirects to `/login` on 401/403. Refresh token is stored in `localStorage`.
 
-**SpecKit skills (via `/` commands):**
+**i18n:** `next-intl` with `src/i18n/request.ts` and message files at `frontend/messages/{en,pt}.json`. Locale preference is stored per-user in the DB (`User.preferredLocale`).
 
-| Skill | Purpose |
-|-------|---------|
-| `/speckit-specify` | Create or update feature spec from description |
-| `/speckit-clarify` | Ask clarification questions and encode answers into spec |
-| `/speckit-plan` | Generate design artifacts (plan.md) |
-| `/speckit-tasks` | Generate dependency-ordered tasks.md |
-| `/speckit-implement` | Execute all tasks in tasks.md |
-| `/speckit-analyze` | Cross-artifact consistency analysis |
-| `/speckit-checklist` | Generate feature-specific checklist |
-| `/speckit-constitution` | Create/update project constitution |
+**Middleware** (`src/middleware.ts`): calls `GET /setup/status` on every request; redirects to `/setup` if setup is incomplete, or to `/login` if hitting `/setup` after completion. Uses `INTERNAL_API_URL` for server-side fetches in Docker.
 
-**Git skills:**
+### Database (Prisma)
 
-| Skill | Purpose |
-|-------|---------|
-| `/speckit-git-feature` | Create feature branch (sequential numbering) |
-| `/speckit-git-commit` | Auto-commit after a SpecKit command completes |
-| `/speckit-git-initialize` | Initialize repo with initial commit |
-| `/speckit-git-remote` | Detect Git remote for GitHub integration |
-| `/speckit-git-validate` | Validate branch naming conventions |
+Key schema relationships:
+- `Track ↔ Video` — many-to-many via `TrackVideo` (with `order` field)
+- `User → VideoProgress` — unique per `(userId, videoId)`
+- `User → Certificate` — unique per `(userId, trackId)`; generated when track is fully watched
+- `Enrollment` — `(userId, trackId)` unique; statuses: `PENDING`, `APPROVED`, `DENIED`
+- `EnrollmentCode → Track` — many-to-many via `EnrollmentCodeTrack`
+- `RefreshToken` — hashed, consumed on use (rotation); all tokens deleted on replay attack detected
 
-**Feature branch naming:** `feature/NNN-short-description` (sequential numbering, e.g. `feature/001-auth`)
+**Track visibility:** `PUBLIC` (no enrollment needed), `LINK_ONLY`, `DRAFT`.
 
-**Git hooks (via `.specify/extensions.yml`):** Auto-commit is configured before and after each SpecKit phase.
+## Key Business Rules
 
-## Key Planning Docs
-
-Located in `docs/planning/` (git-ignored, for internal reference only):
-
-- `00-project-overview.md` — Goals and scope
-- `01-architecture.md` — System design and decisions
-- `02-database.md` — Prisma schema and entity relationships
-- `03-backend.md` — NestJS module details
-- `04-frontend.md` — Next.js pages and components
-- `05-interface-ux.md` — UX flows
-- `06-business-logic.md` — Rules (80% watch threshold, certificate triggers, rate limits)
-- `07-testing.md` — Test strategy
-- `08-prd.md` — Product requirements
-
-## Non-Functional Requirements
-
-- Page load < 3 seconds
-- bcrypt password hashing (10 salt rounds)
-- CORS restricted to frontend domain
-- Rate limiting: 5 login attempts/minute
-- MVP scope: ~50 users, ~20 videos, desktop + tablet focus
-
-## Active Technologies
-- TypeScript 5.x / Node.js 20 LTS (001-auth)
-- PostgreSQL via Prisma ORM — `User` and `RefreshToken` tables (001-auth)
-- TypeScript 5.x / Node.js 20 LTS + NestJS (existing), Prisma 7 + @prisma/adapter-pg (existing), class-validator, class-transformer, @nestjs/swagger — all already installed (003-tracks-videos)
-- PostgreSQL — two new tables: `tracks`, `videos` (Prisma migration `add-tracks-videos`) (003-tracks-videos)
-- TypeScript 5.x / Node.js 20 LTS + NestJS (existing), Prisma 7 + @prisma/adapter-pg (existing), class-validator, class-transformer, @nestjs/swagger (existing), **pdfkit** (new), @types/pdfkit (new dev) (005-certificates)
-- PostgreSQL via Prisma ORM — new `certificates` table (005-certificates)
-- TypeScript 5.x / Node.js 20 LTS + NestJS (existing), Prisma 7 (existing), bcrypt (existing in auth module), class-validator, @nestjs/swagger (existing) (006-setup-wizard)
-- PostgreSQL — no new tables; setup state derived from `User.role = ADMIN` coun (006-setup-wizard)
-- TypeScript 5.x / Node.js 20 LTS (backend + frontend) + NestJS (backend), Next.js App Router (frontend), Prisma 7, class-validator, nodemailer (existing) (009-course-enrollment)
-- PostgreSQL via Prisma ORM — 4 new tables + Track schema change (009-course-enrollment)
-
-## Recent Changes
-- 001-auth: Added TypeScript 5.x / Node.js 20 LTS
-- 003-tracks-videos: Added TracksModule + VideosModule; `Track` and `Video` Prisma models; extractYoutubeId utility; 6 frontend pages (dashboard/tracks, admin/tracks, admin/videos)
-- 005-certificates: Added CertificatesModule; `Certificate` Prisma model; PDF generation via pdfkit; 5 endpoints (viewer generate, viewer list, admin generate, admin list, public verify); 1 frontend page (dashboard/certificates); first DB migration (`initial-schema`) applied to learnstream_db
+- Video completion threshold: **80%** watched (`progress.constants.ts`)
+- Certificate is issued automatically when all videos in a track are completed
+- `EnrollmentGuard` allows ADMIN unconditionally; VIEWER needs `APPROVED` enrollment (except `PUBLIC` tracks)
+- Setup wizard is only accessible before any ADMIN user exists; blocked afterwards
+- Refresh token replay detection: consuming an already-consumed token deletes all tokens for that user

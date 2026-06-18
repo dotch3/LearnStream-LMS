@@ -34,7 +34,8 @@
       "submitting": "Entrando…",
       "error": "Credenciais inválidas. Tente novamente.",
       "forgotPassword": "Esqueceu a senha?",
-      "setupDone": "Configuração concluída — entre com sua conta de administrador."
+      "setupDone": "Configuração concluída — entre com sua conta de administrador.",
+      "title": "Entrar na plataforma"
     },
     "forgotPassword": {
       "title": "Esqueceu sua senha?",
@@ -141,6 +142,46 @@
         "DENIED": "Negado"
       }
     },
+    "trackDetail": {
+      "failedLoad": "Falha ao carregar o curso.",
+      "enrollRequired": "Matrícula necessária",
+      "enrollRequiredDesc": "Solicite acesso a um administrador ou use um código de matrícula.",
+      "denied": "Sua solicitação anterior foi recusada. Você pode enviar uma nova.",
+      "requestAccess": "Solicitar Acesso",
+      "requesting": "Solicitando…",
+      "requestSent": "Solicitação enviada! Você será notificado quando aprovado.",
+      "failedRequest": "Falha ao enviar solicitação",
+      "orUseCode": "ou use um código",
+      "enterCode": "Digite o código",
+      "redeem": "Resgatar",
+      "accessPending": "Acesso pendente",
+      "accessPendingDesc": "Sua solicitação aguarda aprovação do administrador.",
+      "enrolledSuccess": "Matriculado com sucesso",
+      "codeApplied": "Código aplicado",
+      "nowHasAccess": "Você já tem acesso a este curso. A página será atualizada automaticamente.",
+      "codeNotIncluded": "Código resgatado, mas este curso não estava incluído.",
+      "viewCourse": "Acessar Curso",
+      "invalidCode": "Código inválido ou expirado",
+      "noVideos": "Nenhum vídeo ainda",
+      "noVideosDesc": "Os vídeos aparecerão aqui quando adicionados pelo administrador.",
+      "courseContent": "Conteúdo do curso",
+      "certTitle": "Certificado de Conclusão",
+      "certEligible": "Todas as aulas concluídas — você já pode emitir seu certificado.",
+      "certProgress": "{done} de {total} aulas concluídas — conclua todas para desbloquear.",
+      "generateCert": "Gerar certificado",
+      "nameOnCert": "Nome no certificado",
+      "nameOnCertDesc": "Digite o nome que aparecerá impresso no certificado.",
+      "generating": "Gerando…",
+      "downloadAgain": "Baixar novamente",
+      "certDownloaded": "Certificado baixado!",
+      "viewCertificates": "Ver em Certificados →",
+      "earnCert": "Emitir Certificado",
+      "earnCertTooltip": "Conclua todas as {total} aulas para emitir seu certificado.",
+      "certError": "Não foi possível gerar o certificado. Tente novamente.",
+      "videos": "{count, plural, one {# vídeo} other {# vídeos}}",
+      "downloadPdf": "Baixar PDF",
+      "cancel": "Cancelar"
+    },
     "certificates": {
       "title": "Certificados",
       "subtitle": "Baixe os certificados dos cursos concluídos.",
@@ -151,7 +192,14 @@
       "downloadLabel": "Baixar:",
       "downloading": "Baixando...",
       "exporting": "Exportando...",
-      "imagePng": "Imagem (PNG)"
+      "imagePng": "Imagem (PNG)",
+      "videoCount": "{count, plural, one {# aula} other {# aulas}}",
+      "certCompletedOf": "certificado de conclusão",
+      "thisCertifies": "Certificamos que",
+      "hasCompleted": "concluiu com êxito",
+      "comprising": "compreendendo {count, plural, one {# aula} other {# aulas}} de treinamento",
+      "issued": "Emitido em:",
+      "verCode": "Código de verificação:"
     },
     "progress": {
       "title": "Meu Progresso",
@@ -206,6 +254,21 @@
       "approvedBody": "Sua solicitação para \"{trackName}\" foi aprovada",
       "deniedTitle": "Acesso ao curso não aprovado",
       "deniedBody": "Sua solicitação para \"{trackName}\" não foi aprovada"
+    },
+    "video": {
+      "notFound": "Vídeo não encontrado.",
+      "backToCourse": "Voltar ao curso",
+      "prevLesson": "Aula anterior",
+      "nextLesson": "Próxima aula",
+      "lastLesson": "Última aula",
+      "completed": "Concluída",
+      "repeatLesson": "Repetir aula",
+      "lessonEnded": "Aula finalizada",
+      "pause": "Pausar",
+      "play": "Reproduzir",
+      "speedLabel": "Velocidade: {rate}×. Toque para alterar",
+      "exitFullscreen": "Sair da tela cheia",
+      "enterFullscreen": "Tela cheia"
     }
   },
   "admin": {
@@ -446,5 +509,28 @@
       "deleteTitle": "Excluir código?",
       "deleteDesc": "Este código de acesso será excluído permanentemente e não poderá mais ser resgatado."
     }
+  },
+  "comments": {
+    "discussion": "Discussão",
+    "commentCount": "{count, plural, one {# comentário} other {# comentários}}",
+    "placeholder": "Faça uma pergunta ou compartilhe sua opinião…",
+    "post": "Publicar",
+    "posting": "…",
+    "reply": "Responder",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "confirmDelete": "Confirmar exclusão",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "replyPlaceholder": "Escreva uma resposta…",
+    "empty": "Nenhum comentário ainda. Seja o primeiro a participar!",
+    "tip": "Dica: pressione {key}+Enter para publicar.",
+    "deletedUser": "Usuário excluído",
+    "deletedBody": "[excluído]",
+    "timeJustNow": "agora mesmo",
+    "timeMinutes": "há {m}min",
+    "timeHours": "há {h}h",
+    "timeDays": "há {d}d"
   }
 }

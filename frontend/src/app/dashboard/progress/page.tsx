@@ -25,6 +25,23 @@ interface TrackWithProgress extends TrackSummary {
   progress: TrackProgress | null;
 }
 
+function StatCard({ value, label }: { value: number; label: string }) {
+  return (
+    <div
+      className="rounded-xl p-5"
+      style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+    >
+      <p
+        className="text-3xl font-bold tabular-nums leading-none mb-1"
+        style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}
+      >
+        {value}
+      </p>
+      <p className="text-xs font-medium" style={{ color: 'var(--ls-text-2)' }}>{label}</p>
+    </div>
+  );
+}
+
 function TrackProgressCard({
   track,
   onClick,
@@ -38,36 +55,82 @@ function TrackProgressCard({
   const pct = p?.overallPercentage ?? 0;
   const completedCount = p?.completedCount ?? 0;
   const total = p?.totalActive ?? track.videoCount ?? 0;
+  const isComplete = p?.trackComplete ?? false;
+
+  const barColor = isComplete ? 'var(--ls-success)' : pct > 0 ? 'var(--ls-accent)' : 'var(--ls-border)';
 
   return (
     <div
       onClick={onClick}
-      className="group flex cursor-pointer items-center gap-4 rounded-xl bg-white border border-gray-200 shadow-sm p-4 hover:border-indigo-300 hover:shadow-md transition"
+      className="group flex cursor-pointer items-center gap-4 rounded-xl p-4 transition-all duration-150"
+      style={{
+        background: 'var(--ls-surface)',
+        border: '1px solid var(--ls-border)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'var(--ls-text-3)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'var(--ls-border)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+      }}
     >
-      <div className="shrink-0 h-14 w-14 rounded-lg overflow-hidden bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center">
+      {/* Thumbnail */}
+      <div
+        className="shrink-0 h-14 w-14 rounded-xl overflow-hidden flex items-center justify-center"
+        style={{ background: 'var(--ls-surface-2)' }}
+      >
         {track.thumbnailUrl ? (
-          <img src={track.thumbnailUrl} alt={track.name} className="h-full w-full object-cover" />
+          <img src={track.thumbnailUrl} alt={track.name} className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <svg className="h-6 w-6 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--ls-text-3)' }}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
         )}
       </div>
 
+      {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <h3 className="font-semibold text-gray-900 truncate group-hover:text-indigo-700 transition">{track.name}</h3>
-          <span className="shrink-0 text-sm font-medium text-indigo-600">{pct}%</span>
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <h3
+            className="text-sm font-semibold truncate transition-colors duration-150 group-hover:text-purple-600"
+            style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}
+          >
+            {track.name}
+          </h3>
+          <div className="flex items-center gap-2 shrink-0">
+            {isComplete && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                style={{ background: 'rgba(30,166,62,0.1)', color: 'var(--ls-success)' }}
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                {tProgress('completed')}
+              </span>
+            )}
+            <span
+              className="text-sm font-bold tabular-nums"
+              style={{ color: isComplete ? 'var(--ls-success)' : pct > 0 ? 'var(--ls-accent)' : 'var(--ls-text-3)' }}
+            >
+              {pct}%
+            </span>
+          </div>
         </div>
-        <div className="w-full rounded-full bg-gray-100 h-1.5">
+
+        {/* Progress bar */}
+        <div className="w-full rounded-full h-2" style={{ background: 'var(--ls-surface-2)' }}>
           <div
-            className={`h-1.5 rounded-full transition-all ${pct === 100 ? 'bg-green-500' : 'bg-indigo-500'}`}
-            style={{ width: `${pct}%` }}
+            className="h-2 rounded-full transition-all duration-700"
+            style={{ width: `${pct}%`, background: barColor }}
           />
         </div>
-        <p className="mt-1 text-xs text-gray-400">
+
+        <p className="mt-1.5 text-xs" style={{ color: 'var(--ls-text-3)' }}>
           {tProgress('videoProgress', { completed: completedCount, total })}
-          {p?.trackComplete && <span className="ml-2 text-green-600 font-medium">· {tProgress('completed')}</span>}
         </p>
       </div>
     </div>
@@ -114,111 +177,158 @@ export default function ProgressPage() {
 
   const started = tracks.filter((tr) => tr.progress && tr.progress.completedCount > 0);
   const completed = tracks.filter((tr) => tr.progress?.trackComplete);
+  const inProgress = started.filter((tr) => !tr.progress?.trackComplete);
   const notStarted = tracks.filter((tr) => !tr.progress || tr.progress.completedCount === 0);
 
+  const totalPct = tracks.length > 0
+    ? Math.round(tracks.reduce((acc, tr) => acc + (tr.progress?.overallPercentage ?? 0), 0) / tracks.length)
+    : 0;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-6 py-10">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="page-title mb-1">{t('title')}</h1>
+        <p className="text-sm" style={{ color: 'var(--ls-text-2)' }}>{t('subtitle')}</p>
+      </div>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
-          <p className="mt-1 text-gray-500">{t('subtitle')}</p>
-        </div>
-
-        {loading && (
-          <div className="space-y-4">
+      {/* Loading */}
+      {loading && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4 mb-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl bg-white border border-gray-200 p-5 animate-pulse">
-                <div className="flex gap-4 items-center">
-                  <div className="h-14 w-14 rounded-lg bg-gray-200 shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-1/3" />
-                    <div className="h-3 bg-gray-100 rounded w-full" />
-                    <div className="h-2 bg-gray-100 rounded-full w-full" />
-                  </div>
-                </div>
+              <div key={i} className="rounded-xl p-5 animate-pulse" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
+                <div className="h-8 w-12 rounded skeleton mb-2" />
+                <div className="h-3 rounded skeleton w-3/4" />
               </div>
             ))}
           </div>
-        )}
-
-        {!loading && error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-6 text-center">
-            <p className="text-red-700 font-medium">{error}</p>
-            <button onClick={load} className="mt-3 text-sm text-red-600 underline">{tCommon('tryAgain')}</button>
-          </div>
-        )}
-
-        {!loading && !error && tracks.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-white py-20 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-              <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-              </svg>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl p-4 animate-pulse flex gap-4 items-center" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
+              <div className="h-14 w-14 rounded-xl skeleton shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 rounded skeleton w-1/2" />
+                <div className="h-2 rounded-full skeleton w-full" />
+                <div className="h-3 rounded skeleton w-1/4" />
+              </div>
             </div>
-            <h2 className="text-lg font-semibold text-gray-700">{t('noProgress')}</h2>
-            <p className="mt-1 text-sm text-gray-400">{t('noProgressSubtitle')}</p>
-            <button
-              onClick={() => router.push('/dashboard/tracks')}
-              className="mt-5 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              {tCommon('browseCourses')}
-            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Error */}
+      {!loading && error && (
+        <div className="rounded-xl p-6 text-center" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
+          <p className="text-sm font-medium mb-3" style={{ color: 'var(--ls-error)' }}>{error}</p>
+          <button onClick={load} className="text-xs underline cursor-pointer" style={{ color: 'var(--ls-text-2)' }}>
+            {tCommon('tryAgain')}
+          </button>
+        </div>
+      )}
+
+      {/* Empty */}
+      {!loading && !error && tracks.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: 'var(--ls-accent-muted)' }}
+          >
+            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--ls-accent)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
           </div>
-        )}
+          <h3 className="text-base font-semibold mb-1" style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}>
+            {t('noProgress')}
+          </h3>
+          <p className="text-sm mb-5" style={{ color: 'var(--ls-text-2)' }}>{t('noProgressSubtitle')}</p>
+          <button
+            onClick={() => router.push('/dashboard/tracks')}
+            className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer"
+            style={{ background: 'var(--ls-accent)' }}
+          >
+            {tCommon('browseCourses')}
+          </button>
+        </div>
+      )}
 
-        {!loading && !error && tracks.length > 0 && (
-          <div className="space-y-8">
-
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                { key: 'totalCourses', value: tracks.length },
-                { key: 'inProgress', value: started.length - completed.length },
-                { key: 'completed', value: completed.length },
-              ].map((s) => (
-                <div key={s.key} className="rounded-xl bg-white border border-gray-200 shadow-sm p-4 text-center">
-                  <p className="text-2xl font-bold text-indigo-600">{s.value}</p>
-                  <p className="mt-1 text-xs text-gray-500">{t(s.key as Parameters<typeof t>[0])}</p>
-                </div>
-              ))}
-            </div>
-
-            {started.filter((tr) => !tr.progress?.trackComplete).length > 0 && (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">{t('inProgress')}</h2>
-                <div className="space-y-3">
-                  {started.filter((tr) => !tr.progress?.trackComplete).map((track) => (
-                    <TrackProgressCard key={track.id} track={track} onClick={() => router.push(`/dashboard/tracks/${track.id}`)} tProgress={t} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {completed.length > 0 && (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">{t('completed')}</h2>
-                <div className="space-y-3">
-                  {completed.map((track) => (
-                    <TrackProgressCard key={track.id} track={track} onClick={() => router.push(`/dashboard/tracks/${track.id}`)} tProgress={t} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {notStarted.length > 0 && (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">{t('notStarted')}</h2>
-                <div className="space-y-3">
-                  {notStarted.map((track) => (
-                    <TrackProgressCard key={track.id} track={track} onClick={() => router.push(`/dashboard/tracks/${track.id}`)} tProgress={t} />
-                  ))}
-                </div>
-              </section>
-            )}
-
+      {/* Content */}
+      {!loading && !error && tracks.length > 0 && (
+        <div className="space-y-8">
+          {/* Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2">
+            <StatCard value={tracks.length} label={t('totalCourses')} />
+            <StatCard value={inProgress.length} label={t('inProgress')} />
+            <StatCard value={completed.length} label={t('completed')} />
+            <StatCard value={totalPct} label="Progresso geral" />
           </div>
-        )}
-      </div>
+
+          {/* In Progress */}
+          {inProgress.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ls-warning)' }} />
+                <h2 className="section-label">
+                  {t('inProgress')} · {inProgress.length}
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {inProgress.map((track) => (
+                  <TrackProgressCard
+                    key={track.id}
+                    track={track}
+                    onClick={() => router.push(`/dashboard/tracks/${track.id}`)}
+                    tProgress={t}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Completed */}
+          {completed.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ls-success)' }} />
+                <h2 className="section-label">
+                  {t('completed')} · {completed.length}
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {completed.map((track) => (
+                  <TrackProgressCard
+                    key={track.id}
+                    track={track}
+                    onClick={() => router.push(`/dashboard/tracks/${track.id}`)}
+                    tProgress={t}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Not started */}
+          {notStarted.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ls-text-3)' }} />
+                <h2 className="section-label">
+                  {t('notStarted')} · {notStarted.length}
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {notStarted.map((track) => (
+                  <TrackProgressCard
+                    key={track.id}
+                    track={track}
+                    onClick={() => router.push(`/dashboard/tracks/${track.id}`)}
+                    tProgress={t}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
     </div>
   );
 }

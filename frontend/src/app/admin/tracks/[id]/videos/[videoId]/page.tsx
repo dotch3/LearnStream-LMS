@@ -114,14 +114,6 @@ export default function AdminVideoFormPage() {
 
   return (
     <div className="p-8 max-w-xl mx-auto">
-      <button
-        onClick={() => router.push(`/admin/tracks/${params.id}/videos`)}
-        className="text-sm mb-4 flex items-center gap-1 transition-opacity hover:opacity-70"
-        style={{ color: 'var(--ls-accent-text)' }}
-      >
-        ← {t('backToVideos')}
-      </button>
-
       <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--ls-text-1)' }}>
         {isNew ? t('addVideo') : t('editVideo')}
       </h1>
@@ -221,14 +213,6 @@ export default function AdminVideoFormPage() {
             style={{ background: 'var(--ls-accent)' }}
           >
             {saving ? t('savingVideo') : isNew ? t('addVideo') : t('save')}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push(`/admin/tracks/${params.id}/videos`)}
-            className="px-5 py-2 rounded-lg text-sm"
-            style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)', background: 'var(--ls-surface)' }}
-          >
-            {tCommon('cancel')}
           </button>
         </div>
       </form>

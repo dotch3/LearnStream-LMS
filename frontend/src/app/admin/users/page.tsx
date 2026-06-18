@@ -29,7 +29,7 @@ function Avatar({ name }: { name: string }) {
   const bg = colors[name.charCodeAt(0) % colors.length];
   return (
     <div
-      className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+      className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white"
       style={{ background: bg }}
     >
       {name.charAt(0).toUpperCase()}
@@ -146,19 +146,19 @@ export default function AdminUsersPage() {
 
       {invite.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.45)' }}>
-          <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
+          <div className="w-full max-w-md rounded-lg p-6" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
 
             {!invite.inviteUrl ? (
               <>
-                <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--ls-text-1)' }}>{t('inviteUser')}</h2>
-                <p className="text-sm mb-5" style={{ color: 'var(--ls-text-2)' }}>{t('inviteSubtitle')}</p>
+                <h2 className="text-base font-semibold mb-1" style={{ color: 'var(--ls-text)' }}>{t('inviteUser')}</h2>
+                <p className="text-sm mb-5" style={{ color: 'var(--ls-muted)' }}>{t('inviteSubtitle')}</p>
                 <div className="flex flex-col gap-4">
                   <div>
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('emailAddress')}</label>
+                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text)' }}>{t('emailAddress')}</label>
                     <input
                       type="email"
-                      className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                      style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-1)' }}
+                      className="w-full rounded-md px-3 py-2 text-sm outline-none"
+                      style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text)' }}
                       placeholder="user@example.com"
                       value={invite.email}
                       onChange={(e) => setInvite((s) => ({ ...s, email: e.target.value }))}
@@ -167,16 +167,16 @@ export default function AdminUsersPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-2)' }}>{t('roleCol')}</label>
+                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text)' }}>{t('roleCol')}</label>
                     <div className="flex gap-2">
                       {(['VIEWER', 'ADMIN'] as const).map((r) => (
                         <button
                           key={r}
                           onClick={() => setInvite((s) => ({ ...s, role: r }))}
-                          className="flex-1 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all"
+                          className="flex-1 py-2 rounded-md text-sm font-medium cursor-pointer transition-all"
                           style={{
                             background: invite.role === r ? 'var(--ls-accent-muted)' : 'var(--ls-surface-2)',
-                            color: invite.role === r ? 'var(--ls-accent)' : 'var(--ls-text-2)',
+                            color: invite.role === r ? 'var(--ls-accent)' : 'var(--ls-muted)',
                             border: `1px solid ${invite.role === r ? 'var(--ls-accent)' : 'transparent'}`,
                           }}
                         >
@@ -190,15 +190,15 @@ export default function AdminUsersPage() {
                     <button
                       disabled={invite.loading || !invite.email.trim()}
                       onClick={handleInvite}
-                      className="flex-1 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 cursor-pointer"
+                      className="flex-1 py-2 rounded-md text-sm font-medium text-white disabled:opacity-50 cursor-pointer transition-opacity hover:opacity-90"
                       style={{ background: 'var(--ls-accent)' }}
                     >
                       {invite.loading ? t('creating') : t('createInvite')}
                     </button>
                     <button
                       onClick={closeInviteModal}
-                      className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
-                      style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text-2)' }}
+                      className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer"
+                      style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-muted)' }}
                     >
                       {tCommon('cancel')}
                     </button>
@@ -208,17 +208,17 @@ export default function AdminUsersPage() {
             ) : (
               <>
                 <div className="flex items-center gap-2 mb-1">
-                  <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: '#22c55e' }}>
+                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--ls-success)' }}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <h2 className="text-lg font-semibold" style={{ color: 'var(--ls-text-1)' }}>{t('inviteCreated')}</h2>
+                  <h2 className="text-base font-semibold" style={{ color: 'var(--ls-text)' }}>{t('inviteCreated')}</h2>
                 </div>
-                <p className="text-sm mb-4" style={{ color: 'var(--ls-text-2)' }}>
+                <p className="text-sm mb-4" style={{ color: 'var(--ls-muted)' }}>
                   {t('inviteExpiry', { email: invite.email })}
                 </p>
                 <div
-                  className="rounded-lg px-3 py-2.5 text-xs font-mono break-all mb-3 select-all"
-                  style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)' }}
+                  className="rounded-md px-3 py-2.5 text-xs font-mono break-all mb-3 select-all"
+                  style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-muted)' }}
                 >
                   {invite.inviteUrl}
                 </div>
@@ -229,8 +229,8 @@ export default function AdminUsersPage() {
                       setInvite((s) => ({ ...s, copied: true }));
                       setTimeout(() => setInvite((s) => ({ ...s, copied: false })), 2000);
                     }}
-                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold text-white cursor-pointer"
-                    style={{ background: invite.copied ? '#16a34a' : 'var(--ls-accent)' }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium text-white cursor-pointer transition-opacity hover:opacity-90"
+                    style={{ background: invite.copied ? 'var(--ls-success)' : 'var(--ls-accent)' }}
                   >
                     {invite.copied ? (
                       <>
@@ -250,8 +250,8 @@ export default function AdminUsersPage() {
                   </button>
                   <button
                     onClick={closeInviteModal}
-                    className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
-                    style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text-2)' }}
+                    className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer"
+                    style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-muted)' }}
                   >
                     {tCommon('done')}
                   </button>
@@ -263,12 +263,12 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <div className="p-8 max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="px-4 sm:px-6 py-6 sm:py-10 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{t('title')}</h1>
+            <h1 className="page-title">{t('title')}</h1>
             {meta && (
-              <p className="text-sm mt-0.5" style={{ color: 'var(--ls-text-muted)' }}>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--ls-muted)' }}>
                 {t('userTotal', { count: meta.total })}
               </p>
             )}
@@ -276,10 +276,8 @@ export default function AdminUsersPage() {
           <div className="flex gap-2">
             <button
               onClick={() => setInvite((s) => ({ ...s, open: true, email: '', error: '' }))}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer"
-              style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text-1)', border: '1px solid var(--ls-border)' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-border)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+              style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text)', border: '1px solid var(--ls-border)' }}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
@@ -288,10 +286,8 @@ export default function AdminUsersPage() {
             </button>
             <button
               onClick={() => router.push('/admin/users/new')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white cursor-pointer transition-opacity hover:opacity-90"
               style={{ background: 'var(--ls-accent)' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent-h)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-accent)'; }}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -302,27 +298,28 @@ export default function AdminUsersPage() {
         </div>
 
         {globalError && (
-          <div className="mb-4 px-4 py-3 rounded-lg text-sm text-red-700 bg-red-50 border border-red-200">
+          <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)', color: 'var(--ls-error)' }}>
             {globalError}
           </div>
         )}
 
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)' }}>
+        {/* Desktop table */}
+        <div className="hidden md:block rounded-lg overflow-hidden" style={{ border: '1px solid var(--ls-border)' }}>
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-bg)' }}>
-                <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-muted)' }}>{t('userCol')}</th>
-                <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-muted)' }}>{t('emailCol')}</th>
-                <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-muted)' }}>{t('roleCol')}</th>
-                <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-muted)' }}>{t('statusCol')}</th>
-                <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wide" style={{ color: 'var(--ls-text-muted)' }}>{t('joinedCol')}</th>
+              <tr style={{ borderBottom: '1px solid var(--ls-border)', background: 'var(--ls-card)' }}>
+                <th className="text-left px-5 py-3 font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('userCol')}</th>
+                <th className="text-left px-5 py-3 font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('emailCol')}</th>
+                <th className="text-left px-5 py-3 font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('roleCol')}</th>
+                <th className="text-left px-5 py-3 font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('statusCol')}</th>
+                <th className="text-left px-5 py-3 font-medium text-xs" style={{ color: 'var(--ls-muted)' }}>{t('joinedCol')}</th>
                 <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody>
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-sm" style={{ color: 'var(--ls-text-muted)' }}>
+                  <td colSpan={6} className="text-center py-12 text-sm" style={{ color: 'var(--ls-muted)', background: 'var(--ls-card)' }}>
                     {t('noUsers')}
                   </td>
                 </tr>
@@ -330,74 +327,40 @@ export default function AdminUsersPage() {
               {users.map((u, i) => (
                 <tr
                   key={u.id}
-                  style={{
-                    borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined,
-                    opacity: u.isActive ? 1 : 0.6,
-                  }}
+                  style={{ background: 'var(--ls-card)', borderTop: i > 0 ? '1px solid var(--ls-border)' : undefined, opacity: u.isActive ? 1 : 0.5 }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-card)'; }}
                 >
                   <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       <Avatar name={u.name} />
-                      <span className="font-medium" style={{ color: 'var(--ls-text)' }}>{u.name}</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--ls-text)' }}>{u.name}</span>
                     </div>
                   </td>
-
-                  <td className="px-5 py-3" style={{ color: 'var(--ls-text-muted)' }}>{u.email}</td>
-
-                  <td className="px-5 py-3">
-                    <span
-                      className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={
-                        u.role === 'ADMIN'
-                          ? { background: '#fef3c7', color: '#92400e' }
-                          : { background: '#eff6ff', color: '#1e40af' }
-                      }
-                    >
-                      {u.role === 'ADMIN' ? t('adminRole') : t('viewerRole')}
-                    </span>
+                  <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>{u.email}</td>
+                  <td className="px-5 py-3 text-xs font-medium" style={{ color: u.role === 'ADMIN' ? 'var(--ls-accent)' : 'var(--ls-muted)' }}>
+                    {u.role === 'ADMIN' ? t('adminRole') : t('viewerRole')}
                   </td>
-
                   <td className="px-5 py-3">
-                    <span
-                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      style={
-                        u.isActive
-                          ? { background: '#dcfce7', color: '#15803d' }
-                          : { background: '#f3f4f6', color: '#6b7280' }
-                      }
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: u.isActive ? '#16a34a' : '#9ca3af' }}
-                      />
+                    <span className="flex items-center gap-1.5 text-xs" style={{ color: u.isActive ? 'var(--ls-success)' : 'var(--ls-muted)' }}>
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: u.isActive ? 'var(--ls-success)' : 'var(--ls-border)' }} />
                       {u.isActive ? t('activeStatus') : t('inactiveStatus')}
                     </span>
                   </td>
-
-                  <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-text-muted)' }}>
+                  <td className="px-5 py-3 text-xs" style={{ color: 'var(--ls-muted)' }}>
                     {new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
-
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <ActionBtn
-                        onClick={() => router.push(`/admin/users/${u.id}`)}
-                        label={tCommon('edit')}
-                        variant="primary"
+                      <ActionBtn onClick={() => router.push(`/admin/users/${u.id}`)} label={tCommon('edit')} variant="primary"
                         icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>}
                       />
                       {u.isActive ? (
-                        <ActionBtn
-                          onClick={() => openDialog(u, 'deactivate')}
-                          label={t('deactivate')}
-                          variant="danger"
+                        <ActionBtn onClick={() => openDialog(u, 'deactivate')} label={t('deactivate')} variant="danger"
                           icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>}
                         />
                       ) : (
-                        <ActionBtn
-                          onClick={() => openDialog(u, 'reactivate')}
-                          label={t('reactivate')}
-                          variant="success"
+                        <ActionBtn onClick={() => openDialog(u, 'reactivate')} label={t('reactivate')} variant="success"
                           icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                         />
                       )}
@@ -409,23 +372,79 @@ export default function AdminUsersPage() {
           </table>
         </div>
 
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-2">
+          {users.length === 0 && (
+            <p className="text-center py-12 text-sm" style={{ color: 'var(--ls-muted)' }}>{t('noUsers')}</p>
+          )}
+          {users.map((u) => (
+            <div key={u.id} className="rounded-lg overflow-hidden" style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)', opacity: u.isActive ? 1 : 0.5 }}>
+              <div className="flex items-center gap-3 px-4 py-3">
+                <Avatar name={u.name} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium" style={{ color: 'var(--ls-text)' }}>{u.name}</span>
+                    <span className="text-xs font-medium" style={{ color: u.role === 'ADMIN' ? 'var(--ls-accent)' : 'var(--ls-muted)' }}>
+                      {u.role === 'ADMIN' ? t('adminRole') : t('viewerRole')}
+                    </span>
+                  </div>
+                  <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ls-muted)' }}>{u.email}</p>
+                </div>
+                <span className="flex items-center gap-1 text-xs shrink-0" style={{ color: u.isActive ? 'var(--ls-success)' : 'var(--ls-muted)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: u.isActive ? 'var(--ls-success)' : 'var(--ls-border)' }} />
+                  {u.isActive ? t('activeStatus') : t('inactiveStatus')}
+                </span>
+              </div>
+              <div className="grid grid-cols-2" style={{ borderTop: '1px solid var(--ls-border)', background: 'var(--ls-surface-2)' }}>
+                <button
+                  onClick={() => router.push(`/admin/users/${u.id}`)}
+                  className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                  style={{ color: 'var(--ls-accent)' }}
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                  {tCommon('edit')}
+                </button>
+                {u.isActive ? (
+                  <button
+                    onClick={() => openDialog(u, 'deactivate')}
+                    className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                    style={{ color: 'var(--ls-error)', borderLeft: '1px solid var(--ls-border)' }}
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                    {t('deactivate')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => openDialog(u, 'reactivate')}
+                    className="flex items-center justify-center gap-2 py-3 text-sm font-medium cursor-pointer transition-opacity hover:opacity-70"
+                    style={{ color: 'var(--ls-success)', borderLeft: '1px solid var(--ls-border)' }}
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    {t('reactivate')}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
         {meta && meta.totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between text-sm" style={{ color: 'var(--ls-text-muted)' }}>
+          <div className="mt-4 flex items-center justify-between text-sm" style={{ color: 'var(--ls-muted)' }}>
             <span>{t('pageOf', { page: meta.page, total: meta.totalPages })}</span>
             <div className="flex gap-2">
               <button
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
-                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40 transition-colors"
-                style={{ borderColor: 'var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text)' }}
+                className="px-3 py-1.5 rounded-md text-sm disabled:opacity-40 transition-opacity hover:opacity-80 cursor-pointer"
+                style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-card)', color: 'var(--ls-text)' }}
               >
                 ← {tCommon('previous')}
               </button>
               <button
                 disabled={page >= meta.totalPages}
                 onClick={() => setPage(page + 1)}
-                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40 transition-colors"
-                style={{ borderColor: 'var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text)' }}
+                className="px-3 py-1.5 rounded-md text-sm disabled:opacity-40 transition-opacity hover:opacity-80 cursor-pointer"
+                style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-card)', color: 'var(--ls-text)' }}
               >
                 {tCommon('next')} →
               </button>

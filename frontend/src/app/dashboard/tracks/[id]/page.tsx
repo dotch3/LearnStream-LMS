@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { useAuth } from '@/contexts/auth.context';
 
@@ -36,9 +37,9 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function CheckIcon({ className }: { className?: string }) {
+function CheckIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
     </svg>
   );
@@ -53,6 +54,7 @@ function EnrollmentGate({
   status: 'NONE' | 'PENDING' | 'DENIED';
   onStatusChange: (s: 'PENDING') => void;
 }) {
+  const t = useTranslations('dashboard.trackDetail');
   const [code, setCode] = useState('');
   const [requesting, setRequesting] = useState(false);
   const [redeeming, setRedeeming] = useState(false);
@@ -63,8 +65,8 @@ function EnrollmentGate({
 
   useEffect(() => {
     if (!redeemSuccess || !redeemGranted) return;
-    const t = setTimeout(() => window.location.reload(), 1500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => window.location.reload(), 1500);
+    return () => clearTimeout(timer);
   }, [redeemSuccess, redeemGranted]);
 
   const request = async () => {
@@ -73,10 +75,10 @@ function EnrollmentGate({
     try {
       await api.post('/api/enrollments/request', { trackId });
       onStatusChange('PENDING');
-      setMsg('Request sent! You will be notified when approved.');
+      setMsg(t('requestSent'));
     } catch (e: unknown) {
       const m = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setErr(Array.isArray(m) ? m.join(', ') : String(m ?? 'Failed to send request'));
+      setErr(Array.isArray(m) ? m.join(', ') : String(m ?? t('failedRequest')));
     } finally {
       setRequesting(false);
     }
@@ -94,54 +96,47 @@ function EnrollmentGate({
       setMsg('');
       setCode('');
     } catch (e: unknown) {
-      let msg = 'Invalid or expired code';
+      let errMsg = t('invalidCode');
       try {
-        const err = e as any;
-        const data = err?.response?.data?.message;
-        if (data) msg = Array.isArray(data) ? data.join(', ') : String(data);
+        const raw = (e as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+        if (raw) errMsg = Array.isArray(raw) ? raw.join(', ') : String(raw);
       } catch {}
-      setErr(msg);
+      setErr(errMsg);
     } finally {
       setRedeeming(false);
     }
   };
 
   return (
-    <div
-      className="rounded-2xl p-8 text-center"
-      style={{ background: 'var(--ls-card)', border: '1px solid var(--ls-border)' }}
-    >
+    <div className="rounded-xl p-5 sm:p-6" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
       {redeemSuccess ? (
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className="flex h-14 w-14 items-center justify-center rounded-full"
-            style={{ background: redeemGranted ? 'rgba(34,197,94,0.15)' : 'rgba(245,158,11,0.15)' }}
-          >
-            {redeemGranted ? (
-              <svg className="h-7 w-7 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            ) : (
-              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth={2}>
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          {redeemGranted ? (
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(30,166,62,0.1)' }}>
+              <CheckIcon className="h-6 w-6" style={{ color: 'var(--ls-success)' }} />
+            </div>
+          ) : (
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--ls-surface-2)' }}>
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} style={{ color: 'var(--ls-text-3)' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
-            )}
+            </div>
+          )}
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--ls-text-1)' }}>
+              {redeemGranted ? t('enrolledSuccess') : t('codeApplied')}
+            </p>
+            <p className="text-sm mt-1 max-w-xs" style={{ color: 'var(--ls-text-2)' }}>
+              {redeemGranted ? t('nowHasAccess') : t('codeNotIncluded')}
+            </p>
           </div>
-          <p className="text-base font-semibold" style={{ color: 'var(--ls-text)' }}>
-            {redeemGranted ? 'Enrolled Successfully!' : 'Code applied'}
-          </p>
-          <p className="text-sm text-center" style={{ color: 'var(--ls-muted)' }}>
-            {redeemGranted
-              ? 'You now have access to this course. The page will refresh automatically.'
-              : 'Code redeemed. Access granted to other courses, but not this one.'}
-          </p>
           {redeemGranted && (
             <button
               onClick={() => window.location.reload()}
-              className="mt-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer"
+              className="mt-1 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer active:scale-95"
               style={{ background: 'var(--ls-accent)' }}
             >
-              View Course
+              {t('viewCourse')}
             </button>
           )}
         </div>
@@ -149,64 +144,62 @@ function EnrollmentGate({
         <>
           {status === 'DENIED' && (
             <div
-              className="mb-4 rounded-lg px-4 py-3 text-sm"
-              style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}
+              className="flex items-start gap-2 rounded-lg px-3 py-2.5 mb-4 text-sm"
+              style={{ background: 'rgba(211,47,47,0.07)', color: 'var(--ls-error)' }}
             >
-              Your previous request was denied. You can submit a new request.
+              <svg className="h-4 w-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              {t('denied')}
             </div>
           )}
 
           {status === 'PENDING' || msg ? (
-            <div className="flex flex-col items-center gap-3">
-              <div
-                className="flex h-14 w-14 items-center justify-center rounded-full"
-                style={{ background: 'rgba(245,158,11,0.15)' }}
-              >
-                <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth={1.8}>
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--ls-surface-2)' }}>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} style={{ color: 'var(--ls-text-3)' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-base font-semibold" style={{ color: 'var(--ls-text)' }}>Access Pending</p>
-              <p className="text-sm" style={{ color: 'var(--ls-muted)' }}>
-                {msg || 'Your enrollment request is awaiting admin approval. You will receive a notification when it\'s reviewed.'}
-              </p>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--ls-text-1)' }}>{t('accessPending')}</p>
+                <p className="text-sm mt-0.5 max-w-xs" style={{ color: 'var(--ls-text-2)' }}>
+                  {msg || t('accessPendingDesc')}
+                </p>
+              </div>
             </div>
           ) : (
             <>
-              <div
-                className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full"
-                style={{ background: 'var(--ls-sb-hover)' }}
-              >
-                <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} style={{ color: 'var(--ls-muted)' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-              </div>
-              <p className="text-base font-semibold mb-1" style={{ color: 'var(--ls-text)' }}>Enrollment Required</p>
-              <p className="text-sm mb-6" style={{ color: 'var(--ls-muted)' }}>
-                Request access from an admin or use an enrollment code.
-              </p>
+              <p className="text-sm font-semibold mb-1" style={{ color: 'var(--ls-text-1)' }}>{t('enrollRequired')}</p>
+              <p className="text-sm mb-5" style={{ color: 'var(--ls-text-2)' }}>{t('enrollRequiredDesc')}</p>
 
-              <div className="flex flex-col items-center gap-4 max-w-xs mx-auto">
+              <div className="flex flex-col gap-3">
                 <button
                   disabled={requesting}
                   onClick={request}
-                  className="w-full rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+                  className="w-full rounded-lg py-3 text-sm font-semibold text-white disabled:opacity-50 transition-opacity hover:opacity-90 cursor-pointer active:scale-[0.98]"
                   style={{ background: 'var(--ls-accent)' }}
                 >
-                  {requesting ? 'Sending request…' : 'Request Access'}
+                  {requesting ? t('requesting') : t('requestAccess')}
                 </button>
 
-                <div className="flex items-center gap-3 w-full">
+                <div className="flex items-center gap-2">
                   <hr className="flex-1" style={{ borderColor: 'var(--ls-border)' }} />
-                  <span className="text-xs" style={{ color: 'var(--ls-muted)' }}>or use a code</span>
+                  <span className="text-xs shrink-0 font-medium" style={{ color: 'var(--ls-text-3)' }}>{t('orUseCode')}</span>
                   <hr className="flex-1" style={{ borderColor: 'var(--ls-border)' }} />
                 </div>
 
-                <div className="flex w-full gap-2">
+                <div className="flex gap-2">
                   <input
-                    className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
-                    style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)', color: 'var(--ls-text)' }}
-                    placeholder="Enter code"
+                    className="flex-1 rounded-lg px-3 py-2.5 text-sm outline-none"
+                    style={{
+                      background: 'var(--ls-bg)',
+                      border: '1px solid var(--ls-border)',
+                      color: 'var(--ls-text-1)',
+                    }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--ls-accent)'; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--ls-border)'; }}
+                    placeholder={t('enterCode')}
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') redeem(); }}
@@ -214,15 +207,17 @@ function EnrollmentGate({
                   <button
                     disabled={redeeming || !code.trim()}
                     onClick={redeem}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
-                    style={{ background: 'var(--ls-accent)' }}
+                    className="px-4 rounded-lg text-sm font-semibold text-white disabled:opacity-40 transition-opacity hover:opacity-90 cursor-pointer"
+                    style={{ background: 'var(--ls-accent)', minWidth: 80 }}
                   >
-                    {redeeming ? '…' : 'Redeem'}
+                    {redeeming ? '…' : t('redeem')}
                   </button>
                 </div>
               </div>
 
-              {err && <p className="mt-3 text-sm" style={{ color: '#ef4444' }}>{err}</p>}
+              {err && (
+                <p className="mt-3 text-sm" style={{ color: 'var(--ls-error)' }}>{err}</p>
+              )}
             </>
           )}
         </>
@@ -235,6 +230,7 @@ export default function TrackDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
+  const t = useTranslations('dashboard.trackDetail');
 
   const [track, setTrack] = useState<TrackDetail | null>(null);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
@@ -248,8 +244,6 @@ export default function TrackDetailPage() {
   const [certError, setCertError] = useState('');
   const [certSuccess, setCertSuccess] = useState(false);
   const certFormRef = useRef<HTMLDivElement>(null);
-
-  const [redeemSuccess, setRedeemSuccess] = useState(false);
 
   const isAdmin = user?.role === 'ADMIN';
 
@@ -276,14 +270,14 @@ export default function TrackDetailPage() {
         else if (status === 403 || status === 404) {
           setError('');
         } else {
-          setError('Failed to load course.');
+          setError(t('failedLoad'));
         }
       } finally {
         setLoading(false);
       }
     };
     loadTrack();
-  }, [params.id, router, isAdmin]);
+  }, [params.id, router, isAdmin, t]);
 
   const handleOpenCert = () => {
     setCertName(user?.name ?? '');
@@ -307,14 +301,12 @@ export default function TrackDetailPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `certificate-${track?.name ?? params.id}.pdf`;
+      a.download = `certificado-${track?.name ?? params.id}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
       setCertSuccess(true);
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Could not generate certificate. Please try again.';
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('certError');
       setCertError(Array.isArray(msg) ? msg.join(', ') : String(msg));
     } finally {
       setCertLoading(false);
@@ -322,42 +314,85 @@ export default function TrackDetailPage() {
   };
 
   if (loading) return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="h-6 w-32 rounded animate-pulse mb-6" style={{ background: 'var(--ls-card)' }} />
-      <div className="h-8 w-64 rounded animate-pulse mb-4" style={{ background: 'var(--ls-card)' }} />
-      <div className="space-y-3">
-        {[1,2,3].map((i) => <div key={i} className="h-16 rounded-lg animate-pulse" style={{ background: 'var(--ls-card)' }} />)}
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+      <div className="rounded-xl overflow-hidden mb-4 skeleton" style={{ height: 140 }} />
+      <div className="space-y-2">
+        {[1, 2, 3, 4].map((i) => <div key={i} className="h-16 rounded-xl animate-pulse skeleton" />)}
       </div>
     </div>
   );
 
-  if (error) return <div className="p-8" style={{ color: '#ef4444' }}>{error}</div>;
+  if (error) return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+      <p className="text-sm" style={{ color: 'var(--ls-error)' }}>{error}</p>
+    </div>
+  );
   if (!track) return null;
 
   const needsEnrollment = !isAdmin && track.enrollmentStatus !== 'APPROVED';
+  const activeVideos = track.videos.filter((v) => v.isActive);
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <button
-        onClick={() => router.push('/dashboard/tracks')}
-        className="text-sm mb-4 flex items-center gap-1 transition-opacity hover:opacity-70"
-        style={{ color: 'var(--ls-accent)' }}
-      >
-        ← Back to Courses
-      </button>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
 
-      <div className="flex gap-6 mb-8">
-        {track.thumbnailUrl && (
-          <img src={track.thumbnailUrl} alt={track.name} className="w-48 h-32 object-cover rounded-xl" />
-        )}
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{track.name}</h1>
-          {track.description && (
-            <p className="mt-1" style={{ color: 'var(--ls-muted)' }}>{track.description}</p>
-          )}
-          <p className="text-sm mt-2" style={{ color: 'var(--ls-muted)' }}>
-            {track.videoCount} video{track.videoCount !== 1 ? 's' : ''}
-          </p>
+      {/* Track header card */}
+      <div
+        className="rounded-xl overflow-hidden mb-5"
+        style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+      >
+        <div className="flex flex-col sm:flex-row">
+          {/* Thumbnail */}
+          <div className="w-full sm:w-52 shrink-0">
+            {track.thumbnailUrl ? (
+              <img src={track.thumbnailUrl} alt={track.name} className="w-full aspect-video sm:h-full object-cover" />
+            ) : (
+              <div className="w-full aspect-video sm:h-full flex items-center justify-center" style={{ background: 'var(--ls-surface-2)' }}>
+                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2} style={{ color: 'var(--ls-text-3)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0 p-4 sm:p-6 flex flex-col justify-center">
+            <h1
+              className="text-lg sm:text-2xl font-bold tracking-tight mb-2"
+              style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}
+            >
+              {track.name}
+            </h1>
+            {track.description && (
+              <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--ls-text-2)' }}>
+                {track.description}
+              </p>
+            )}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                style={{ background: 'var(--ls-accent-muted)', color: 'var(--ls-accent)' }}
+              >
+                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4.5 4.5a3 3 0 00-3 3v9a3 3 0 003 3h8.25a3 3 0 003-3v-9a3 3 0 00-3-3H4.5zM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.944-.945 2.56-.276 2.56 1.06v11.38c0 1.336-1.616 2.005-2.56 1.06z" />
+                </svg>
+                {track.videoCount} aula{track.videoCount !== 1 ? 's' : ''}
+              </span>
+              {completedIds.size > 0 && (
+                <span className="text-xs" style={{ color: 'var(--ls-text-3)' }}>
+                  {completedIds.size}/{activeVideos.length} concluídas
+                </span>
+              )}
+              {trackComplete && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ color: 'var(--ls-success)', background: 'rgba(30,166,62,0.1)' }}
+                >
+                  <CheckIcon className="h-3 w-3" />
+                  Concluído
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -365,144 +400,227 @@ export default function TrackDetailPage() {
         <EnrollmentGate
           trackId={track.id}
           status={track.enrollmentStatus as 'NONE' | 'PENDING' | 'DENIED'}
-          onStatusChange={(s) => setTrack((t) => t ? { ...t, enrollmentStatus: s } : t)}
+          onStatusChange={(s) => setTrack((prev) => prev ? { ...prev, enrollmentStatus: s } : prev)}
         />
       ) : (
         <>
-          {(() => {
-            const activeVideos = track.videos.filter((v) => v.isActive);
-            return (
-              <>
-                <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--ls-text)' }}>Videos</h2>
-                {activeVideos.length === 0 && (
-                  <p style={{ color: 'var(--ls-muted)' }}>No videos in this course yet.</p>
-                )}
+          {/* Video list */}
+          <div
+            className="rounded-xl overflow-hidden mb-5"
+            style={{ border: '1px solid var(--ls-border)' }}
+          >
+            {/* Header */}
+            <div
+              className="px-4 sm:px-5 py-3.5 flex items-center justify-between"
+              style={{
+                background: 'var(--ls-surface)',
+                borderBottom: activeVideos.length > 0 ? '1px solid var(--ls-border)' : 'none',
+              }}
+            >
+              <h2 className="text-sm font-bold" style={{ color: 'var(--ls-text-1)', fontFamily: 'var(--font-poppins, sans-serif)' }}>
+                {t('courseContent')}
+              </h2>
+              {activeVideos.length > 0 && (
+                <span
+                  className="text-xs font-medium px-2 py-0.5 rounded-full"
+                  style={{ background: 'var(--ls-surface-2)', color: 'var(--ls-text-2)' }}
+                >
+                  {activeVideos.length} aula{activeVideos.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
 
-                <div className="space-y-3">
-                  {activeVideos.map((video, idx) => {
-                    const done = completedIds.has(video.id);
-                    return (
-                      <div
-                        key={video.id}
-                        className="flex gap-4 items-center border rounded-lg p-3 cursor-pointer transition-colors"
-                        style={{ borderColor: 'var(--ls-border)' }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-sb-hover)'; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                        onClick={() => router.push(`/dashboard/tracks/${track.id}/videos/${video.id}`)}
-                      >
-                        <span className="text-sm w-5" style={{ color: 'var(--ls-muted)' }}>{idx + 1}</span>
-                        {video.thumbnailUrl && (
-                          <img src={video.thumbnailUrl} alt={video.title} className="w-24 h-16 object-cover rounded" />
-                        )}
-                        <div className="flex-1">
-                          <p className="font-medium" style={{ color: done ? 'var(--ls-muted)' : 'var(--ls-text)' }}>{video.title}</p>
-                        </div>
-                        <span className="text-sm" style={{ color: 'var(--ls-muted)' }}>{formatDuration(video.duration)}</span>
-                        {done && (
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100">
-                            <CheckIcon className="h-3.5 w-3.5 text-green-600" />
+            {activeVideos.length === 0 ? (
+              <div
+                className="flex flex-col items-center justify-center py-14 text-center"
+                style={{ background: 'var(--ls-surface)' }}
+              >
+                <svg className="h-7 w-7 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--ls-text-3)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
+                </svg>
+                <p className="text-sm font-medium" style={{ color: 'var(--ls-text-1)' }}>{t('noVideos')}</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--ls-text-2)' }}>{t('noVideosDesc')}</p>
+              </div>
+            ) : (
+              <div style={{ background: 'var(--ls-surface)' }}>
+                {activeVideos.map((video, idx) => {
+                  const done = completedIds.has(video.id);
+                  return (
+                    <div
+                      key={video.id}
+                      onClick={() => router.push(`/dashboard/tracks/${track.id}/videos/${video.id}`)}
+                      className="flex items-center gap-3 px-4 sm:px-5 cursor-pointer transition-colors duration-150 active:opacity-70"
+                      style={{
+                        paddingTop: 14,
+                        paddingBottom: 14,
+                        borderBottom: idx < activeVideos.length - 1 ? '1px solid var(--ls-border)' : 'none',
+                        minHeight: 60,
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface-2)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--ls-surface)'; }}
+                    >
+                      {/* Number / check */}
+                      <div className="shrink-0 w-7 h-7 flex items-center justify-center">
+                        {done ? (
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center"
+                            style={{ background: 'var(--ls-success)' }}
+                          >
+                            <CheckIcon className="h-3.5 w-3.5 text-white" />
+                          </div>
+                        ) : (
+                          <span className="text-xs font-semibold tabular-nums" style={{ color: 'var(--ls-text-3)' }}>
+                            {idx + 1}
                           </span>
                         )}
                       </div>
-                    );
-                  })}
 
-                  {activeVideos.length > 0 && (
-                    <div className="mt-6" style={{ borderTop: '1px solid var(--ls-border)', paddingTop: '1.25rem' }}>
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(99,102,241,0.1)' }}>
-                          <svg className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold" style={{ color: 'var(--ls-text)' }}>Certificate of Completion</p>
-                          {trackComplete ? (
-                            <p className="text-sm" style={{ color: '#22c55e' }}>You&apos;ve completed all lessons — you&apos;re eligible!</p>
-                          ) : (
-                            <p className="text-sm" style={{ color: 'var(--ls-muted)' }}>
-                              Complete all {activeVideos.length} lessons to unlock your certificate.
-                              ({completedIds.size}/{activeVideos.length} done)
-                            </p>
-                          )}
-                        </div>
-                        <div className="relative group">
-                          <button
-                            onClick={trackComplete ? handleOpenCert : undefined}
-                            disabled={!trackComplete}
-                            className="rounded-lg px-4 py-2 text-sm font-medium transition-opacity"
-                            style={
-                              trackComplete
-                                ? { background: 'var(--ls-accent)', color: '#fff' }
-                                : { background: 'var(--ls-sb-hover)', color: 'var(--ls-muted)', cursor: 'not-allowed' }
-                            }
-                          >
-                            Earn Certificate
-                          </button>
-                          {!trackComplete && (
-                            <div className="pointer-events-none absolute bottom-full right-0 mb-2 hidden w-56 rounded-md bg-gray-800 px-3 py-2 text-xs text-white shadow-lg group-hover:block">
-                              Complete all {activeVideos.length} lessons to earn your certificate.
-                              <div className="absolute right-4 top-full h-0 w-0 border-x-4 border-t-4 border-x-transparent border-t-gray-800" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {certOpen && (
-                        <div ref={certFormRef} className="mt-4 rounded-xl p-5" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)' }}>
-                          <h3 className="font-semibold mb-1" style={{ color: 'var(--ls-text)' }}>Generate your certificate</h3>
-                          <p className="text-sm mb-4" style={{ color: 'var(--ls-muted)' }}>
-                            Enter the name to print on the certificate.
-                          </p>
-                          <form onSubmit={handleGenerateCert} className="flex flex-col gap-3">
-                            <label className="flex flex-col gap-1">
-                              <span className="text-sm font-medium" style={{ color: 'var(--ls-text)' }}>Name on certificate</span>
-                              <input
-                                className="rounded-lg px-3 py-2 text-sm outline-none"
-                                style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-card)', color: 'var(--ls-text)' }}
-                                required
-                                minLength={2}
-                                value={certName}
-                                onChange={(e) => setCertName(e.target.value)}
-                              />
-                            </label>
-                            {certError && <p className="text-sm" style={{ color: '#ef4444' }}>{certError}</p>}
-                            {certSuccess && (
-                              <div className="flex items-center gap-2 text-sm font-medium" style={{ color: '#22c55e' }}>
-                                <CheckIcon className="h-4 w-4" />
-                                <span>Certificate downloaded!</span>
-                                <button type="button" onClick={() => router.push('/dashboard/certificates')} className="ml-1 underline font-normal" style={{ color: 'var(--ls-accent)' }}>
-                                  View in Certificates →
-                                </button>
-                              </div>
-                            )}
-                            <div className="flex gap-2">
-                              <button
-                                type="submit"
-                                disabled={certLoading}
-                                className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                                style={{ background: 'var(--ls-accent)' }}
-                              >
-                                {certLoading ? 'Generating...' : certSuccess ? 'Download again' : 'Download PDF'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setCertOpen(false); setCertSuccess(false); }}
-                                className="rounded-lg px-4 py-2 text-sm font-medium"
-                                style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-card)', color: 'var(--ls-text)' }}
-                              >
-                                Close
-                              </button>
-                            </div>
-                          </form>
-                        </div>
+                      {/* Thumbnail — hidden on very small screens */}
+                      {video.thumbnailUrl && (
+                        <img
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          className="hidden xs:block w-16 sm:w-20 aspect-video object-cover rounded-lg shrink-0"
+                          loading="lazy"
+                        />
                       )}
+
+                      {/* Title */}
+                      <p
+                        className="flex-1 text-sm font-medium min-w-0 line-clamp-2 sm:truncate"
+                        style={{ color: done ? 'var(--ls-text-2)' : 'var(--ls-text-1)' }}
+                      >
+                        {video.title}
+                      </p>
+
+                      {/* Duration + play chevron */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs tabular-nums font-mono" style={{ color: 'var(--ls-text-3)' }}>
+                          {formatDuration(video.duration)}
+                        </span>
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--ls-accent)' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                      </div>
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Certificate section */}
+          {activeVideos.length > 0 && (
+            <div
+              className="rounded-xl p-4 sm:p-5"
+              style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: trackComplete ? 'rgba(30,166,62,0.1)' : 'var(--ls-surface-2)' }}
+                >
+                  <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}
+                    style={{ color: trackComplete ? 'var(--ls-success)' : 'var(--ls-accent)' }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                  </svg>
                 </div>
-              </>
-            );
-          })()}
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: 'var(--ls-text-1)' }}>
+                    {t('certTitle')}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: trackComplete ? 'var(--ls-success)' : 'var(--ls-text-3)' }}>
+                    {trackComplete
+                      ? t('certEligible')
+                      : t('certProgress', { done: completedIds.size, total: activeVideos.length })}
+                  </p>
+                </div>
+
+                <button
+                  onClick={trackComplete ? handleOpenCert : undefined}
+                  disabled={!trackComplete}
+                  className="shrink-0 rounded-lg px-3.5 py-2 text-sm font-semibold transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 hover:opacity-90 active:scale-95"
+                  style={
+                    trackComplete
+                      ? { background: 'var(--ls-accent)', color: '#fff' }
+                      : { background: 'var(--ls-surface-2)', color: 'var(--ls-text-3)', border: '1px solid var(--ls-border)' }
+                  }
+                >
+                  {t('earnCert')}
+                </button>
+              </div>
+
+              {certOpen && (
+                <div
+                  ref={certFormRef}
+                  className="mt-4 rounded-lg p-4"
+                  style={{ background: 'var(--ls-bg)', border: '1px solid var(--ls-border)' }}
+                >
+                  <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--ls-text-1)' }}>
+                    {t('generateCert')}
+                  </p>
+                  <p className="text-xs mb-4" style={{ color: 'var(--ls-text-2)' }}>
+                    {t('nameOnCertDesc')}
+                  </p>
+                  <form onSubmit={handleGenerateCert} className="flex flex-col gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ls-text-1)' }}>
+                        {t('nameOnCert')}
+                      </label>
+                      <input
+                        className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
+                        style={{ border: '1px solid var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text-1)' }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--ls-accent)'; }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--ls-border)'; }}
+                        required
+                        minLength={2}
+                        value={certName}
+                        onChange={(e) => setCertName(e.target.value)}
+                      />
+                    </div>
+
+                    {certError && <p className="text-xs" style={{ color: 'var(--ls-error)' }}>{certError}</p>}
+
+                    {certSuccess && (
+                      <div className="flex items-center gap-1.5 text-xs font-medium flex-wrap" style={{ color: 'var(--ls-success)' }}>
+                        <CheckIcon className="h-3.5 w-3.5 shrink-0" />
+                        <span>{t('certDownloaded')}</span>
+                        <button
+                          type="button"
+                          onClick={() => router.push('/dashboard/certificates')}
+                          className="underline underline-offset-2 font-semibold cursor-pointer"
+                          style={{ color: 'var(--ls-accent)' }}
+                        >
+                          {t('viewCertificates')}
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={certLoading}
+                        className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-opacity hover:opacity-90 cursor-pointer"
+                        style={{ background: 'var(--ls-accent)' }}
+                      >
+                        {certLoading ? t('generating') : certSuccess ? t('downloadAgain') : t('downloadPdf')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setCertOpen(false); setCertSuccess(false); }}
+                        className="rounded-lg px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer"
+                        style={{ border: '1px solid var(--ls-border)', color: 'var(--ls-text-2)', background: 'transparent' }}
+                      >
+                        {t('cancel')}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

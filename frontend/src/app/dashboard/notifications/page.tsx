@@ -93,7 +93,7 @@ export default function NotificationsPage() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--ls-text)' }}>{t('title')}</h1>
+        <h1 className="page-title">{t('title')}</h1>
         {unread && (
           <button
             onClick={markAll}
